@@ -1,0 +1,130 @@
+// schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(cuid())
+  name          String?
+  email         String?  @unique
+  password      String?  // ใช้กรณี email/password
+  image         String?
+  role          Role     @default(USER)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  shops         Shop[]   // ผู้ใช้สามารถเป็นเจ้าของร้านได้หลายร้าน
+  accounts      Account[]
+  sessions      Session[]
+}
+
+model Shop {
+  id            String       @id @default(cuid())
+  name          String
+  description   String?
+  address       String?
+  lat           Float?
+  lng           Float?
+  image         String?
+  category      ShopCategory @relation(fields: [categoryId], references: [id])
+  categoryId    String
+  owner         User         @relation(fields: [ownerId], references: [id])
+  ownerId       String
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  // Ads package ปัจจุบัน
+  adPackage     AdPackage?   @relation(fields: [adPackageId], references: [id])
+  adPackageId   String?
+
+  menus         Menu[]
+  analytics     Analytics[]
+}
+
+model ShopCategory {
+  id        String   @id @default(cuid())
+  name      String   @unique // เช่น ร้านอาหารตามสั่ง, ก๋วยเตี๋ยว, เครื่องดื่ม, เบเกอรี่
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  shops     Shop[]
+}
+
+model Menu {
+  id        String   @id @default(cuid())
+  name      String
+  price     Float
+  image     String?
+  shop      Shop     @relation(fields: [shopId], references: [id])
+  shopId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AdPackage {
+  id        String   @id @default(cuid())
+  name      String   // Free, Pro1, Pro2, Pro3, Special
+  scope     AdScope
+  priority  Int      // ใช้สำหรับจัดลำดับเวลาแสดงร้าน
+  price     Float    @default(0.0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  shops     Shop[]
+}
+
+model Analytics {
+  id        String   @id @default(cuid())
+  shop      Shop     @relation(fields: [shopId], references: [id])
+  shopId    String
+  date      DateTime @default(now())
+  views     Int      @default(0)
+  clicks    Int      @default(0) // เช่น click ไปยัง delivery platform
+}
+
+model Account {
+  id                 String  @id @default(cuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String?  @db.Text
+  access_token       String?  @db.Text
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String?  @db.Text
+  session_state      String?
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id])
+}
+
+enum Role {
+  USER
+  SHOP
+  ADMIN
+}
+
+enum AdScope {
+  SUBDISTRICT
+  DISTRICT
+  PROVINCE
+  NATIONWIDE
+}
