@@ -1,19 +1,26 @@
 // src/app/api/auth/[...nextauth]/route.ts
-import NextAuth, { NextAuthOptions } from "next-auth";
+import NextAuth, { NextAuthOptions, DefaultSession, User as NextAuthUser } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import FacebookProvider from "next-auth/providers/facebook";
 import TwitterProvider from "next-auth/providers/twitter";
 import EmailProvider from "next-auth/providers/email";
 
-import TikTokProvider from "@/lib/tiktok-provider"; // Custom TikTok provider
+import TikTokProvider from "@/lib/tiktok-provider";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
 
-// -----------------------------
-// NextAuth Config
-// -----------------------------
+// เพิ่ม type สำหรับ session.user
+interface ExtendedUser extends NextAuthUser {
+  id: string;
+  role: "user" | "admin" | "shop";
+}
+
+interface ExtendedSession extends DefaultSession {
+  user: ExtendedUser;
+}
+
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma), // ใช้ Prisma DB
+  adapter: PrismaAdapter(prisma),
   session: { strategy: "jwt" },
   providers: [
     GoogleProvider({
@@ -39,40 +46,21 @@ export const authOptions: NextAuthOptions = {
   ],
 
   callbacks: {
-    // -----------------------------
-    // Session Callback
-    // -----------------------------
     async session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.sub!;
-        session.user.role = (token as any).role ?? "user";
-      }
-      return session;
+      const extendedSession = session as ExtendedSession;
+      extendedSession.user.id = token.sub!;
+      extendedSession.user.role = (token as { role?: "user" | "admin" | "shop" }).role ?? "user";
+      return extendedSession;
     },
 
-    // -----------------------------
-    // JWT Callback
-    // -----------------------------
     async jwt({ token, user }) {
       if (user) {
-        // user.role มาจาก DB ผ่าน adapter
-        token.role = (user as any).role ?? "user";
+        token.role = (user as { role?: "user" | "admin" | "shop" }).role ?? "user";
       }
       return token;
     },
   },
 
-  // -----------------------------
-  // Pages (ถ้าต้องการ custom หน้า login)
-  // -----------------------------
-  pages: {
-    signIn: "/auth/signin",
-    error: "/auth/error",
-  },
-
-  // -----------------------------
-  // Debug
-  // -----------------------------
   debug: process.env.NODE_ENV === "development",
 };
 
