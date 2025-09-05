@@ -20,7 +20,6 @@ type Shop = {
 
 // --- shops ตัวอย่าง 30 ร้าน ---
 const shops: Shop[] = [
-  const shops: Shop[] = [
   // --- ร้านเก่า 20 ร้าน (ค่าเดิม + เพิ่ม field) ---
   {
     id: 1,
