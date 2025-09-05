@@ -13,7 +13,7 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const role = (session?.user as any)?.role as string | undefined;
+  const role = (session?.user as { role?: string })?.role;
 
   const links = [
     { href: "/", label: "หน้าแรก" },
@@ -99,7 +99,13 @@ export default function Navbar() {
   );
 }
 
-function MenuItem({ href, children, onClick }: any) {
+type MenuItemProps = {
+  href: string;
+  children: React.ReactNode;
+  onClick?: () => void;
+};
+
+function MenuItem({ href, children, onClick }: MenuItemProps) {
   return (
     <Link href={href} className="block px-3 py-2 rounded-lg hover:bg-muted" onClick={onClick}>
       {children}
