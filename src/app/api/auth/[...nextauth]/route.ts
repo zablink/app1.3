@@ -2,57 +2,45 @@
 import NextAuth, { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import FacebookProvider from "next-auth/providers/facebook";
-import TwitterProvider from "next-auth/providers/twitter"; // X
+import TwitterProvider from "next-auth/providers/twitter";
 import EmailProvider from "next-auth/providers/email";
-import type { OAuthConfig } from "next-auth/providers";
 
-// -----------------------------
-// Custom TikTok Provider
-// -----------------------------
-interface TikTokUser {
-  id?: string;
-  open_id?: string;
-  display_name?: string;
-  avatar_url?: string;
-}
-
-interface TikTokProfileResponse {
-  data?: { user?: TikTokUser };
-}
-
-const TikTok: OAuthConfig<TikTokProfileResponse> = {
-  id: "tiktok",
-  name: "TikTok",
-  type: "oauth",
-  authorization: { url: process.env.TIKTOK_AUTH_URL! },
-  token: { url: process.env.TIKTOK_TOKEN_URL! },
-  userinfo: { url: process.env.TIKTOK_USERINFO_URL! },
-  profile: (raw) => {
-    const u = raw?.data?.user || {};
-    return {
-      id: u.id?.toString() ?? u.open_id,
-      name: u.display_name,
-      email: undefined,
-      image: u.avatar_url,
-    };
-  },
-  clientId: process.env.TIKTOK_CLIENT_ID!,
-  clientSecret: process.env.TIKTOK_CLIENT_SECRET!,
-};
+import TikTokProvider from "@/lib/tiktok-provider"; // Custom TikTok provider
 
 // -----------------------------
 // NextAuth Config
 // -----------------------------
 export const authOptions: NextAuthOptions = {
   // adapter: PrismaAdapter(prisma), // ยังไม่ใช้ DB ให้ remark ไว้ก่อน
-  session: { strategy: "jwt" }, // เปลี่ยนเป็น jwt ถ้ายังไม่ใช้ database
+  session: { strategy: "jwt" }, // ใช้ JWT ชั่วคราว
+
   providers: [
-    GoogleProvider,
-    FacebookProvider,
-    TwitterProvider,
-    EmailProvider,
-    TikTok,
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    }),
+    FacebookProvider({
+      clientId: process.env.FACEBOOK_CLIENT_ID!,
+      clientSecret: process.env.FACEBOOK_CLIENT_SECRET!,
+    }),
+    TwitterProvider({
+      clientId: process.env.TWITTER_CLIENT_ID!,
+      clientSecret: process.env.TWITTER_CLIENT_SECRET!,
+    }),
+    EmailProvider({
+      server: process.env.EMAIL_SERVER!,
+      from: process.env.EMAIL_FROM!,
+    }),
+
+    // -----------------------------
+    // TikTok Provider (Custom)
+    // -----------------------------
+    TikTokProvider({
+      clientId: process.env.TIKTOK_CLIENT_ID!,
+      clientSecret: process.env.TIKTOK_CLIENT_SECRET!,
+    }),
   ],
+
   callbacks: {
     async session({ session, token }) {
       if (session.user) {
