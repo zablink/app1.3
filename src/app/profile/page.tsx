@@ -1,5 +1,4 @@
-// src/app/profile/page.tsx
-"use client"; // บังคับ client component
+"use client"; // บังคับ Client Component
 
 import { useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
@@ -17,7 +16,7 @@ export default function ProfilePage() {
   }, [session]);
 
   if (status === "loading") {
-    return <div>Loading...</div>; // Skeleton / loading state
+    return <div>Loading...</div>; // Skeleton loader
   }
 
   if (!session) {
