@@ -8,7 +8,7 @@ import EmailProvider from "next-auth/providers/email";
 import TikTokProvider from "@/lib/tiktok-provider"; // Custom TikTok provider
 
 // -----------------------------
-// NextAuth Config
+// NextAuth Config  
 // -----------------------------
 export const authOptions: NextAuthOptions = {
   // adapter: PrismaAdapter(prisma), // ยังไม่ใช้ DB ให้ remark ไว้ก่อน
