@@ -2,54 +2,332 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
-
-const categories = [
-  "ทั้งหมด",
-  "อาหารตามสั่ง",
-  "ก๋วยเตี๋ยว",
-  "เครื่องดื่ม",
-  "เบเกอรี่",
-];
 
 type Shop = {
   id: number;
   name: string;
   category: string;
   image: string;
-  lat: number; // latitude
-  lng: number; // longitude
+  lat: number;
+  lng: number;
   subdistrict: string;
   district: string;
   province: string;
 };
 
-const shops = [
-  { id: 1, name: "ร้านข้าวผัดอร่อย", category: "อาหารตามสั่ง", image: "/images/friedrice.jpg" },
-  { id: 2, name: "ก๋วยเตี๋ยวเรืออยุธยา", category: "ก๋วยเตี๋ยว", image: "/images/noodleboat.jpg" },
-  { id: 3, name: "ชานมไข่มุกนุ่มนิ่ม", category: "เครื่องดื่ม", image: "/images/milktea.jpg" },
-  { id: 4, name: "ขนมปังอบใหม่", category: "เบเกอรี่", image: "/images/bakery.jpg" },
-  { id: 5, name: "ส้มตำรสเด็ด", category: "อาหารตามสั่ง", image: "/images/somtam.jpg" },
-  { id: 6, name: "ก๋วยเตี๋ยวต้มยำ", category: "ก๋วยเตี๋ยว", image: "/images/noodletomyum.jpg" },
-  { id: 7, name: "คาเฟ่กาแฟสด", category: "เครื่องดื่ม", image: "/images/coffee.jpg" },
-  { id: 8, name: "ครัวข้าวแกง", category: "อาหารตามสั่ง", image: "/images/ricecurry.jpg" },
-  { id: 9, name: "ขนมเค้กวานิลลา", category: "เบเกอรี่", image: "/images/cake.jpg" },
-  { id: 10, name: "ร้านชาบูหมูจุ่ม", category: "อาหารตามสั่ง", image: "/images/shabu.jpg" },
-  { id: 11, name: "ก๋วยเตี๋ยวเนื้อน้ำตก", category: "ก๋วยเตี๋ยว", image: "/images/noodlebeef.jpg" },
-  { id: 12, name: "น้ำผลไม้สด", category: "เครื่องดื่ม", image: "/images/juice.jpg" },
-  { id: 13, name: "ครัวป้าแดง", category: "อาหารตามสั่ง", image: "/images/thai-food.jpg" },
-  { id: 14, name: "ขนมครัวซองต์หอมกรุ่น", category: "เบเกอรี่", image: "/images/croissant.jpg" },
-  { id: 15, name: "สเต๊กพรีเมียม", category: "อาหารตามสั่ง", image: "/images/steak.jpg" },
-  { id: 16, name: "ก๋วยเตี๋ยวหมูเด้ง", category: "ก๋วยเตี๋ยว", image: "/images/noodle-pork.jpg" },
-  { id: 17, name: "ชามะนาวเย็น", category: "เครื่องดื่ม", image: "/images/icetea.jpg" },
-  { id: 18, name: "เบเกอรี่โฮมเมด", category: "เบเกอรี่", image: "/images/homemade-bakery.jpg" },
-  { id: 19, name: "อาหารใต้จัดจ้าน", category: "อาหารตามสั่ง", image: "/images/south-food.jpg" },
-  { id: 20, name: "ก๋วยเตี๋ยวไก่ตุ๋น", category: "ก๋วยเตี๋ยว", image: "/images/noodle-chicken.jpg" },
+// --- shops ตัวอย่าง 30 ร้าน ---
+const shops: Shop[] = [
+  const shops: Shop[] = [
+  // --- ร้านเก่า 20 ร้าน (ค่าเดิม + เพิ่ม field) ---
+  {
+    id: 1,
+    name: "ร้านข้าวผัดอร่อย",
+    category: "อาหารตามสั่ง",
+    image: "/images/friedrice.jpg",
+    lat: 13.746, lng: 100.534,
+    subdistrict: "วังบูรพา",
+    district: "พระนคร",
+    province: "กรุงเทพฯ",
+  },
+  {
+    id: 2,
+    name: "ก๋วยเตี๋ยวเรืออยุธยา",
+    category: "ก๋วยเตี๋ยว",
+    image: "/images/noodleboat.jpg",
+    lat: 13.742, lng: 100.538,
+    subdistrict: "วังบูรพา",
+    district: "พระนคร",
+    province: "กรุงเทพฯ",
+  },
+  {
+    id: 3,
+    name: "ชานมไข่มุกนุ่มนิ่ม",
+    category: "เครื่องดื่ม",
+    image: "/images/milktea.jpg",
+    lat: 13.744, lng: 100.536,
+    subdistrict: "วังบูรพา",
+    district: "พระนคร",
+    province: "กรุงเทพฯ",
+  },
+  {
+    id: 4,
+    name: "ขนมปังอบใหม่",
+    category: "เบเกอรี่",
+    image: "/images/bakery.jpg",
+    lat: 13.745, lng: 100.539,
+    subdistrict: "วังบูรพา",
+    district: "พระนคร",
+    province: "กรุงเทพฯ",
+  },
+  {
+    id: 5,
+    name: "ส้มตำรสเด็ด",
+    category: "อาหารตามสั่ง",
+    image: "/images/somtam.jpg",
+    lat: 13.743, lng: 100.537,
+    subdistrict: "วังบูรพา",
+    district: "พระนคร",
+    province: "กรุงเทพฯ",
+  },
+  {
+    id: 6,
+    name: "ก๋วยเตี๋ยวต้มยำ",
+    category: "ก๋วยเตี๋ยว",
+    image: "/images/noodletomyum.jpg",
+    lat: 13.741, lng: 100.535,
+    subdistrict: "วังบูรพา",
+    district: "พระนคร",
+    province: "กรุงเทพฯ",
+  },
+  {
+    id: 7,
+    name: "คาเฟ่กาแฟสด",
+    category: "เครื่องดื่ม",
+    image: "/images/coffee.jpg",
+    lat: 13.746, lng: 100.540,
+    subdistrict: "วังบูรพา",
+    district: "พระนคร",
+    province: "กรุงเทพฯ",
+  },
+  {
+    id: 8,
+    name: "ครัวข้าวแกง",
+    category: "อาหารตามสั่ง",
+    image: "/images/ricecurry.jpg",
+    lat: 13.747, lng: 100.534,
+    subdistrict: "วังบูรพา",
+    district: "พระนคร",
+    province: "กรุงเทพฯ",
+  },
+  {
+    id: 9,
+    name: "ขนมเค้กวานิลลา",
+    category: "เบเกอรี่",
+    image: "/images/cake.jpg",
+    lat: 13.744, lng: 100.539,
+    subdistrict: "วังบูรพา",
+    district: "พระนคร",
+    province: "กรุงเทพฯ",
+  },
+  {
+    id: 10,
+    name: "ร้านชาบูหมูจุ่ม",
+    category: "อาหารตามสั่ง",
+    image: "/images/shabu.jpg",
+    lat: 13.745, lng: 100.537,
+    subdistrict: "วังบูรพา",
+    district: "พระนคร",
+    province: "กรุงเทพฯ",
+  },
+  {
+    id: 11,
+    name: "ก๋วยเตี๋ยวเนื้อน้ำตก",
+    category: "ก๋วยเตี๋ยว",
+    image: "/images/noodlebeef.jpg",
+    lat: 13.743, lng: 100.536,
+    subdistrict: "วังบูรพา",
+    district: "พระนคร",
+    province: "กรุงเทพฯ",
+  },
+  {
+    id: 12,
+    name: "น้ำผลไม้สด",
+    category: "เครื่องดื่ม",
+    image: "/images/juice.jpg",
+    lat: 13.746, lng: 100.538,
+    subdistrict: "วังบูรพา",
+    district: "พระนคร",
+    province: "กรุงเทพฯ",
+  },
+  {
+    id: 13,
+    name: "ครัวป้าแดง",
+    category: "อาหารตามสั่ง",
+    image: "/images/thai-food.jpg",
+    lat: 13.742, lng: 100.539,
+    subdistrict: "วังบูรพา",
+    district: "พระนคร",
+    province: "กรุงเทพฯ",
+  },
+  {
+    id: 14,
+    name: "ขนมครัวซองต์หอมกรุ่น",
+    category: "เบเกอรี่",
+    image: "/images/croissant.jpg",
+    lat: 13.744, lng: 100.535,
+    subdistrict: "วังบูรพา",
+    district: "พระนคร",
+    province: "กรุงเทพฯ",
+  },
+  {
+    id: 15,
+    name: "สเต๊กพรีเมียม",
+    category: "อาหารตามสั่ง",
+    image: "/images/steak.jpg",
+    lat: 13.745, lng: 100.536,
+    subdistrict: "วังบูรพา",
+    district: "พระนคร",
+    province: "กรุงเทพฯ",
+  },
+  {
+    id: 16,
+    name: "ก๋วยเตี๋ยวหมูเด้ง",
+    category: "ก๋วยเตี๋ยว",
+    image: "/images/noodle-pork.jpg",
+    lat: 13.746, lng: 100.537,
+    subdistrict: "วังบูรพา",
+    district: "พระนคร",
+    province: "กรุงเทพฯ",
+  },
+  {
+    id: 17,
+    name: "ชามะนาวเย็น",
+    category: "เครื่องดื่ม",
+    image: "/images/icetea.jpg",
+    lat: 13.747, lng: 100.536,
+    subdistrict: "วังบูรพา",
+    district: "พระนคร",
+    province: "กรุงเทพฯ",
+  },
+  {
+    id: 18,
+    name: "เบเกอรี่โฮมเมด",
+    category: "เบเกอรี่",
+    image: "/images/homemade-bakery.jpg",
+    lat: 13.745, lng: 100.539,
+    subdistrict: "วังบูรพา",
+    district: "พระนคร",
+    province: "กรุงเทพฯ",
+  },
+  {
+    id: 19,
+    name: "อาหารใต้จัดจ้าน",
+    category: "อาหารตามสั่ง",
+    image: "/images/south-food.jpg",
+    lat: 13.743, lng: 100.534,
+    subdistrict: "วังบูรพา",
+    district: "พระนคร",
+    province: "กรุงเทพฯ",
+  },
+  {
+    id: 20,
+    name: "ก๋วยเตี๋ยวไก่ตุ๋น",
+    category: "ก๋วยเตี๋ยว",
+    image: "/images/noodle-chicken.jpg",
+    lat: 13.742, lng: 100.538,
+    subdistrict: "วังบูรพา",
+    district: "พระนคร",
+    province: "กรุงเทพฯ",
+  },
+
+  // --- ร้านใหม่ 10 ร้าน แถวสมุทรปราการ ---
+  {
+    id: 21,
+    name: "ร้านกาแฟกระทิงแดง",
+    category: "เครื่องดื่ม",
+    image: "/images/coffee2.jpg",
+    lat: 13.605, lng: 100.609,
+    subdistrict: "ในคลองบางปลากด",
+    district: "พระประแดง",
+    province: "สมุทรปราการ",
+  },
+  {
+    id: 22,
+    name: "ข้าวต้มประชาอุทิศ 90",
+    category: "อาหารตามสั่ง",
+    image: "/images/riceporridge.jpg",
+    lat: 13.607, lng: 100.615,
+    subdistrict: "ในคลองบางปลากด",
+    district: "พระประแดง",
+    province: "สมุทรปราการ",
+  },
+  {
+    id: 23,
+    name: "ก๋วยเตี๋ยวซอยช้อยเพ็ง",
+    category: "ก๋วยเตี๋ยว",
+    image: "/images/noodles2.jpg",
+    lat: 13.603, lng: 100.611,
+    subdistrict: "ในคลองบางปลากด",
+    district: "พระประแดง",
+    province: "สมุทรปราการ",
+  },
+  {
+    id: 24,
+    name: "เบเกอรี่วัดคู่สร้าง",
+    category: "เบเกอรี่",
+    image: "/images/bakery2.jpg",
+    lat: 13.606, lng: 100.613,
+    subdistrict: "ในคลองบางปลากด",
+    district: "พระประแดง",
+    province: "สมุทรปราการ",
+  },
+  {
+    id: 25,
+    name: "ชานมไข่มุกคลองบางปลากด",
+    category: "เครื่องดื่ม",
+    image: "/images/milktea2.jpg",
+    lat: 13.604, lng: 100.610,
+    subdistrict: "ในคลองบางปลากด",
+    district: "พระประแดง",
+    province: "สมุทรปราการ",
+  },
+  {
+    id: 26,
+    name: "ข้าวมันไก่ประชาอุทิศ",
+    category: "อาหารตามสั่ง",
+    image: "/images/chickenrice.jpg",
+    lat: 13.605, lng: 100.612,
+    subdistrict: "ในคลองบางปลากด",
+    district: "พระประแดง",
+    province: "สมุทรปราการ",
+  },
+  {
+    id: 27,
+    name: "ร้านก๋วยเตี๋ยวเรือสมุทรปราการ",
+    category: "ก๋วยเตี๋ยว",
+    image: "/images/noodleboat2.jpg",
+    lat: 13.606, lng: 100.614,
+    subdistrict: "ในคลองบางปลากด",
+    district: "พระประแดง",
+    province: "สมุทรปราการ",
+  },
+  {
+    id: 28,
+    name: "คาเฟ่สดชื่น",
+    category: "เครื่องดื่ม",
+    image: "/images/coffee3.jpg",
+    lat: 13.603, lng: 100.609,
+    subdistrict: "ในคลองบางปลากด",
+    district: "พระประแดง",
+    province: "สมุทรปราการ",
+  },
+  {
+    id: 29,
+    name: "ครัวอาหารใต้บางปลากด",
+    category: "อาหารตามสั่ง",
+    image: "/images/southfood2.jpg",
+    lat: 13.604, lng: 100.611,
+    subdistrict: "ในคลองบางปลากด",
+    district: "พระประแดง",
+    province: "สมุทรปราการ",
+  },
+  {
+    id: 30,
+    name: "เบเกอรี่อบสดประชาอุทิศ",
+    category: "เบเกอรี่",
+    image: "/images/bakery3.jpg",
+    lat: 13.605, lng: 100.613,
+    subdistrict: "ในคลองบางปลากด",
+    district: "พระประแดง",
+    province: "สมุทรปราการ",
+  },
 ];
 
-// Haversine formula
+
+// --- Haversine formula ---
 function getDistance(lat1: number, lng1: number, lat2: number, lng2: number) {
   const R = 6371; // km
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
@@ -63,60 +341,97 @@ function getDistance(lat1: number, lng1: number, lat2: number, lng2: number) {
   return R * c;
 }
 
+// --- Geocode API helper (Google Maps) ---
+async function reverseGeocode(lat: number, lng: number) {
+  if (!process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY) return null;
+  const res = await fetch(
+    `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
+  );
+  const data = await res.json();
+  if (!data.results || data.results.length === 0) return null;
+
+  const addressComponents = data.results[0].address_components;
+
+  const subdistrict = addressComponents.find((c: any) =>
+    c.types.includes("sublocality_level_1")
+  )?.long_name;
+
+  const district = addressComponents.find((c: any) =>
+    c.types.includes("administrative_area_level_2")
+  )?.long_name;
+
+  const province = addressComponents.find((c: any) =>
+    c.types.includes("administrative_area_level_1")
+  )?.long_name;
+
+  return { subdistrict, district, province };
+}
+
+// --- HomePage ---
 export default function HomePage() {
   const [query, setQuery] = useState("");
   const [userLat, setUserLat] = useState<number | null>(null);
   const [userLng, setUserLng] = useState<number | null>(null);
+  const [userLocation, setUserLocation] = useState<{
+    subdistrict?: string;
+    district?: string;
+    province?: string;
+  }>({});
   const [filteredShops, setFilteredShops] = useState<Shop[]>(shops);
 
+  // Get user location
   useEffect(() => {
     if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition((pos) => {
+      navigator.geolocation.getCurrentPosition(async (pos) => {
         setUserLat(pos.coords.latitude);
         setUserLng(pos.coords.longitude);
+
+        // Dynamic reverse geocode
+        const loc = await reverseGeocode(pos.coords.latitude, pos.coords.longitude);
+        if (loc) setUserLocation(loc);
       });
     }
   }, []);
 
+  // Filter shops
   useEffect(() => {
-    let result = Shops.filter(
-      (Shop) =>
-        Shop.name.toLowerCase().includes(query.toLowerCase()) ||
-        Shop.category.toLowerCase().includes(query.toLowerCase())
+    let result = shops.filter(
+      (shop) =>
+        shop.name.toLowerCase().includes(query.toLowerCase()) ||
+        shop.category.toLowerCase().includes(query.toLowerCase())
     );
 
     if (userLat !== null && userLng !== null) {
-      // 1. ร้านในรัศมี 5 กม.
-      const nearby = result.filter((Shop) => getDistance(userLat, userLng, Shop.lat, Shop.lng) <= 5);
+      // 1. ร้านใกล้ผู้ใช้ ≤ 5 กม.
+      const nearby = result.filter((shop) => getDistance(userLat, userLng, shop.lat, shop.lng) <= 5);
       if (nearby.length > 0) {
         result = nearby;
-      } else {
-        // 2. ร้านในตำบลเดียวกัน
-        const sameSubdistrict = result.filter((Shop) => Shop.subdistrict === "วังบูรพา"); // ใช้ตัวอย่างตำบลผู้ใช้
-        if (sameSubdistrict.length > 0) {
-          result = sameSubdistrict;
-        } else {
-          // 3. ร้านในอำเภอเดียวกัน
-          const sameDistrict = result.filter((Shop) => Shop.district === "พระนคร");
-          if (sameDistrict.length > 0) {
-            result = sameDistrict;
-          } else {
-            // 4. ร้านในจังหวัดเดียวกัน
-            const sameProvince = result.filter((Shop) => Shop.province === "กรุงเทพฯ");
-            result = sameProvince;
-          }
-        }
+      } else if (userLocation.subdistrict) {
+        // 2. ร้านใน subdistrict
+        const sameSub = result.filter((shop) => shop.subdistrict === userLocation.subdistrict);
+        if (sameSub.length > 0) result = sameSub;
+      } 
+      
+      if (result.length === 0 && userLocation.district) {
+        // 3. ร้านใน district
+        const sameDist = result.filter((shop) => shop.district === userLocation.district);
+        if (sameDist.length > 0) result = sameDist;
+      }
+
+      if (result.length === 0 && userLocation.province) {
+        // 4. ร้านใน province
+        const sameProv = result.filter((shop) => shop.province === userLocation.province);
+        if (sameProv.length > 0) result = sameProv;
       }
     }
 
     setFilteredShops(result);
-  }, [query, userLat, userLng]);
+  }, [query, userLat, userLng, userLocation]);
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <h1 className="text-3xl font-bold mb-6 text-center">ค้นหาร้านใกล้คุณ 🍜</h1>
 
-      {/* Search */}
       <div className="max-w-xl mx-auto mb-6">
         <input
           type="text"
@@ -127,38 +442,24 @@ export default function HomePage() {
         />
       </div>
 
-      {/* Category */}
-      <div className="flex flex-wrap gap-3 mb-8 justify-center">
-        {["อาหารตามสั่ง", "ก๋วยเตี๋ยว", "เครื่องดื่ม", "เบเกอรี่"].map((cat) => (
-          <Link
-            key={cat}
-            href={`/category/${encodeURIComponent(cat)}`}
-            className="px-4 py-2 bg-white shadow rounded-full hover:bg-blue-50 transition"
-          >
-            {cat}
-          </Link>
-        ))}
-      </div>
-
-      {/* Shops */}
       {filteredShops.length === 0 ? (
         <p className="text-center text-gray-500">ไม่พบร้านในพื้นที่ของคุณ</p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-          {filteredShops.map((Shop, i) => (
+          {filteredShops.map((shop, i) => (
             <motion.div
-              key={Shop.id}
+              key={shop.id}
               className="bg-white shadow-md rounded-2xl overflow-hidden hover:shadow-xl transition"
               whileHover={{ scale: 1.03 }}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.05 }}
             >
-              <Link href={`/Shop/${Shop.id}`}>
-                <img src={Shop.image} alt={Shop.name} className="w-full h-40 object-cover" />
+              <Link href={`/Shop/${shop.id}`}>
+                <img src={shop.image} alt={shop.name} className="w-full h-40 object-cover" />
                 <div className="p-4">
-                  <h2 className="font-semibold text-lg">{Shop.name}</h2>
-                  <p className="text-sm text-gray-500">{Shop.category}</p>
+                  <h2 className="font-semibold text-lg">{shop.name}</h2>
+                  <p className="text-sm text-gray-500">{shop.category}</p>
                 </div>
               </Link>
             </motion.div>
