@@ -67,7 +67,7 @@ export default function HomePage() {
   const [query, setQuery] = useState("");
   const [userLat, setUserLat] = useState<number | null>(null);
   const [userLng, setUserLng] = useState<number | null>(null);
-  const [filteredShops, setFilteredShops] = useState<Shop[]>(Shops);
+  const [filteredShops, setFilteredShops] = useState<Shop[]>(shops);
 
   useEffect(() => {
     if (navigator.geolocation) {
