@@ -1,4 +1,4 @@
-"use client"; // บังคับให้ Next.js รู้ว่าเป็น Client Component
+"use client"; // ต้องอยู่บรรทัดแรก
 
 import { useSession } from "next-auth/react";
 import { useState, useEffect } from "react";

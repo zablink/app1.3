@@ -1,11 +1,11 @@
+import { PrismaAdapter } from "@next-auth/prisma-adapter";
+import { prisma } from "@/lib/prisma";
 import NextAuth, { type NextAuthOptions, DefaultSession, User as NextAuthUser } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import FacebookProvider from "next-auth/providers/facebook";
 import TwitterProvider from "next-auth/providers/twitter";
 import EmailProvider from "next-auth/providers/email";
 import TikTokProvider from "@/lib/tiktok-provider";
-import { PrismaAdapter } from "@next-auth/prisma-adapter";
-import { prisma } from "@/lib/prisma";
 
 export interface ExtendedUser extends NextAuthUser {
   id: string;
