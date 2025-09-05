@@ -1,35 +1,20 @@
 // src/app/api/auth/[...nextauth]/route.ts
-import NextAuth, { NextAuthOptions, DefaultSession, User as NextAuthUser } from "next-auth";
+import NextAuth, { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import FacebookProvider from "next-auth/providers/facebook";
 import TwitterProvider from "next-auth/providers/twitter";
 import EmailProvider from "next-auth/providers/email";
 
 import TikTokProvider from "@/lib/tiktok-provider"; // Custom TikTok provider
-
-// -----------------------------
-// Type-safe extension for session
-// -----------------------------
-declare module "next-auth" {
-  interface Session {
-    user: {
-      id: string;
-      role: "user" | "shop" | "admin"; // ปรับตาม Role ใน Prisma
-    } & DefaultSession["user"];
-  }
-
-  interface User extends NextAuthUser {
-    role?: "user" | "shop" | "admin";
-  }
-}
+import { PrismaAdapter } from "@next-auth/prisma-adapter";
+import { prisma } from "@/lib/prisma";
 
 // -----------------------------
 // NextAuth Config
 // -----------------------------
 export const authOptions: NextAuthOptions = {
-  // adapter: PrismaAdapter(prisma), // ยังไม่ใช้ DB ให้ remark ไว้ก่อน
-  session: { strategy: "jwt" }, // ใช้ JWT ชั่วคราว
-
+  adapter: PrismaAdapter(prisma), // ใช้ Prisma DB
+  session: { strategy: "jwt" },
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
@@ -47,8 +32,6 @@ export const authOptions: NextAuthOptions = {
       server: process.env.EMAIL_SERVER!,
       from: process.env.EMAIL_FROM!,
     }),
-
-    // TikTok Provider (Custom)
     TikTokProvider({
       clientId: process.env.TIKTOK_CLIENT_ID!,
       clientSecret: process.env.TIKTOK_CLIENT_SECRET!,
@@ -56,16 +39,42 @@ export const authOptions: NextAuthOptions = {
   ],
 
   callbacks: {
+    // -----------------------------
+    // Session Callback
+    // -----------------------------
     async session({ session, token }) {
       if (session.user) {
-        session.user.id = token.sub ?? "";
-        session.user.role = (token as { role?: "user" | "shop" | "admin" }).role ?? "user";
+        session.user.id = token.sub!;
+        session.user.role = (token as any).role ?? "user";
       }
       return session;
     },
+
+    // -----------------------------
+    // JWT Callback
+    // -----------------------------
+    async jwt({ token, user }) {
+      if (user) {
+        // user.role มาจาก DB ผ่าน adapter
+        token.role = (user as any).role ?? "user";
+      }
+      return token;
+    },
   },
+
+  // -----------------------------
+  // Pages (ถ้าต้องการ custom หน้า login)
+  // -----------------------------
+  pages: {
+    signIn: "/auth/signin",
+    error: "/auth/error",
+  },
+
+  // -----------------------------
+  // Debug
+  // -----------------------------
+  debug: process.env.NODE_ENV === "development",
 };
 
 const handler = NextAuth(authOptions);
-
 export { handler as GET, handler as POST };
