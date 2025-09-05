@@ -1,5 +1,6 @@
 // src/app/api/auth/[...nextauth]/route.ts
-import NextAuth, { NextAuthOptions, DefaultSession, User as NextAuthUser } from "next-auth";
+import NextAuth from "next-auth";
+import type { NextAuthOptions, DefaultSession, User as NextAuthUser } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import FacebookProvider from "next-auth/providers/facebook";
 import TwitterProvider from "next-auth/providers/twitter";
@@ -9,23 +10,18 @@ import TikTokProvider from "@/lib/tiktok-provider";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
 
-import type { NextRequest } from "next/server";
-import { NextResponse } from "next/server";
-import type { JWT } from "next-auth/jwt";
-import type { Session } from "next-auth";
-
 // --- Extended Types ---
-interface ExtendedUser extends NextAuthUser {
+export interface ExtendedUser extends NextAuthUser {
   id: string;
   role: "user" | "admin" | "shop";
 }
 
-interface ExtendedSession extends DefaultSession {
+export interface ExtendedSession extends DefaultSession {
   user: ExtendedUser;
 }
 
 // --- NextAuth options ---
-const options: NextAuthOptions = {
+export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   session: { strategy: "jwt" },
   providers: [
@@ -52,29 +48,16 @@ const options: NextAuthOptions = {
   ],
 
   callbacks: {
-    async session({
-      session,
-      token,
-    }: {
-      session: Session;
-      token: JWT;
-    }): Promise<ExtendedSession> {
+    async session({ session, token }) {
       const extendedSession = session as ExtendedSession;
       extendedSession.user.id = token.sub!;
-      extendedSession.user.role =
-        (token as { role?: "user" | "admin" | "shop" }).role ?? "user";
+      extendedSession.user.role = (token as { role?: "user" | "admin" | "shop" }).role ?? "user";
       return extendedSession;
     },
 
-    async jwt({
-      token,
-      user,
-    }: {
-      token: JWT;
-      user?: Partial<ExtendedUser>;
-    }): Promise<JWT> {
+    async jwt({ token, user }) {
       if (user) {
-        token.role = user.role ?? "user";
+        token.role = (user as { role?: "user" | "admin" | "shop" }).role ?? "user";
       }
       return token;
     },
@@ -84,16 +67,6 @@ const options: NextAuthOptions = {
 };
 
 // --- App Router handler ---
-const handler = async (req: NextRequest) => {
-  // NextAuth ต้องการ Node.js Request/Response
-  // ใช้ any แบบปลอดภัยภายใน local scope
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const nodeReq: any = req;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const nodeRes: any = NextResponse.next();
+const handler = NextAuth(authOptions);
 
-  return NextAuth(nodeReq, nodeRes, options);
-};
-
-// export per HTTP method
 export { handler as GET, handler as POST };
