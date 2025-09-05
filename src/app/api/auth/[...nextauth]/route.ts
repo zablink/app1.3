@@ -1,10 +1,9 @@
 // src/app/api/auth/[...nextauth]/route.ts
-import NextAuth, { NextAuthOptions, DefaultSession, User as NextAuthUser } from "next-auth";
+import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import FacebookProvider from "next-auth/providers/facebook";
 import TwitterProvider from "next-auth/providers/twitter";
 import EmailProvider from "next-auth/providers/email";
-
 import TikTokProvider from "@/lib/tiktok-provider";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
@@ -14,6 +13,8 @@ import { NextResponse } from "next/server";
 import type { NextAuthRequest, NextAuthResponse } from "next-auth/core/types";
 
 // --- Extended Types ---
+import type { DefaultSession, User as NextAuthUser } from "next-auth";
+
 interface ExtendedUser extends NextAuthUser {
   id: string;
   role: "user" | "admin" | "shop";
@@ -23,8 +24,8 @@ interface ExtendedSession extends DefaultSession {
   user: ExtendedUser;
 }
 
-// --- NextAuth options ---
-export const authOptions: NextAuthOptions = {
+// --- NextAuth options (ไม่ต้อง export) ---
+const options = {
   adapter: PrismaAdapter(prisma),
   session: { strategy: "jwt" },
   providers: [
@@ -69,14 +70,13 @@ export const authOptions: NextAuthOptions = {
   debug: process.env.NODE_ENV === "development",
 };
 
-// --- App Router handler wrapper (TypeScript-safe) ---
-const authHandler = async (req: NextRequest) => {
-  // แปลง NextRequest → NextAuthRequest
+// --- App Router handler ---
+const handler = async (req: NextRequest) => {
   const nodeReq = req as unknown as NextAuthRequest;
   const nodeRes = NextResponse.next() as unknown as NextAuthResponse;
 
-  return await NextAuth(nodeReq, nodeRes, authOptions);
+  return NextAuth(nodeReq, nodeRes, options);
 };
 
 // export per HTTP method
-export { authHandler as GET, authHandler as POST };
+export { handler as GET, handler as POST };
