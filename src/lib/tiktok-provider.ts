@@ -1,11 +1,12 @@
 // src/lib/tiktok-provider.ts
-import type { OAuthConfig, OAuthUserConfig } from "next-auth";
+import type { OAuthConfig, OAuthUserConfig } from "next-auth/providers"; // แก้ path ให้ถูกต้อง
+import { OAuth2Provider } from "next-auth/providers"; // ถ้าจำเป็นต้องใช้ OAuth2Provider
 
-interface TikTokProfile {
+export interface TikTokProfile {
   id: string;
-  display_name: string;
-  email?: string;
-  // add more fields if needed
+  displayName: string;
+  username: string;
+  // เพิ่ม field ตาม response ของ TikTok API
 }
 
 export default function TikTokProvider<P extends TikTokProfile>(
@@ -15,16 +16,19 @@ export default function TikTokProvider<P extends TikTokProfile>(
     id: "tiktok",
     name: "TikTok",
     type: "oauth",
-    authorization: "https://www.tiktok.com/auth/authorize/",
-    token: "https://open-api.tiktok.com/oauth/access_token/",
-    userinfo: "https://open-api.tiktok.com/oauth/userinfo/",
-    profile(profile) {
+    version: "2.0",
+    scope: "user.info.basic",
+    params: { grant_type: "authorization_code" },
+    accessTokenUrl: "https://open-api.tiktokglobalshop.com/oauth/access_token/",
+    authorization: "https://open-api.tiktokglobalshop.com/oauth/authorize",
+    profileUrl: "https://open-api.tiktokglobalshop.com/oauth/userinfo",
+    async profile(profile: P) {
       return {
         id: profile.id,
-        name: profile.display_name,
-        email: profile.email,
+        name: profile.displayName,
+        username: profile.username,
       };
     },
-    options,
+    ...options,
   };
 }
