@@ -1,5 +1,5 @@
 // src/app/api/auth/[...nextauth]/route.ts
-import NextAuth from "next-auth";
+import NextAuth, { NextAuthOptions, DefaultSession, User as NextAuthUser } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import FacebookProvider from "next-auth/providers/facebook";
 import TwitterProvider from "next-auth/providers/twitter";
@@ -11,7 +11,8 @@ import { prisma } from "@/lib/prisma";
 
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import type { DefaultSession, User as NextAuthUser } from "next-auth";
+import type { JWT } from "next-auth/jwt";
+import type { Session } from "next-auth";
 
 // --- Extended Types ---
 interface ExtendedUser extends NextAuthUser {
@@ -24,7 +25,7 @@ interface ExtendedSession extends DefaultSession {
 }
 
 // --- NextAuth options ---
-const options = {
+const options: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   session: { strategy: "jwt" },
   providers: [
@@ -51,16 +52,29 @@ const options = {
   ],
 
   callbacks: {
-    async session({ session, token }) {
+    async session({
+      session,
+      token,
+    }: {
+      session: Session;
+      token: JWT;
+    }): Promise<ExtendedSession> {
       const extendedSession = session as ExtendedSession;
       extendedSession.user.id = token.sub!;
-      extendedSession.user.role = (token as { role?: "user" | "admin" | "shop" }).role ?? "user";
+      extendedSession.user.role =
+        (token as { role?: "user" | "admin" | "shop" }).role ?? "user";
       return extendedSession;
     },
 
-    async jwt({ token, user }) {
+    async jwt({
+      token,
+      user,
+    }: {
+      token: JWT;
+      user?: Partial<ExtendedUser>;
+    }): Promise<JWT> {
       if (user) {
-        token.role = (user as { role?: "user" | "admin" | "shop" }).role ?? "user";
+        token.role = user.role ?? "user";
       }
       return token;
     },
@@ -72,7 +86,7 @@ const options = {
 // --- App Router handler ---
 const handler = async (req: NextRequest) => {
   // NextAuth ต้องการ Node.js Request/Response
-  // ใช้ any แค่ local scope → ปลอดภัย, ESLint ไม่เตือนถ้า comment
+  // ใช้ any แบบปลอดภัยภายใน local scope
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const nodeReq: any = req;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
