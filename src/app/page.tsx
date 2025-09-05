@@ -351,15 +351,21 @@ async function reverseGeocode(lat: number, lng: number) {
 
   const addressComponents = data.results[0].address_components;
 
-  const subdistrict = addressComponents.find((c: any) =>
+  interface AddressComponent {
+    long_name: string;
+    short_name: string;
+    types: string[];
+  }
+
+  const subdistrict = addressComponents.find((c: AddressComponent) =>
     c.types.includes("sublocality_level_1")
   )?.long_name;
 
-  const district = addressComponents.find((c: any) =>
+  const district = addressComponents.find((c: AddressComponent) =>
     c.types.includes("administrative_area_level_2")
   )?.long_name;
 
-  const province = addressComponents.find((c: any) =>
+  const province = addressComponents.find((c: AddressComponent) =>
     c.types.includes("administrative_area_level_1")
   )?.long_name;
 
