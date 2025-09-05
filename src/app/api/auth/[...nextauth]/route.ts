@@ -5,7 +5,7 @@ import Google from "next-auth/providers/google";
 import Facebook from "next-auth/providers/facebook";
 import Twitter from "next-auth/providers/twitter"; // X
 import Email from "next-auth/providers/email";
-import { prisma } from "@/lib/db";
+//import { prisma } from "@/lib/db";
 
 
 // TikTok (Generic OAuth2)
@@ -28,7 +28,7 @@ const TikTok = {
 
 
 export const authOptions: NextAuthOptions = {
-	adapter: PrismaAdapter(prisma),
+	//adapter: PrismaAdapter(prisma),
 	session: { strategy: "database" },
 	providers: [Google, Facebook, Twitter, Email, TikTok],
 	callbacks: {
