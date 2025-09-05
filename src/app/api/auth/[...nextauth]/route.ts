@@ -1,5 +1,5 @@
 // src/app/api/auth/[...nextauth]/route.ts
-import NextAuth, { NextAuthOptions } from "next-auth";
+import NextAuth, { NextAuthOptions, DefaultSession, User as NextAuthUser } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import FacebookProvider from "next-auth/providers/facebook";
 import TwitterProvider from "next-auth/providers/twitter";
@@ -8,7 +8,23 @@ import EmailProvider from "next-auth/providers/email";
 import TikTokProvider from "@/lib/tiktok-provider"; // Custom TikTok provider
 
 // -----------------------------
-// NextAuth Config  
+// Type-safe extension for session
+// -----------------------------
+declare module "next-auth" {
+  interface Session {
+    user: {
+      id: string;
+      role: "user" | "admin"; // ปรับตาม Role ใน Prisma
+    } & DefaultSession["user"];
+  }
+
+  interface User extends NextAuthUser {
+    role?: "user" | "admin";
+  }
+}
+
+// -----------------------------
+// NextAuth Config
 // -----------------------------
 export const authOptions: NextAuthOptions = {
   // adapter: PrismaAdapter(prisma), // ยังไม่ใช้ DB ให้ remark ไว้ก่อน
@@ -32,9 +48,7 @@ export const authOptions: NextAuthOptions = {
       from: process.env.EMAIL_FROM!,
     }),
 
-    // -----------------------------
     // TikTok Provider (Custom)
-    // -----------------------------
     TikTokProvider({
       clientId: process.env.TIKTOK_CLIENT_ID!,
       clientSecret: process.env.TIKTOK_CLIENT_SECRET!,
@@ -44,10 +58,8 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async session({ session, token }) {
       if (session.user) {
-        // เก็บ id/role ใน token แทนการอ้าง DB
-        (session.user as { id?: string; role?: string }).id = token.sub;
-        (session.user as { id?: string; role?: string }).role =
-          (token as { role?: string }).role ?? "user";
+        session.user.id = token.sub ?? "";
+        session.user.role = (token as { role?: "user" | "admin" }).role ?? "user";
       }
       return session;
     },
