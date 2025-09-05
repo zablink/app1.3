@@ -1,33 +1,40 @@
-"use client"; // ต้องอยู่บนสุด
+// src/app/profile/page.tsx
+"use client"; // บังคับ client component
 
 import { useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
 
-export const dynamic = "force-dynamic"; // บังคับ render แบบ client/server ไม่ prerender static
+type Role = "user" | "admin" | "shop";
 
 export default function ProfilePage() {
   const { data: session, status } = useSession();
-  const [role, setRole] = useState<"user" | "admin" | "shop">("user");
-  const [loaded, setLoaded] = useState(false);
+  const [role, setRole] = useState<Role>("user");
 
   useEffect(() => {
-    if (status === "loading") return;
-    setRole((session?.user as { role?: "user" | "admin" | "shop" })?.role ?? "user");
-    setLoaded(true);
-  }, [session, status]);
+    if (session?.user) {
+      setRole((session.user as { role?: Role }).role ?? "user");
+    }
+  }, [session]);
 
-  if (!loaded) return <p className="p-6 max-w-2xl mx-auto">Loading...</p>;
+  if (status === "loading") {
+    return <div>Loading...</div>; // Skeleton / loading state
+  }
+
+  if (!session) {
+    return <div>กรุณาเข้าสู่ระบบก่อน</div>;
+  }
 
   const upgradeToShop = () => {
     setRole("shop");
     alert("คุณได้อัปเกรดเป็น Shop แล้ว!");
+    // TODO: Update role ใน DB ผ่าน API
   };
 
   return (
     <div className="p-6 max-w-2xl mx-auto">
       <h1 className="text-2xl font-bold mb-4">โปรไฟล์ของคุณ</h1>
-      <p>ชื่อผู้ใช้: {session?.user?.name ?? "-"}</p>
-      <p>อีเมล: {session?.user?.email ?? "-"}</p>
+      <p>ชื่อผู้ใช้: {session.user?.name}</p>
+      <p>อีเมล: {session.user?.email}</p>
       <p>Role ปัจจุบัน: {role}</p>
 
       {role === "user" && (
