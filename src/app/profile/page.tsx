@@ -1,20 +1,28 @@
 // src/app/profile/page.tsx
 "use client";
 import { useSession } from "next-auth/react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
-// กำหนด type ของ role ให้ตรงกับ NextAuth ExtendedUser
 type Role = "user" | "admin" | "shop";
 
 export default function ProfilePage() {
-  const { data: session } = useSession();
-  const [role, setRole] = useState<Role>((session?.user as { role?: Role })?.role ?? "user");
+  const { data: session, status } = useSession();
+  const [role, setRole] = useState<Role>("user");
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    if (status === "loading") return; // รอ loading
+    setRole((session?.user as { role?: Role })?.role ?? "user");
+    setLoaded(true);
+  }, [session, status]);
 
   const upgradeToShop = () => {
-    setRole("shop"); // ตอนนี้ TypeScript ไม่เตือนแล้ว
+    setRole("shop");
     alert("คุณได้อัปเกรดเป็น Shop แล้ว!");
-    // TODO: Update role ใน DB ผ่าน API
+    // TODO: update role ใน DB
   };
+
+  if (!loaded) return <p>Loading...</p>; // รอ session ก่อน render
 
   return (
     <div className="p-6 max-w-2xl mx-auto">
