@@ -9,6 +9,9 @@ import TikTokProvider from "@/lib/tiktok-provider";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
 
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
+
 // เพิ่ม type สำหรับ session.user
 interface ExtendedUser extends NextAuthUser {
   id: string;
@@ -64,5 +67,12 @@ export const authOptions: NextAuthOptions = {
   debug: process.env.NODE_ENV === "development",
 };
 
-const handler = NextAuth(authOptions);
-export { handler as GET, handler as POST };
+// wrapper สำหรับ App Router
+const authHandler = async (req: NextRequest) => {
+  // NextAuth ต้องใช้ Node.js Request/Response
+  const res = NextResponse.next();
+  return await NextAuth(req as any, res as any, authOptions);
+};
+
+// export method สำหรับ App Router
+export { authHandler as GET, authHandler as POST };
