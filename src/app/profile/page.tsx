@@ -1,4 +1,4 @@
-"use client"; // บังคับ Client Component
+"use client";
 
 import { useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
@@ -15,18 +15,12 @@ export default function ProfilePage() {
     }
   }, [session]);
 
-  if (status === "loading") {
-    return <div>Loading...</div>; // Skeleton loader
-  }
-
-  if (!session) {
-    return <div>กรุณาเข้าสู่ระบบก่อน</div>;
-  }
+  if (status === "loading") return <div>Loading...</div>;
+  if (!session) return <div>กรุณาเข้าสู่ระบบก่อน</div>;
 
   const upgradeToShop = () => {
     setRole("shop");
     alert("คุณได้อัปเกรดเป็น Shop แล้ว!");
-    // TODO: Update role ใน DB ผ่าน API
   };
 
   return (
