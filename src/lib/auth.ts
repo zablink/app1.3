@@ -7,6 +7,7 @@ import TwitterProvider from "next-auth/providers/twitter";
 import EmailProvider from "next-auth/providers/email";
 import TikTokProvider from "@/lib/tiktok-provider";
 
+// --- Extended Types ---
 export interface ExtendedUser extends NextAuthUser {
   id: string;
   role: "user" | "admin" | "shop";

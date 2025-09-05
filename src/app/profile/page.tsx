@@ -1,4 +1,4 @@
-"use client"; // บังคับ client component
+"use client"; // ต้องอยู่บรรทัดแรก
 
 import { useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
@@ -9,14 +9,12 @@ export default function ProfilePage() {
   const { data: session, status } = useSession();
   const [role, setRole] = useState<Role>("user");
 
-  // update role หลังจาก session load เสร็จ
   useEffect(() => {
     if (session?.user) {
       setRole((session.user as { role?: Role }).role ?? "user");
     }
   }, [session]);
 
-  // ป้องกัน undefined
   if (status === "loading") return <div>Loading...</div>;
   if (!session) return <div>กรุณาเข้าสู่ระบบก่อน</div>;
 
