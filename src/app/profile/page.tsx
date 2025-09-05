@@ -1,4 +1,4 @@
-"use client";
+"use client"; // บังคับ client component
 
 import { useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
