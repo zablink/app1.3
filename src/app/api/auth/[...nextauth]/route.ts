@@ -4,17 +4,16 @@ import GoogleProvider from "next-auth/providers/google";
 import FacebookProvider from "next-auth/providers/facebook";
 import TwitterProvider from "next-auth/providers/twitter";
 import EmailProvider from "next-auth/providers/email";
+
 import TikTokProvider from "@/lib/tiktok-provider";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
 
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import type { NextAuthRequest, NextAuthResponse } from "next-auth/core/types";
-
-// --- Extended Types ---
 import type { DefaultSession, User as NextAuthUser } from "next-auth";
 
+// --- Extended Types ---
 interface ExtendedUser extends NextAuthUser {
   id: string;
   role: "user" | "admin" | "shop";
@@ -24,7 +23,7 @@ interface ExtendedSession extends DefaultSession {
   user: ExtendedUser;
 }
 
-// --- NextAuth options (ไม่ต้อง export) ---
+// --- NextAuth options ---
 const options = {
   adapter: PrismaAdapter(prisma),
   session: { strategy: "jwt" },
@@ -72,8 +71,12 @@ const options = {
 
 // --- App Router handler ---
 const handler = async (req: NextRequest) => {
-  const nodeReq = req as unknown as NextAuthRequest;
-  const nodeRes = NextResponse.next() as unknown as NextAuthResponse;
+  // NextAuth ต้องการ Node.js Request/Response
+  // ใช้ any แค่ local scope → ปลอดภัย, ESLint ไม่เตือนถ้า comment
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const nodeReq: any = req;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const nodeRes: any = NextResponse.next();
 
   return NextAuth(nodeReq, nodeRes, options);
 };
