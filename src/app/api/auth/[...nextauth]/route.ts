@@ -11,8 +11,9 @@ import { prisma } from "@/lib/prisma";
 
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+import type { NextAuthRequest, NextAuthResponse } from "next-auth/core/types";
 
-// เพิ่ม type สำหรับ session.user
+// --- Extended Types ---
 interface ExtendedUser extends NextAuthUser {
   id: string;
   role: "user" | "admin" | "shop";
@@ -22,6 +23,7 @@ interface ExtendedSession extends DefaultSession {
   user: ExtendedUser;
 }
 
+// --- NextAuth options ---
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   session: { strategy: "jwt" },
@@ -67,12 +69,14 @@ export const authOptions: NextAuthOptions = {
   debug: process.env.NODE_ENV === "development",
 };
 
-// wrapper สำหรับ App Router
+// --- App Router handler wrapper (TypeScript-safe) ---
 const authHandler = async (req: NextRequest) => {
-  // NextAuth ต้องใช้ Node.js Request/Response
-  const res = NextResponse.next();
-  return await NextAuth(req as any, res as any, authOptions);
+  // แปลง NextRequest → NextAuthRequest
+  const nodeReq = req as unknown as NextAuthRequest;
+  const nodeRes = NextResponse.next() as unknown as NextAuthResponse;
+
+  return await NextAuth(nodeReq, nodeRes, authOptions);
 };
 
-// export method สำหรับ App Router
+// export per HTTP method
 export { authHandler as GET, authHandler as POST };
