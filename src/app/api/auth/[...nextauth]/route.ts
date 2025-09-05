@@ -14,12 +14,12 @@ declare module "next-auth" {
   interface Session {
     user: {
       id: string;
-      role: "user" | "admin"; // ปรับตาม Role ใน Prisma
+      role: "user" | "shop" | "admin"; // ปรับตาม Role ใน Prisma
     } & DefaultSession["user"];
   }
 
   interface User extends NextAuthUser {
-    role?: "user" | "admin";
+    role?: "user" | "shop" | "admin";
   }
 }
 
@@ -59,7 +59,7 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.sub ?? "";
-        session.user.role = (token as { role?: "user" | "admin" }).role ?? "user";
+        session.user.role = (token as { role?: "user" | "shop" | "admin" }).role ?? "user";
       }
       return session;
     },
