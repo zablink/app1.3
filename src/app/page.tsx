@@ -5,6 +5,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import AppLayout from "@/components/AppLayout";
 
 type Shop = {
   id: number;
@@ -434,43 +435,45 @@ export default function HomePage() {
   }, [query, userLat, userLng, userLocation]);
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <h1 className="text-3xl font-bold mb-6 text-center">ค้นหาร้านใกล้คุณ 🍜</h1>
+    <AppLayout>
+      <div className="min-h-screen bg-gray-50 p-6">
+        <h1 className="text-3xl font-bold mb-6 text-center">ค้นหาร้านใกล้คุณ 🍜</h1>
 
-      <div className="max-w-xl mx-auto mb-6">
-        <input
-          type="text"
-          placeholder="ค้นหาร้านหรือหมวดหมู่..."
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          className="w-full px-4 py-3 rounded-xl border border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-400 focus:outline-none"
-        />
-      </div>
-
-      {filteredShops.length === 0 ? (
-        <p className="text-center text-gray-500">ไม่พบร้านในพื้นที่ของคุณ</p>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-          {filteredShops.map((shop, i) => (
-            <motion.div
-              key={shop.id}
-              className="bg-white shadow-md rounded-2xl overflow-hidden hover:shadow-xl transition"
-              whileHover={{ scale: 1.03 }}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.05 }}
-            >
-              <Link href={`/Shop/${shop.id}`}>
-                <img src={shop.image} alt={shop.name} className="w-full h-40 object-cover" />
-                <div className="p-4">
-                  <h2 className="font-semibold text-lg">{shop.name}</h2>
-                  <p className="text-sm text-gray-500">{shop.category}</p>
-                </div>
-              </Link>
-            </motion.div>
-          ))}
+        <div className="max-w-xl mx-auto mb-6">
+          <input
+            type="text"
+            placeholder="ค้นหาร้านหรือหมวดหมู่..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className="w-full px-4 py-3 rounded-xl border border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-400 focus:outline-none"
+          />
         </div>
-      )}
-    </div>
+
+        {filteredShops.length === 0 ? (
+          <p className="text-center text-gray-500">ไม่พบร้านในพื้นที่ของคุณ</p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+            {filteredShops.map((shop, i) => (
+              <motion.div
+                key={shop.id}
+                className="bg-white shadow-md rounded-2xl overflow-hidden hover:shadow-xl transition"
+                whileHover={{ scale: 1.03 }}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.05 }}
+              >
+                <Link href={`/Shop/${shop.id}`}>
+                  <img src={shop.image} alt={shop.name} className="w-full h-40 object-cover" />
+                  <div className="p-4">
+                    <h2 className="font-semibold text-lg">{shop.name}</h2>
+                    <p className="text-sm text-gray-500">{shop.category}</p>
+                  </div>
+                </Link>
+              </motion.div>
+            ))}
+          </div>
+        )}
+      </div>
+    </AppLayout>
   );
 }
