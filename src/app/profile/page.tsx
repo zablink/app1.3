@@ -1,3 +1,4 @@
+// src/app/profile/page.tsx
 "use client"; // ต้องอยู่บรรทัดแรก
 
 import { useSession } from "next-auth/react";
