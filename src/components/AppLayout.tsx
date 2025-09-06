@@ -8,8 +8,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div>
-      {/* Navbar แบบ sticky */}
-      <nav className="fixed top-0 bg-white shadow-md p-4 flex justify-between items-center z-50">
+      {/* Navbar แบบ fixed */}
+      <nav className="fixed top-0 left-0 right-0 bg-white shadow-md p-4 flex justify-between items-center z-50">
         <Link href="/" className="font-bold text-xl">
           FoodPlatform
         </Link>
@@ -26,7 +26,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
       {/* เมนู mobile (dropdown) */}
       {open && (
-        <div className="flex flex-col bg-white p-4 md:hidden gap-2 shadow-md">
+        <div className="fixed top-[64px] left-0 right-0 flex flex-col bg-white p-4 md:hidden gap-2 shadow-md z-40">
           <Link href="/">Home</Link>
           <Link href="/profile">Profile</Link>
           <Link href="/dashboard/shop">Shop Dashboard</Link>
@@ -35,7 +35,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       )}
 
       {/* เนื้อหา */}
-      <main className="p-4">{children}</main>
+      <main className="pt-20 p-4">{children}</main>
     </div>
   );
 }
