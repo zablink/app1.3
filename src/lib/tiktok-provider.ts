@@ -5,7 +5,7 @@ interface TikTokProfile {
   id: string;
   display_name: string;
   email?: string;
-  // เพิ่ม fields อื่น ๆ ตามต้องการ
+  role?: string;
 }
 
 export default function TikTokProvider<P extends TikTokProfile>(
@@ -23,6 +23,7 @@ export default function TikTokProvider<P extends TikTokProfile>(
         id: profile.id,
         name: profile.display_name,
         email: profile.email,
+        role: "user",
       };
     },
     options,
