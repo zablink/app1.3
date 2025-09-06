@@ -9,7 +9,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <div>
       {/* Navbar แบบ sticky */}
-      <nav className="sticky top-0 bg-white shadow-md p-4 flex justify-between items-center z-50">
+      <nav className="fixed top-0 bg-white shadow-md p-4 flex justify-between items-center z-50">
         <Link href="/" className="font-bold text-xl">
           FoodPlatform
         </Link>
