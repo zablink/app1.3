@@ -667,7 +667,14 @@ export default function ShopDetail() {
 
   const [scrollY, setScrollY] = useState(0);
 
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrollY(window.scrollY);
+    };
 
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Debug logging
   console.log("URL params:", params);
@@ -686,14 +693,7 @@ export default function ShopDetail() {
     );
   }
 
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrollY(window.scrollY);
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  
 
   // Mock gallery if not provided
   const gallery = shop.gallery || [shop.image, shop.image, shop.image];
