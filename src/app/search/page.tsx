@@ -50,7 +50,7 @@ export default function SearchPage() {
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <h1 className="text-3xl font-bold mb-6 text-center">
-        ผลการค้นหา: "{query}"
+        ผลการค้นหา: &quot;query}&quot;
       </h1>
 
       {filteredShops.length === 0 ? (
