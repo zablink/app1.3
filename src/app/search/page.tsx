@@ -1,5 +1,5 @@
 // src/app/search/page.tsx
-"use client";
+"use client"; // จำเป็นต้องใส่บรรทัดนี้ข้างบนสุด
 
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -11,19 +11,13 @@ type Shop = {
   name: string;
   category: string;
   image: string;
-  lat: number;
-  lng: number;
-  subdistrict: string;
-  district: string;
-  province: string;
 };
 
-// --- ตัวอย่าง shops เดิม ---
+// ตัวอย่างร้านค้า
 const shops: Shop[] = [
-  { id: 1, name: "ร้านข้าวผัดอร่อย", category: "อาหารตามสั่ง", image: "/images/friedrice.jpg", lat: 13.746, lng: 100.534, subdistrict: "วังบูรพา", district: "พระนคร", province: "กรุงเทพฯ" },
-  { id: 2, name: "ก๋วยเตี๋ยวเรืออยุธยา", category: "ก๋วยเตี๋ยว", image: "/images/noodleboat.jpg", lat: 13.742, lng: 100.538, subdistrict: "วังบูรพา", district: "พระนคร", province: "กรุงเทพฯ" },
-  { id: 3, name: "ชานมไข่มุกนุ่มนิ่ม", category: "เครื่องดื่ม", image: "/images/milktea.jpg", lat: 13.744, lng: 100.536, subdistrict: "วังบูรพา", district: "พระนคร", province: "กรุงเทพฯ" },
-  // ... เพิ่มร้านอื่น ๆ ตามต้องการ
+  { id: 1, name: "ร้านข้าวผัดอร่อย", category: "อาหารตามสั่ง", image: "/images/friedrice.jpg" },
+  { id: 2, name: "ก๋วยเตี๋ยวเรืออยุธยา", category: "ก๋วยเตี๋ยว", image: "/images/noodleboat.jpg" },
+  { id: 3, name: "ชานมไข่มุกนุ่มนิ่ม", category: "เครื่องดื่ม", image: "/images/milktea.jpg" },
 ];
 
 export default function SearchPage() {
