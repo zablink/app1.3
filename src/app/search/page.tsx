@@ -39,7 +39,7 @@ export default function SearchPage() {
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <h1 className="text-2xl font-bold mb-4">
-        ผลลัพธ์การค้นหา: '{query}'
+        ผลลัพธ์การค้นหา: {query}
       </h1>
 
       {filteredShops.length === 0 ? (
