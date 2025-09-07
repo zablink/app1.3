@@ -24,7 +24,13 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const role = session?.user?.role ?? "user";
 
   const pathname = usePathname();
-  const ptTop = pathname === "/" ? "!pt-20 sm:!pt-0" : "!pt-24 sm:!pt-10";
+
+  const isHome = pathname === "/";
+
+  const pTop = isHome
+    ? "!pt-0 sm:!pt-4 md:!pt-8 lg:!pt-12"     // Home page
+    : "!pt-20 sm:!pt-24 md:!pt-28 lg:!pt-32"; // หน้าอื่น
+
 
   useEffect(() => {
     const handleScroll = () => {
@@ -166,7 +172,9 @@ export default function AppLayout({ children }: AppLayoutProps) {
         )}
 
         {/* Content */}
-        <main className={`${ptTop} p-4`}>{children}</main>
+        <main className={`${pTop} p-4`}>
+          {children}
+        </main>
       </div>
     </>
   );
