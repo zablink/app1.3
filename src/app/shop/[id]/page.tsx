@@ -746,7 +746,7 @@ export default function ShopDetail() {
             >
               <h2 className="text-xl font-semibold mb-4">แกลลอรี่</h2>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                {shop.images?.map((img, index) => (
+                {shop.image?.map((img, index) => (
                   <img key={index} src={img} alt={`Gallery ${index}`} className="rounded-lg object-cover w-full h-32" />
                 ))}
               </div>
