@@ -1,11 +1,11 @@
 // src/app/search/page.tsx
 "use client";
 
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 
-// --- ตัวอย่างข้อมูลร้านค้า ---
 type Shop = {
   id: number;
   name: string;
@@ -18,6 +18,7 @@ type Shop = {
   province: string;
 };
 
+// --- ตัวอย่าง shops เดิม ---
 const shops: Shop[] = [
   { id: 1, name: "ร้านข้าวผัดอร่อย", category: "อาหารตามสั่ง", image: "/images/friedrice.jpg", lat: 13.746, lng: 100.534, subdistrict: "วังบูรพา", district: "พระนคร", province: "กรุงเทพฯ" },
   { id: 2, name: "ก๋วยเตี๋ยวเรืออยุธยา", category: "ก๋วยเตี๋ยว", image: "/images/noodleboat.jpg", lat: 13.742, lng: 100.538, subdistrict: "วังบูรพา", district: "พระนคร", province: "กรุงเทพฯ" },
@@ -27,23 +28,35 @@ const shops: Shop[] = [
 
 export default function SearchPage() {
   const searchParams = useSearchParams();
-  const query = searchParams.get("q")?.toLowerCase() ?? "";
+  const query = (searchParams.get("q") ?? "").toLowerCase();
 
-  // --- Filter ร้านตาม query ---
-  const filteredShops = shops.filter(
-    (shop) =>
-      shop.name.toLowerCase().includes(query) ||
-      shop.category.toLowerCase().includes(query)
-  );
+  const [filteredShops, setFilteredShops] = useState<Shop[]>([]);
+
+  useEffect(() => {
+    if (!query) {
+      setFilteredShops([]);
+      return;
+    }
+
+    const result = shops.filter(
+      (shop) =>
+        shop.name.toLowerCase().includes(query) ||
+        shop.category.toLowerCase().includes(query)
+    );
+
+    setFilteredShops(result);
+  }, [query]);
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
-      <h1 className="text-2xl font-bold mb-4">
-        ผลลัพธ์การค้นหา: {query}
+      <h1 className="text-3xl font-bold mb-6 text-center">
+        ผลการค้นหา: "{query}"
       </h1>
 
       {filteredShops.length === 0 ? (
-        <p className="text-gray-500">ไม่พบร้านค้าที่ตรงกับคำค้นหา</p>
+        <p className="text-center text-gray-500">
+          ไม่พบร้านค้าที่ตรงกับคำค้น
+        </p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
           {filteredShops.map((shop, i) => (
