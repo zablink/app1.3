@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import React, { ReactNode } from "react";
 import Head from "next/head";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 
 type AppLayoutProps = {
   children: ReactNode;
@@ -21,7 +21,10 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const role = session?.user?.role ?? "guest";
+  const role = session?.user?.role ?? "user";
+
+  const pathname = usePathname();
+  const ptClass = pathname === "/" ? "pt-0" : "pt-20";
 
   useEffect(() => {
     const handleScroll = () => {
@@ -163,7 +166,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
         )}
 
         {/* Content */}
-        <main className="pt-20 p-4">{children}</main>
+        <main className="${ptTop} p-4">{children}</main>
       </div>
     </>
   );
