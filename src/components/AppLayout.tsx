@@ -166,7 +166,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
         )}
 
         {/* Content */}
-        <main className={"${ptTop} p-4"}>{children}</main>
+        <main className={`${ptTop} p-4`}>{children}</main>
       </div>
     </>
   );
