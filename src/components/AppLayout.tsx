@@ -9,7 +9,7 @@ import Head from "next/head";
 import { useRouter, usePathname } from "next/navigation";
 
 type AppLayoutProps = {
-  children: ReactNode;
+  children: ReactNode; 
 };
 
 export default function AppLayout({ children }: AppLayoutProps) {
