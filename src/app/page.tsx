@@ -475,8 +475,8 @@ export default function HomePage() {
 
 
 
+      <h2>รายชื่อร้าน</h2>
       <div className="min-h-screen bg-gray-50 p-6">
-        <h2>รายชื่อร้าน</h2>
         {/* Shop grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-6">
           {displayShops.map((shop, i) => (
