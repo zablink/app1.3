@@ -462,7 +462,7 @@ export default function HomePage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.05 }}
               >
-                <Link href={`/Shop/${shop.id}`}>
+                <Link href={`/shop/${shop.id}`}>
                   <img src={shop.image} alt={shop.name} className="w-full h-40 object-cover" />
                   <div className="p-4">
                     <h2 className="font-semibold text-lg">{shop.name}</h2>
