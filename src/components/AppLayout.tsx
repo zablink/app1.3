@@ -53,8 +53,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     <>
 
     <Head>
-      <title>My App</title>
-      <link rel="icon" href="/favicon.png" /> 
+      <title>ZabLink แหล่งอาหารเครื่องดื่มสำหรับทุกคน</title>
+      <link rel="icon" href="/favicon.png" type="image/png" />
+
       <meta name="viewport" content="width=device-width, initial-scale=1" />
     </Head>
     <div>

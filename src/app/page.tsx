@@ -456,23 +456,22 @@ export default function HomePage() {
               />
             </Link>
           ))}
-        </div>
 
-        {/* ---------------- Dot navigator ---------------- */}
-        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
-          {banners.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setCurrentBanner(i)}
-              className={`w-3 h-3 rounded-full ${
-                i === currentBanner ? "bg-white shadow-md" : "bg-white/50 shadow-sm"
-              }`}
-            ></button>
-          ))}
+          {/* ---------------- Dot navigator ---------------- */}
+          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
+            {banners.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setCurrentBanner(i)}
+                className={`w-3 h-3 rounded-full ${
+                  i === currentBanner ? "bg-white shadow-md" : "bg-white/50 shadow-sm"
+                }`}
+              ></button>
+            ))}
+          </div>
         </div>
-
-        
       </div>
+
 
 
 
