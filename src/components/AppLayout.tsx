@@ -28,8 +28,8 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const isHome = pathname === "/";
 
   const pTop = isHome
-    ? "!pt-0 sm:!pt-4 md:!pt-8 lg:!pt-12"     // Home page
-    : "!pt-20 sm:!pt-24 md:!pt-28 lg:!pt-32"; // หน้าอื่น
+    ? "!pt-12 sm:!pt-4 md:!pt-8 lg:!pt-12"     // Home page
+    : "!pt-20 sm:!pt-24 md:!pt-20 lg:!pt-16"; // หน้าอื่น
 
 
   useEffect(() => {
