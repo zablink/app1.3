@@ -163,7 +163,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
         )}
 
         {/* Content */}
-        <main className="pt-20 p-4">{children}</main>
+        <main className="pt-0 p-4">{children}</main>
       </div>
     </>
   );
