@@ -437,7 +437,7 @@ export default function HomePage() {
   return (
     <AppLayout>
       {/* ---------------- Hero Banner ---------------- */}
-      <div className="w-full overflow-hidden mb-6">
+      <div className="w-full overflow-hidden mb-6 mt-0 mb-0">
         <div className="relative h-80 sm:h-96 md:h-[28rem]">
           {banners.map((banner, i) => (
             <Link 
