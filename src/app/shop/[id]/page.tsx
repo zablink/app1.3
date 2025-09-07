@@ -710,7 +710,7 @@ export default function ShopDetail() {
             height: '120%' // เพิ่มความสูงเพื่อให้ parallax ทำงานได้
           }}
         />
-        <div className="absolute inset-0 bg-black bg-opacity-40 flex items-end">
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end">
           <div className="p-8 text-white">
             <h1 className="text-4xl font-bold mb-2">{shop.name}</h1>
             <p className="text-xl">{shop.category}</p>
