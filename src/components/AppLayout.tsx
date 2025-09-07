@@ -24,7 +24,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const role = session?.user?.role ?? "user";
 
   const pathname = usePathname();
-  const ptClass = pathname === "/" ? "pt-0" : "pt-24";
+  const ptTop = pathname === "/" ? "pt-0" : "pt-24";
 
   useEffect(() => {
     const handleScroll = () => {
