@@ -70,7 +70,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
         {/* Navbar */}
         <nav
           className={`fixed top-0 left-0 right-0 flex justify-between items-center z-50 transition-all duration-300 ${
-            scrolled ? "bg-white shadow-md p-2" : "bg-wihte/90 p-4"
+            scrolled ? "bg-white shadow-md p-2" : "bg-wihte p-4"
           }`}
         >
           {/* Logo */}
