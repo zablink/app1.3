@@ -37,6 +37,7 @@ const banners: Banner[] = [
   { id: 2, image: "/images/banner/2.jpg", link: "/shop/26"  },
   { id: 3, image: "/images/banner/3.jpg"},
 ];
+const [currentBanner, setCurrentBanner] = useState(0);
 
 // --- shops ตัวอย่าง 30 ร้าน ---
 const shops: Shop[] = [
@@ -367,6 +368,16 @@ export default function HomePage() {
   const [displayShops, setDisplayShops] = useState<Shop[]>([]);
   const [query, setQuery] = useState("");
 
+
+  //// Hero Banner 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentBanner((prev) => (prev + 1) % banners.length);
+    }, 8000); // 8000ms = 8 วินาที
+
+    return () => clearInterval(interval);
+  }, []);
+
   // --- Get user location ---
   useEffect(() => {
     if (navigator.geolocation) {
@@ -434,17 +445,22 @@ export default function HomePage() {
               href={banner.link ?? "#"}
               className="absolute inset-0 w-full h-full"
             >
-              <img
+              <motion.img
+                key={banner.id}
                 src={banner.image}
                 alt={`Banner ${banner.id}`}
                 className="w-full h-full object-cover"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: i === currentBanner ? 1 : 0 }}
+                transition={{ duration: 1 }}
               />
             </Link>
           ))}
         </div>
       </div>
 
-      
+
+
       <div className="min-h-screen bg-gray-50 p-6">
         <h1 className="text-3xl font-bold mb-6 text-center">ค้นหาร้านใกล้คุณ 🍜</h1>
 
