@@ -23,6 +23,21 @@ interface AddressComponent {
   types: string[];
 }
 
+type Banner = {
+  id: number;
+  image: string;
+  link?: string;
+};
+
+// -----------------------------
+// Example Data
+// -----------------------------
+const banners: Banner[] = [
+  { id: 1, image: "/images/banner/1.jpg", link: "/shop/6" },
+  { id: 2, image: "/images/banner/2.jpg", link: "/shop/26"  },
+  { id: 3, image: "/images/banner/3.jpg"},
+];
+
 // --- shops ตัวอย่าง 30 ร้าน ---
 const shops: Shop[] = [
   // --- ร้านเก่า 20 ร้าน (ค่าเดิม + เพิ่ม field) ---
@@ -374,7 +389,7 @@ export default function HomePage() {
 
             if (province) setUserLocation({ province });
           }
-          
+
         },
         (err) => console.log("Location error:", err)
       );
@@ -410,6 +425,26 @@ export default function HomePage() {
 
   return (
     <AppLayout>
+      {/* ---------------- Hero Banner ---------------- */}
+      <div className="w-full overflow-hidden mb-6">
+        <div className="relative h-64 sm:h-80 md:h-96">
+          {banners.map((banner, i) => (
+            <Link
+              key={banner.id}
+              href={banner.link ?? "#"}
+              className="absolute inset-0 w-full h-full"
+            >
+              <img
+                src={banner.image}
+                alt={`Banner ${banner.id}`}
+                className="w-full h-full object-cover"
+              />
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      
       <div className="min-h-screen bg-gray-50 p-6">
         <h1 className="text-3xl font-bold mb-6 text-center">ค้นหาร้านใกล้คุณ 🍜</h1>
 
