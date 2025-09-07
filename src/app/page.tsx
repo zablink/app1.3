@@ -464,12 +464,14 @@ export default function HomePage() {
             <button
               key={i}
               onClick={() => setCurrentBanner(i)}
-              className={`w-3 h-3 rounded-full transition ${
-                i === currentBanner ? "bg-white" : "bg-white/50"
+              className={`w-3 h-3 rounded-full ${
+                i === currentBanner ? "bg-white shadow-md" : "bg-white/50 shadow-sm"
               }`}
-            />
+            ></button>
           ))}
         </div>
+
+        
       </div>
 
 
