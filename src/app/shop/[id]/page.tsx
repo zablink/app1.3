@@ -841,7 +841,7 @@ export default function ShopDetail() {
                   <span className="text-orange-600 group-hover:translate-x-1 transition-transform">→</span>
                 </a>
 
-                {/* Food Panda */}
+                {/* Food Panda */} 
                 <a
                   href="#"
                   className="flex items-center justify-between p-3 border border-pink-200 rounded-lg hover:bg-pink-50 transition group"
