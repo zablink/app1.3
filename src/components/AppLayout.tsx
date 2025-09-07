@@ -7,6 +7,10 @@ import { useSession } from "next-auth/react";
 import React, { ReactNode } from "react";
 import Head from "next/head";
 
+type AppLayoutProps = {
+  children: ReactNode;
+};
+
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
