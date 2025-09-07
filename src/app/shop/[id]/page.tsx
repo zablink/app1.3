@@ -5,6 +5,7 @@
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import AppLayout from "@/components/AppLayout";
 
 // -----------------------------
 // TypeScript Type
@@ -172,45 +173,47 @@ export default function ShopDetail() {
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
-      <Link href="/" className="inline-block mb-6 text-blue-600 hover:underline">
-        ← กลับหน้าหลัก
-      </Link>
+      <AppLayout>
+        <Link href="/" className="inline-block mb-6 text-blue-600 hover:underline">
+          ← กลับหน้าหลัก
+        </Link>
 
-      <motion.div
-        className="bg-white rounded-2xl shadow-lg overflow-hidden max-w-3xl mx-auto"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-      >
-        <img src={shop.image} alt={shop.name} className="w-full h-64 object-cover" />
-        <div className="p-6">
-          <h1 className="text-2xl font-bold mb-2">{shop.name}</h1>
-          <p className="text-gray-500 mb-2">{shop.category}</p>
-          <p className="text-gray-400 text-sm mb-4">
-            {shop.subdistrict}, {shop.district}, {shop.province}
-          </p>
+        <motion.div
+          className="bg-white rounded-2xl shadow-lg overflow-hidden max-w-3xl mx-auto"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+        >
+          <img src={shop.image} alt={shop.name} className="w-full h-64 object-cover" />
+          <div className="p-6">
+            <h1 className="text-2xl font-bold mb-2">{shop.name}</h1>
+            <p className="text-gray-500 mb-2">{shop.category}</p>
+            <p className="text-gray-400 text-sm mb-4">
+              {shop.subdistrict}, {shop.district}, {shop.province}
+            </p>
 
-          {shop.menu && shop.menu.length > 0 ? (
-            <>
-              <h2 className="text-xl font-semibold mb-3">เมนูแนะนำ</h2>
-              <ul className="list-disc list-inside text-gray-700 space-y-2">
-                {shop.menu.map((item, index) => (
-                  <motion.li
-                    key={index}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.1 * index }}
-                  >
-                    {item}
-                  </motion.li>
-                ))}
-              </ul>
-            </>
-          ) : (
-            <p className="text-gray-500">ยังไม่มีเมนูแนะนำ</p>
-          )}
-        </div>
-      </motion.div>
+            {shop.menu && shop.menu.length > 0 ? (
+              <>
+                <h2 className="text-xl font-semibold mb-3">เมนูแนะนำ</h2>
+                <ul className="list-disc list-inside text-gray-700 space-y-2">
+                  {shop.menu.map((item, index) => (
+                    <motion.li
+                      key={index}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.1 * index }}
+                    >
+                      {item}
+                    </motion.li>
+                  ))}
+                </ul>
+              </>
+            ) : (
+              <p className="text-gray-500">ยังไม่มีเมนูแนะนำ</p>
+            )}
+          </div>
+        </motion.div>
+      </AppLayout>
     </div>
   );
 }
