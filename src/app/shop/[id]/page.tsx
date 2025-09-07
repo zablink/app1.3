@@ -1,11 +1,14 @@
 // src/app/shop/[id]/page.tsx
 "use client";
 
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
 import { useParams } from "next/navigation";
-import Image from "next/image";
+import Link from "next/link";
+import { motion } from "framer-motion";
+import { useState } from "react";
 
+// -----------------------------
+// TypeScript Type
+// -----------------------------
 type Shop = {
   id: number;
   name: string;
@@ -16,14 +19,15 @@ type Shop = {
   subdistrict: string;
   district: string;
   province: string;
-  description: string;
-  gallery: string[];
-  phone: string;
-  hours: string;
-  links: {
-    lineman: string;
-    grab: string;
-    other: string;
+  menu?: string[];
+  description?: string;
+  gallery?: string[];
+  rating?: number;
+  reviews?: Review[];
+  deliveryLinks?: {
+    lineMan?: string;
+    grabFood?: string;
+    foodPanda?: string;
   };
 };
 
@@ -35,370 +39,384 @@ type Review = {
   date: string;
 };
 
-// Mock data for shops with extended information
-const shops: Shop[] = [
-  {
-    id: 1,
-    name: "ร้านข้าวผัดอร่อย",
-    category: "อาหารตามสั่ง",
-    image: "/images/friedrice.jpg",
-    lat: 13.746,
-    lng: 100.534,
-    subdistrict: "วังบูรพา",
-    district: "พระนคร",
-    province: "กรุงเทพฯ",
-    description: "ร้านข้าวผัดที่มีประสบการณ์มากกว่า 20 ปี เสิร์ฟข้าวผัดรสเด็ดด้วยส่วนผสมแสนพิเศษและเครื่องเทศสูตรลับ ใช้วัตถุดิบคุณภาพสูงและเสิร์ฟในอุณหภูมิที่เหมาะสม รับประกันความอร่อยที่จะทำให้คุณต้องกลับมาอีก",
-    gallery: [
-      "/images/friedrice.jpg",
-      "/images/friedrice-gallery1.jpg", 
-      "/images/friedrice-gallery2.jpg",
-      "/images/friedrice-gallery3.jpg"
-    ],
-    phone: "02-123-4567",
-    hours: "09:00 - 22:00",
-    links: {
-      lineman: "https://lineman.onelink.me/shop/abc123",
-      grab: "https://food.grab.com/th/restaurant/abc123", 
-      other: "https://foodpanda.co.th/restaurant/abc123"
-    }
-  },
-  {
-    id: 2,
-    name: "ก๋วยเตี๋ยวเรืออยุธยา",
-    category: "ก๋วยเตี๋ยว",
-    image: "/images/noodleboat.jpg",
-    lat: 13.742,
-    lng: 100.538,
-    subdistrict: "วังบูรพา",
-    district: "พระนคร",
-    province: "กรุงเทพฯ",
-    description: "ก๋วยเตี๋ยวเรือสไตล์อยุธยาแท้ๆ ใช้เส้นที่ทำสดใหม่ทุกวัน น้ำซุปใส หวานมัน เข้มข้น เสิร์ฟพร้อมเครื่องเคียงครบครัน ลิ้มรสชาติดั้งเดิมที่สืบทอดมายาวนาน ร้านเปิดมาแล้ว 15 ปี",
-    gallery: [
-      "/images/noodleboat.jpg",
-      "/images/noodleboat-gallery1.jpg",
-      "/images/noodleboat-gallery2.jpg"
-    ],
-    phone: "02-234-5678",
-    hours: "07:00 - 16:00",
-    links: {
-      lineman: "https://lineman.onelink.me/shop/def456",
-      grab: "https://food.grab.com/th/restaurant/def456",
-      other: "https://robinhood.co.th/restaurant/def456"
-    }
-  },
-  {
-    id: 3,
-    name: "ชานมไข่มุกนุ่มนิ่ม",
-    category: "เครื่องดื่ม", 
-    image: "/images/milktea.jpg",
-    lat: 13.744,
-    lng: 100.536,
-    subdistrict: "วังบูรพา",
-    district: "พระนคร",
-    province: "กรุงเทพฯ",
-    description: "ชานมไข่มุกพรีเมียม ใช้ชาคุณภาพดีนำเข้าจากต่างประเทศ ไข่มุกทำสดใหม่ทุกวัน เนื้อนุ่ม หนึบ หวานมัน เสิร์ฟในแก้วใสพร้อมหลอดขนาดใหญ่ มีให้เลือกหลากหลายรสชาติและระดับความหวาน",
-    gallery: [
-      "/images/milktea.jpg",
-      "/images/milktea-gallery1.jpg",
-      "/images/milktea-gallery2.jpg",
-      "/images/milktea-gallery3.jpg"
-    ],
-    phone: "02-345-6789",
-    hours: "10:00 - 22:00",
-    links: {
-      lineman: "https://lineman.onelink.me/shop/ghi789",
-      grab: "https://food.grab.com/th/restaurant/ghi789",
-      other: "https://foodpanda.co.th/restaurant/ghi789"
-    }
-  }
-];
-
 // Mock reviews data
 const mockReviews: Review[] = [
   {
     id: 1,
-    userName: "สมศรี",
+    userName: "สมชาย ใจดี",
     rating: 5,
-    comment: "อร่อยมากครับ ข้าวผัดเผ็ดน้อยหวานหน่อย กำลังดี เสิร์ฟเร็วด้วย",
-    date: "2024-01-15"
+    comment: "อร่อยมาก บริการดี จะมาใหม่แน่นอน",
+    date: "2024-09-01"
   },
   {
     id: 2,
-    userName: "นายกิจ",
+    userName: "กิตติ รักอาหาร",
     rating: 4,
-    comment: "รสชาติดี แต่ราคาเท่าไหร่ก็ไม่ระบุชัดเจน โดยรวมพอใจ",
-    date: "2024-01-10"
+    comment: "รสชาติดี แต่รอนานหน่อย",
+    date: "2024-08-28"
   },
   {
     id: 3,
-    userName: "คุณแนน",
+    userName: "นิดา หิวข้าว",
     rating: 5,
-    comment: "เป็นลูกค้าประจำมา 3 ปีแล้ว ไม่เคยผิดหวัง อร่อยทุกครั้ง",
-    date: "2024-01-08"
+    comment: "เป็นร้านประจำแล้ว อาหารสด สะอาด",
+    date: "2024-08-25"
   }
 ];
 
-export default function ShopDetailPage() {
-  const params = useParams();
-  const shopId = parseInt(params.id as string);
-  const [shop, setShop] = useState<Shop | null>(null);
-  const [reviews, setReviews] = useState<Review[]>(mockReviews);
-  const [newReview, setNewReview] = useState({
-    userName: "",
-    rating: 5,
-    comment: ""
-  });
-  const [selectedImage, setSelectedImage] = useState(0);
+// Mock descriptions for different shop types
+const mockDescriptions = {
+  "อาหารตามสั่ง": "ร้านอาหารตามสั่งที่ให้บริการอาหารไทยต้นตำรับ ปรุงสดใหม่ทุกจาน ด้วยวัตถุดิบคุณภาพดี เสิร์ฟร้อนๆ พร้อมรสชาติที่ถูกปากคนไทย",
+  "ก๋วยเตี๋ยว": "ร้านก๋วยเตี๋ยวต้นตำรับ เส้นสด น้ำซุปเข้มข้น หมูสด ปลาลูกชิ้นทำเอง เครื่องเคียงครบครัน บรรยากาศแบบดั้งเดิม",
+  "เครื่องดื่ม": "ร้านเครื่องดื่มสดชื่น เน้นคุณภาพเครื่องดื่ม วัตถุดิบพรีเมียม บรรยากาศร้านสบายๆ เหมาะสำหรับนั่งชิลล์หรือซื้อกลับบ้าน",
+  "เบเกอรี่": "เบเกอรี่ขนมปังและเค้กสดใหม่ อบทุกวัน วัตถุดิบนำเข้าคุณภาดี หอมกรุ่นทั้งร้าน มีทั้งขนมหวานและขนมคาว"
+};
 
-  useEffect(() => {
-    const foundShop = shops.find(s => s.id === shopId);
-    setShop(foundShop || null);
-  }, [shopId]);
+// -----------------------------
+// ร้านทั้งหมด 30 ร้าน (เพิ่ม description, gallery, rating)
+// -----------------------------
+const shops: Shop[] = [
+  {
+    id: 1, 
+    name: "ร้านข้าวผัดอร่อย", 
+    category: "อาหารตามสั่ง",
+    image: "/images/friedrice.jpg", 
+    lat: 13.746, 
+    lng: 100.534,
+    subdistrict: "วังบูรพา", 
+    district: "พระนคร", 
+    province: "กรุงเทพฯ",
+    menu: ["ข้าวผัดหมู", "ข้าวผัดไก่", "ข้าวผัดกุ้ง", "ข้าวผัดปู"],
+    description: mockDescriptions["อาหารตามสั่ง"],
+    rating: 4.5,
+    gallery: ["/images/friedrice.jpg", "/images/friedrice-2.jpg", "/images/friedrice-3.jpg"],
+    deliveryLinks: {
+      lineMan: "https://lineman.line.me/shop/1",
+      grabFood: "https://food.grab.com/shop/1",
+      foodPanda: "https://foodpanda.co.th/shop/1"
+    }
+  },
+  { 
+    id: 2, 
+    name: "ก๋วยเตี๋ยวเรืออยุธยา", 
+    category: "ก๋วยเตี๋ยว",
+    image: "/images/noodleboat.jpg", 
+    lat: 13.742, 
+    lng: 100.538,
+    subdistrict: "วังบูรพา", 
+    district: "พระนคร", 
+    province: "กรุงเทพฯ",
+    menu: ["ก๋วยเตี๋ยวน้ำ", "ก๋วยเตี๋ยวแห้ง", "เย็นตาโฟ"],
+    description: mockDescriptions["ก๋วยเตี๋ยว"],
+    rating: 4.2,
+    gallery: ["/images/noodleboat.jpg", "/images/noodle-2.jpg", "/images/noodle-3.jpg"]
+  },
+  { 
+    id: 3, 
+    name: "ชานมไข่มุกนุ่มนิ่ม", 
+    category: "เครื่องดื่ม",
+    image: "/images/milktea.jpg", 
+    lat: 13.744, 
+    lng: 100.536,
+    subdistrict: "วังบูรพา", 
+    district: "พระนคร", 
+    province: "กรุงเทพฯ",
+    menu: ["ชานมไข่มุก", "ชาไทย", "กาแฟเย็น", "โกโก้"],
+    description: mockDescriptions["เครื่องดื่ม"],
+    rating: 4.7,
+    gallery: ["/images/milktea.jpg", "/images/drink-2.jpg", "/images/drink-3.jpg"]
+  },
+  // ... เพิ่มร้านอื่นๆ ตามต้องการ
+];
+
+// Star Rating Component
+const StarRating = ({ rating, size = "w-5 h-5" }: { rating: number; size?: string }) => {
+  return (
+    <div className="flex items-center">
+      {[1, 2, 3, 4, 5].map((star) => (
+        <span
+          key={star}
+          className={`${size} ${
+            star <= rating ? "text-yellow-400" : "text-gray-300"
+          }`}
+        >
+          ⭐
+        </span>
+      ))}
+      <span className="ml-2 text-sm text-gray-600">{rating.toFixed(1)}</span>
+    </div>
+  );
+};
+
+// Review Component
+const ReviewSection = ({ shopId }: { shopId: number }) => {
+  const [userRating, setUserRating] = useState(0);
+  const [userComment, setUserComment] = useState("");
+  const [reviews, setReviews] = useState(mockReviews);
 
   const handleSubmitReview = (e: React.FormEvent) => {
     e.preventDefault();
-    if (newReview.userName && newReview.comment) {
-      const review: Review = {
-        id: reviews.length + 1,
-        userName: newReview.userName,
-        rating: newReview.rating,
-        comment: newReview.comment,
-        date: new Date().toISOString().split('T')[0]
-      };
-      setReviews([review, ...reviews]);
-      setNewReview({ userName: "", rating: 5, comment: "" });
-    }
+    if (userRating === 0 || userComment.trim() === "") return;
+
+    const newReview: Review = {
+      id: reviews.length + 1,
+      userName: "ผู้ใช้งาน", // In real app, get from session
+      rating: userRating,
+      comment: userComment,
+      date: new Date().toISOString().split('T')[0]
+    };
+
+    setReviews([newReview, ...reviews]);
+    setUserRating(0);
+    setUserComment("");
   };
 
-  const averageRating = reviews.length > 0 
-    ? reviews.reduce((acc, review) => acc + review.rating, 0) / reviews.length 
-    : 0;
+  return (
+    <div className="mt-8 border-t pt-6">
+      <h2 className="text-2xl font-bold mb-4">รีวิวจากลูกค้า</h2>
+      
+      {/* Review Form */}
+      <div className="bg-gray-50 p-6 rounded-lg mb-6">
+        <h3 className="text-lg font-semibold mb-3">เขียนรีวิว</h3>
+        <form onSubmit={handleSubmitReview}>
+          <div className="mb-4">
+            <label className="block text-sm font-medium mb-2">ให้คะแนน</label>
+            <div className="flex gap-1">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  type="button"
+                  onClick={() => setUserRating(star)}
+                  className={`w-8 h-8 ${
+                    star <= userRating ? "text-yellow-400" : "text-gray-300"
+                  } hover:text-yellow-400 transition`}
+                >
+                  ⭐
+                </button>
+              ))}
+            </div>
+          </div>
+          
+          <div className="mb-4">
+            <label className="block text-sm font-medium mb-2">ความคิดเห็น</label>
+            <textarea
+              value={userComment}
+              onChange={(e) => setUserComment(e.target.value)}
+              className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+              rows={4}
+              placeholder="แบ่งปันประสบการณ์ของคุณ..."
+            />
+          </div>
+          
+          <button
+            type="submit"
+            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition"
+          >
+            ส่งรีวิว
+          </button>
+        </form>
+      </div>
+
+      {/* Reviews List */}
+      <div className="space-y-4">
+        {reviews.map((review) => (
+          <motion.div
+            key={review.id}
+            className="bg-white p-4 rounded-lg shadow-sm border"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <div className="flex items-start justify-between mb-2">
+              <div>
+                <h4 className="font-semibold">{review.userName}</h4>
+                <StarRating rating={review.rating} size="w-4 h-4" />
+              </div>
+              <span className="text-sm text-gray-500">{review.date}</span>
+            </div>
+            <p className="text-gray-700">{review.comment}</p>
+          </motion.div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// -----------------------------
+// Main Component
+// -----------------------------
+export default function ShopDetail() {
+  const params = useParams();
+  const shopId = Number(params?.id);
+  const shop = shops.find((s) => s.id === shopId);
+  const [selectedImage, setSelectedImage] = useState(0);
 
   if (!shop) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <p className="text-xl text-gray-500">ไม่พบร้านที่คุณต้องการ</p>
+      <div className="p-6 text-center">
+        <h1 className="text-xl font-bold">ไม่พบร้านที่คุณเลือก</h1>
+        <Link href="/" className="text-blue-600 underline">กลับหน้าหลัก</Link>
       </div>
     );
   }
 
+  // Mock gallery if not provided
+  const gallery = shop.gallery || [shop.image, shop.image, shop.image];
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Banner */}
-      <div className="relative h-96 w-full">
-        <img
-          src={shop.gallery[selectedImage]}
-          alt={shop.name}
+      <div className="relative h-96 overflow-hidden">
+        <img 
+          src={gallery[selectedImage]} 
+          alt={shop.name} 
           className="w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-black bg-opacity-30"></div>
-        <div className="absolute bottom-4 left-4 text-white">
-          <h1 className="text-4xl font-bold mb-2">{shop.name}</h1>
-          <p className="text-lg">{shop.category}</p>
+        <div className="absolute inset-0 bg-black bg-opacity-40 flex items-end">
+          <div className="p-8 text-white">
+            <h1 className="text-4xl font-bold mb-2">{shop.name}</h1>
+            <p className="text-xl">{shop.category}</p>
+          </div>
         </div>
+        
+        {/* Back Button */}
+        <Link 
+          href="/" 
+          className="absolute top-4 left-4 bg-white bg-opacity-90 px-4 py-2 rounded-lg text-gray-800 hover:bg-opacity-100 transition"
+        >
+          ← กลับหน้าหลัก
+        </Link>
       </div>
 
-      {/* Gallery Thumbnails */}
-      <div className="bg-white shadow-sm">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex gap-4 overflow-x-auto">
-            {shop.gallery.map((image, index) => (
-              <button
-                key={index}
-                onClick={() => setSelectedImage(index)}
-                className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition ${
-                  selectedImage === index ? "border-blue-500" : "border-gray-200"
-                }`}
+      <div className="max-w-4xl mx-auto p-6">
+        {/* Gallery Thumbnails */}
+        <div className="flex gap-2 mb-6 overflow-x-auto">
+          {gallery.map((img, index) => (
+            <button
+              key={index}
+              onClick={() => setSelectedImage(index)}
+              className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 ${
+                selectedImage === index ? "border-blue-500" : "border-gray-300"
+              }`}
+            >
+              <img src={img} alt="" className="w-full h-full object-cover" />
+            </button>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Main Content */}
+          <div className="lg:col-span-2">
+            {/* Shop Info */}
+            <motion.div
+              className="bg-white rounded-lg shadow-md p-6 mb-6"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-2xl font-bold">{shop.name}</h2>
+                  <p className="text-gray-600">{shop.category}</p>
+                </div>
+                <StarRating rating={shop.rating || 4.0} />
+              </div>
+
+              <p className="text-gray-700 mb-4">
+                {shop.description || "ร้านอาหารคุณภาพดี บริการเป็นกันเอง"}
+              </p>
+
+              <div className="text-sm text-gray-500">
+                📍 {shop.subdistrict}, {shop.district}, {shop.province}
+              </div>
+            </motion.div>
+
+            {/* Menu */}
+            {shop.menu && shop.menu.length > 0 && (
+              <motion.div
+                className="bg-white rounded-lg shadow-md p-6 mb-6"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
               >
-                <img src={image} alt={`${shop.name} ${index + 1}`} className="w-full h-full object-cover" />
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Shop Details */}
-      <div className="container mx-auto px-4 py-8">
-        <div className="grid md:grid-cols-3 gap-8">
-          {/* Left Column - Main Info */}
-          <div className="md:col-span-2 space-y-8">
-            {/* Description */}
-            <div className="bg-white rounded-lg p-6 shadow-sm">
-              <h2 className="text-2xl font-semibold mb-4">เกี่ยวกับร้าน</h2>
-              <p className="text-gray-700 leading-relaxed">{shop.description}</p>
-            </div>
-
-            {/* Reviews Section */}
-            <div className="bg-white rounded-lg p-6 shadow-sm">
-              <div className="flex items-center gap-4 mb-6">
-                <h2 className="text-2xl font-semibold">รีวิว</h2>
-                <div className="flex items-center gap-2">
-                  <div className="flex">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <span
-                        key={star}
-                        className={`text-2xl ${
-                          star <= averageRating ? "text-yellow-400" : "text-gray-300"
-                        }`}
-                      >
-                        ⭐
-                      </span>
-                    ))}
-                  </div>
-                  <span className="text-gray-600">
-                    ({averageRating.toFixed(1)} จาก {reviews.length} รีวิว)
-                  </span>
+                <h2 className="text-xl font-semibold mb-4">เมนูแนะนำ</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {shop.menu.map((item, index) => (
+                    <motion.div
+                      key={index}
+                      className="flex items-center p-3 bg-gray-50 rounded-lg"
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.1 * index }}
+                    >
+                      <span className="w-2 h-2 bg-blue-500 rounded-full mr-3"></span>
+                      {item}
+                    </motion.div>
+                  ))}
                 </div>
-              </div>
+              </motion.div>
+            )}
 
-              {/* Add Review Form */}
-              <div className="border-t pt-6 mb-6">
-                <h3 className="text-lg font-semibold mb-4">เขียนรีวิว</h3>
-                <form onSubmit={handleSubmitReview} className="space-y-4">
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <input
-                      type="text"
-                      placeholder="ชื่อของคุณ"
-                      value={newReview.userName}
-                      onChange={(e) => setNewReview({...newReview, userName: e.target.value})}
-                      className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-                      required
-                    />
-                    <div className="flex items-center gap-2">
-                      <span>คะแนน:</span>
-                      <select
-                        value={newReview.rating}
-                        onChange={(e) => setNewReview({...newReview, rating: parseInt(e.target.value)})}
-                        className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-                      >
-                        {[5, 4, 3, 2, 1].map((rating) => (
-                          <option key={rating} value={rating}>{rating} ดาว</option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-                  <textarea
-                    placeholder="เขียนรีวิวของคุณ..."
-                    value={newReview.comment}
-                    onChange={(e) => setNewReview({...newReview, comment: e.target.value})}
-                    className="w-full px-4 py-2 border rounded-lg h-24 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                    required
-                  />
-                  <button
-                    type="submit"
-                    className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition"
-                  >
-                    ส่งรีวิว
-                  </button>
-                </form>
-              </div>
-
-              {/* Reviews List */}
-              <div className="space-y-4">
-                {reviews.map((review) => (
-                  <motion.div
-                    key={review.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="border-b pb-4 last:border-b-0"
-                  >
-                    <div className="flex items-center gap-4 mb-2">
-                      <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                        <span className="text-blue-600 font-semibold">
-                          {review.userName.charAt(0)}
-                        </span>
-                      </div>
-                      <div>
-                        <p className="font-semibold">{review.userName}</p>
-                        <div className="flex items-center gap-2">
-                          <div className="flex">
-                            {[1, 2, 3, 4, 5].map((star) => (
-                              <span
-                                key={star}
-                                className={`text-sm ${
-                                  star <= review.rating ? "text-yellow-400" : "text-gray-300"
-                                }`}
-                              >
-                                ⭐
-                              </span>
-                            ))}
-                          </div>
-                          <span className="text-sm text-gray-500">{review.date}</span>
-                        </div>
-                      </div>
-                    </div>
-                    <p className="text-gray-700 ml-14">{review.comment}</p>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
+            {/* Reviews */}
+            <ReviewSection shopId={shopId} />
           </div>
 
-          {/* Right Column - Sidebar */}
-          <div className="space-y-6">
-            {/* Contact Info */}
-            <div className="bg-white rounded-lg p-6 shadow-sm">
-              <h3 className="text-lg font-semibold mb-4">ข้อมูลร้าน</h3>
-              <div className="space-y-3">
-                <div>
-                  <span className="text-gray-600">📍 ที่อยู่:</span>
-                  <p className="font-medium">{shop.subdistrict}, {shop.district}</p>
-                  <p className="text-gray-600">{shop.province}</p>
-                </div>
-                <div>
-                  <span className="text-gray-600">📞 โทรศัพท์:</span>
-                  <p className="font-medium">{shop.phone}</p>
-                </div>
-                <div>
-                  <span className="text-gray-600">🕐 เวลาเปิด:</span>
-                  <p className="font-medium">{shop.hours}</p>
-                </div>
-              </div>
-            </div>
-
+          {/* Sidebar */}
+          <div className="lg:col-span-1">
             {/* Delivery Links */}
-            <div className="bg-white rounded-lg p-6 shadow-sm">
-              <h3 className="text-lg font-semibold mb-4">สั่งออนไลน์</h3>
+            <motion.div
+              className="bg-white rounded-lg shadow-md p-6 mb-6 sticky top-6"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              <h3 className="text-lg font-semibold mb-4">สั่งอาหารออนไลน์</h3>
+              
               <div className="space-y-3">
-                <div className="flex items-center gap-3 p-3 border rounded-lg">
-                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                    <span className="text-green-600 font-bold">L</span>
+                <a
+                  href="#"
+                  className="flex items-center justify-between p-3 border border-green-200 rounded-lg hover:bg-green-50 transition group"
+                >
+                  <div className="flex items-center">
+                    <div className="w-8 h-8 bg-green-500 rounded mr-3 flex items-center justify-center">
+                      <span className="text-white text-xs font-bold">LM</span>
+                    </div>
+                    <span>LINE MAN</span>
                   </div>
-                  <div>
-                    <p className="font-semibold">LINE MAN</p>
-                    <p className="text-sm text-gray-500">ส่งฟรี เมื่อสั่งครบ 100 บาท</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-center gap-3 p-3 border rounded-lg">
-                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                    <span className="text-green-600 font-bold">G</span>
-                  </div>
-                  <div>
-                    <p className="font-semibold">Grab Food</p>
-                    <p className="text-sm text-gray-500">ส่งเร็ว ภายใน 30 นาที</p>
-                  </div>
-                </div>
+                  <span className="text-green-600 group-hover:translate-x-1 transition-transform">→</span>
+                </a>
 
-                <div className="flex items-center gap-3 p-3 border rounded-lg">
-                  <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
-                    <span className="text-orange-600 font-bold">F</span>
+                <a
+                  href="#"
+                  className="flex items-center justify-between p-3 border border-orange-200 rounded-lg hover:bg-orange-50 transition group"
+                >
+                  <div className="flex items-center">
+                    <div className="w-8 h-8 bg-orange-500 rounded mr-3 flex items-center justify-center">
+                      <span className="text-white text-xs font-bold">GB</span>
+                    </div>
+                    <span>Grab Food</span>
                   </div>
-                  <div>
-                    <p className="font-semibold">FoodPanda</p>
-                    <p className="text-sm text-gray-500">โปรโมชั่นพิเศษ</p>
-                  </div>
-                </div>
-              </div>
-            </div>
+                  <span className="text-orange-600 group-hover:translate-x-1 transition-transform">→</span>
+                </a>
 
-            {/* Map placeholder */}
-            <div className="bg-white rounded-lg p-6 shadow-sm">
-              <h3 className="text-lg font-semibold mb-4">แผนที่</h3>
-              <div className="bg-gray-200 h-48 rounded-lg flex items-center justify-center">
-                <p className="text-gray-500">📍 แผนที่ (Coming Soon)</p>
+                <a
+                  href="#"
+                  className="flex items-center justify-between p-3 border border-pink-200 rounded-lg hover:bg-pink-50 transition group"
+                >
+                  <div className="flex items-center">
+                    <div className="w-8 h-8 bg-pink-500 rounded mr-3 flex items-center justify-center">
+                      <span className="text-white text-xs font-bold">FP</span>
+                    </div>
+                    <span>Food Panda</span>
+                  </div>
+                  <span className="text-pink-600 group-hover:translate-x-1 transition-transform">→</span>
+                </a>
               </div>
-            </div>
+
+              <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                <p className="text-sm text-blue-700">
+                  💡 คลิกลิงก์ข้างบนเพื่อสั่งอาหารผ่านแอปฯ
+                </p>
+              </div>
+            </motion.div>
           </div>
         </div>
       </div>
