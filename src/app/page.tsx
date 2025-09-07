@@ -437,8 +437,8 @@ export default function HomePage() {
   return (
     <AppLayout>
       {/* ---------------- Hero Banner ---------------- */}
-      <div className="w-full overflow-hidden mb-6">
-        <div className="relative h-64 sm:h-80 md:h-96">
+      <div className="w-screen overflow-hidden mb-6">
+        <div className="relative h-80 sm:h-96 md:h-[28rem]">
           {banners.map((banner, i) => (
             <Link
               key={banner.id}
@@ -455,6 +455,19 @@ export default function HomePage() {
                 transition={{ duration: 1 }}
               />
             </Link>
+          ))}
+        </div>
+
+        {/* ---------------- Dot navigator ---------------- */}
+        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
+          {banners.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setCurrentBanner(i)}
+              className={`w-3 h-3 rounded-full transition ${
+                i === currentBanner ? "bg-white" : "bg-white/50"
+              }`}
+            />
           ))}
         </div>
       </div>
