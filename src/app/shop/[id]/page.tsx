@@ -665,6 +665,10 @@ export default function ShopDetail() {
   const shop = shops.find((s) => s.id === shopId);
   const [selectedImage, setSelectedImage] = useState(0);
 
+  const [scrollY, setScrollY] = useState(0);
+
+
+
   // Debug logging
   console.log("URL params:", params);
   console.log("Shop ID:", shopId);
@@ -682,6 +686,15 @@ export default function ShopDetail() {
     );
   }
 
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrollY(window.scrollY);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   // Mock gallery if not provided
   const gallery = shop.gallery || [shop.image, shop.image, shop.image];
 
@@ -689,10 +702,13 @@ export default function ShopDetail() {
     <div className="min-h-screen bg-gray-50">
       {/* Hero Banner */}
       <div className="relative h-96 overflow-hidden">
-        <img 
-          src={gallery[selectedImage]} 
-          alt={shop.name} 
-          className="w-full h-full object-cover"
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-transform duration-75 ease-out"
+          style={{
+            backgroundImage: `url(${gallery[selectedImage]})`,
+            transform: `translateY(${scrollY * 0.5}px)`,
+            height: '120%' // เพิ่มความสูงเพื่อให้ parallax ทำงานได้
+          }}
         />
         <div className="absolute inset-0 bg-black bg-opacity-40 flex items-end">
           <div className="p-8 text-white">
