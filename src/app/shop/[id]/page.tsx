@@ -4,7 +4,7 @@
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 // -----------------------------
 // TypeScript Type
@@ -693,7 +693,7 @@ export default function ShopDetail() {
     );
   }
 
-  
+
 
   // Mock gallery if not provided
   const gallery = shop.gallery || [shop.image, shop.image, shop.image];
