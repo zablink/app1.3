@@ -738,11 +738,26 @@ export default function ShopDetail() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2">
+            {/* Gallery */}
+            <motion.div
+              className="bg-white rounded-lg shadow-md p-6 mb-6"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              <h2 className="text-xl font-semibold mb-4">แกลลอรี่</h2>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                {shop.images?.map((img, index) => (
+                  <img key={index} src={img} alt={`Gallery ${index}`} className="rounded-lg object-cover w-full h-32" />
+                ))}
+              </div>
+            </motion.div>
+
             {/* Shop Info */}
             <motion.div
               className="bg-white rounded-lg shadow-md p-6 mb-6"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
             >
               <div className="flex items-center justify-between mb-4">
                 <div>
@@ -767,7 +782,7 @@ export default function ShopDetail() {
                 className="bg-white rounded-lg shadow-md p-6 mb-6"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
+                transition={{ delay: 0.2 }}
               >
                 <h2 className="text-xl font-semibold mb-4">เมนูแนะนำ</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -786,23 +801,19 @@ export default function ShopDetail() {
                 </div>
               </motion.div>
             )}
-
-            {/* Reviews */}
-            <ReviewSection shopId={shopId} />
           </div>
 
-          {/* Sidebar */}
-          <div className="lg:col-span-1">
-            {/* Delivery Links */}
+          {/* Sidebar - Online Order Links */}
+          <div className="lg:col-span-1 order-first lg:order-last">
             <motion.div
               className="bg-white rounded-lg shadow-md p-6 mb-6 sticky top-6"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
+              transition={{ delay: 0.1 }}
             >
               <h3 className="text-lg font-semibold mb-4">สั่งอาหารออนไลน์</h3>
-              
               <div className="space-y-3">
+                {/* LINE MAN */}
                 <a
                   href="#"
                   className="flex items-center justify-between p-3 border border-green-200 rounded-lg hover:bg-green-50 transition group"
@@ -816,6 +827,7 @@ export default function ShopDetail() {
                   <span className="text-green-600 group-hover:translate-x-1 transition-transform">→</span>
                 </a>
 
+                {/* Grab Food */}
                 <a
                   href="#"
                   className="flex items-center justify-between p-3 border border-orange-200 rounded-lg hover:bg-orange-50 transition group"
@@ -829,6 +841,7 @@ export default function ShopDetail() {
                   <span className="text-orange-600 group-hover:translate-x-1 transition-transform">→</span>
                 </a>
 
+                {/* Food Panda */}
                 <a
                   href="#"
                   className="flex items-center justify-between p-3 border border-pink-200 rounded-lg hover:bg-pink-50 transition group"
@@ -850,7 +863,13 @@ export default function ShopDetail() {
               </div>
             </motion.div>
           </div>
+
+          {/* Reviews - Full Width Below */}
+          <div className="lg:col-span-2">
+            <ReviewSection shopId={shopId} />
+          </div>
         </div>
+
       </div>
     </div>
   );
