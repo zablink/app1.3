@@ -1,5 +1,3 @@
-// src/app/page.tsx
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -326,7 +324,6 @@ const shops: Shop[] = [
   },
 ];
 
-
 // --- Haversine formula ---
 function getDistance(lat1: number, lng1: number, lat2: number, lng2: number) {
   const R = 6371; // km
@@ -341,104 +338,72 @@ function getDistance(lat1: number, lng1: number, lat2: number, lng2: number) {
   return R * c;
 }
 
-// --- Geocode API helper (Google Maps) ---
-async function reverseGeocode(lat: number, lng: number) {
-  if (!process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY) return null;
-  const res = await fetch(
-    `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
-  );
-  const data = await res.json();
-  if (!data.results || data.results.length === 0) return null;
-
-  const addressComponents = data.results[0].address_components;
-
-  interface AddressComponent {
-    long_name: string;
-    short_name: string;
-    types: string[];
-  }
-
-  const subdistrict = addressComponents.find((c: AddressComponent) =>
-    c.types.includes("sublocality_level_1")
-  )?.long_name;
-
-  const district = addressComponents.find((c: AddressComponent) =>
-    c.types.includes("administrative_area_level_2")
-  )?.long_name;
-
-  const province = addressComponents.find((c: AddressComponent) =>
-    c.types.includes("administrative_area_level_1")
-  )?.long_name;
-
-  return { subdistrict, district, province };
-}
-
 // --- HomePage ---
 export default function HomePage() {
-  const [query, setQuery] = useState("");
   const [userLat, setUserLat] = useState<number | null>(null);
   const [userLng, setUserLng] = useState<number | null>(null);
-  const [userLocation, setUserLocation] = useState<{
-    subdistrict?: string;
-    district?: string;
-    province?: string;
-  }>({});
-  const [filteredShops, setFilteredShops] = useState<Shop[]>(shops);
+  const [userLocation, setUserLocation] = useState<{ province?: string }>({});
+  const [displayShops, setDisplayShops] = useState<Shop[]>([]);
+  const [query, setQuery] = useState("");
 
-  // Get user location
+  // --- Get user location ---
   useEffect(() => {
     if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(async (pos) => {
-        setUserLat(pos.coords.latitude);
-        setUserLng(pos.coords.longitude);
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          setUserLat(pos.coords.latitude);
+          setUserLng(pos.coords.longitude);
 
-        // Dynamic reverse geocode
-        const loc = await reverseGeocode(pos.coords.latitude, pos.coords.longitude);
-        if (loc) setUserLocation(loc);
-      });
+          // --- Optional: Google reverse geocode ---
+          if (process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY) {
+            const res = await fetch(
+              `https://maps.googleapis.com/maps/api/geocode/json?latlng=${pos.coords.latitude},${pos.coords.longitude}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
+            );
+            const data = await res.json();
+            const province = data.results?.[0]?.address_components?.find((c: any) =>
+              c.types.includes("administrative_area_level_1")
+            )?.long_name;
+            if (province) setUserLocation({ province });
+          }
+        },
+        (err) => console.log("Location error:", err)
+      );
     }
   }, []);
 
-  // Filter shops
+  // --- Determine shops to display ---
   useEffect(() => {
-    let result = shops.filter(
-      (shop) =>
-        shop.name.toLowerCase().includes(query.toLowerCase()) ||
-        shop.category.toLowerCase().includes(query.toLowerCase())
-    );
+    let result: Shop[] = [];
 
     if (userLat !== null && userLng !== null) {
-      // 1. ร้านใกล้ผู้ใช้ ≤ 5 กม.
-      const nearby = result.filter((shop) => getDistance(userLat, userLng, shop.lat, shop.lng) <= 5);
+      // 1. ร้านใกล้ ≤ 5 กม.
+      const nearby = shops.filter((shop) => getDistance(userLat, userLng, shop.lat, shop.lng) <= 5);
       if (nearby.length > 0) {
         result = nearby;
-      } else if (userLocation.subdistrict) {
-        // 2. ร้านใน subdistrict
-        const sameSub = result.filter((shop) => shop.subdistrict === userLocation.subdistrict);
-        if (sameSub.length > 0) result = sameSub;
-      } 
-      
-      if (result.length === 0 && userLocation.district) {
-        // 3. ร้านใน district
-        const sameDist = result.filter((shop) => shop.district === userLocation.district);
-        if (sameDist.length > 0) result = sameDist;
-      }
-
-      if (result.length === 0 && userLocation.province) {
-        // 4. ร้านใน province
-        const sameProv = result.filter((shop) => shop.province === userLocation.province);
+      } else if (userLocation.province) {
+        // 2. ร้านใน province เดียวกัน
+        const sameProv = shops.filter((shop) => shop.province === userLocation.province);
         if (sameProv.length > 0) result = sameProv;
       }
     }
 
-    setFilteredShops(result);
-  }, [query, userLat, userLng, userLocation]);
+    // 3. ถ้าไม่มี location หรือไม่มีร้านใกล้/ในจังหวัด → random 12 ร้าน
+    if (result.length === 0) {
+      result = [...shops].sort(() => 0.5 - Math.random()).slice(0, 12);
+    } else if (result.length > 12) {
+      // ถ้ามีร้านมากกว่า 12 ร้าน → random 12 ร้านจากผลลัพธ์
+      result = [...result].sort(() => 0.5 - Math.random()).slice(0, 12);
+    }
+
+    setDisplayShops(result);
+  }, [userLat, userLng, userLocation]);
 
   return (
     <AppLayout>
       <div className="min-h-screen bg-gray-50 p-6">
         <h1 className="text-3xl font-bold mb-6 text-center">ค้นหาร้านใกล้คุณ 🍜</h1>
 
+        {/* Search */}
         <div className="max-w-xl mx-auto mb-6">
           <input
             type="text"
@@ -449,30 +414,37 @@ export default function HomePage() {
           />
         </div>
 
-        {filteredShops.length === 0 ? (
-          <p className="text-center text-gray-500">ไม่พบร้านในพื้นที่ของคุณ</p>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-            {filteredShops.map((shop, i) => (
-              <motion.div
-                key={shop.id}
-                className="bg-white shadow-md rounded-2xl overflow-hidden hover:shadow-xl transition"
-                whileHover={{ scale: 1.03 }}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.05 }}
-              >
-                <Link href={`/shop/${shop.id}`}>
-                  <img src={shop.image} alt={shop.name} className="w-full h-40 object-cover" />
-                  <div className="p-4">
-                    <h2 className="font-semibold text-lg">{shop.name}</h2>
-                    <p className="text-sm text-gray-500">{shop.category}</p>
-                  </div>
-                </Link>
-              </motion.div>
-            ))}
-          </div>
-        )}
+        {/* Shop grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-6">
+          {displayShops.map((shop, i) => (
+            <motion.div
+              key={shop.id}
+              className="bg-white shadow-md rounded-2xl overflow-hidden hover:shadow-xl transition"
+              whileHover={{ scale: 1.03 }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.05 }}
+            >
+              <Link href={`/shop/${shop.id}`}>
+                <img src={shop.image} alt={shop.name} className="w-full h-40 object-cover" />
+                <div className="p-4">
+                  <h2 className="font-semibold text-lg">{shop.name}</h2>
+                  <p className="text-sm text-gray-500">{shop.category}</p>
+                </div>
+              </Link>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* View all button */}
+        <div className="text-center">
+          <Link
+            href="/shop"
+            className="inline-block px-6 py-3 bg-blue-500 text-white font-semibold rounded-xl shadow hover:bg-blue-600 transition"
+          >
+            ดูทั้งหมด
+          </Link>
+        </div>
       </div>
     </AppLayout>
   );
