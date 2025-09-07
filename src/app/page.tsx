@@ -17,6 +17,12 @@ type Shop = {
   province: string;
 };
 
+interface AddressComponent {
+  long_name: string;
+  short_name: string;
+  types: string[];
+}
+
 // --- shops ตัวอย่าง 30 ร้าน ---
 const shops: Shop[] = [
   // --- ร้านเก่า 20 ร้าน (ค่าเดิม + เพิ่ม field) ---
@@ -354,17 +360,21 @@ export default function HomePage() {
           setUserLat(pos.coords.latitude);
           setUserLng(pos.coords.longitude);
 
-          // --- Optional: Google reverse geocode ---
+
+          // --- Google reverse geocode ---
           if (process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY) {
             const res = await fetch(
               `https://maps.googleapis.com/maps/api/geocode/json?latlng=${pos.coords.latitude},${pos.coords.longitude}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
             );
-            const data = await res.json();
-            const province = data.results?.[0]?.address_components?.find((c: any) =>
+            const data: { results?: { address_components: AddressComponent[] }[] } = await res.json();
+
+            const province = data.results?.[0]?.address_components?.find((c) =>
               c.types.includes("administrative_area_level_1")
             )?.long_name;
+
             if (province) setUserLocation({ province });
           }
+          
         },
         (err) => console.log("Location error:", err)
       );
