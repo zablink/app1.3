@@ -44,6 +44,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const items = menuItems[role] ?? menuItems.guest;
 
   return (
+    <>
+
+    <Head>
+      <title>My App</title>
+      <link rel="icon" href="/favicon.png" /> 
+      <meta name="viewport" content="width=device-width, initial-scale=1" />
+    </Head>
     <div>
       {/* Navbar */}
       <nav
@@ -100,5 +107,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       {/* Content */}
       <main className="pt-20 p-4">{children}</main>
     </div>
+    </>
   );
 }
