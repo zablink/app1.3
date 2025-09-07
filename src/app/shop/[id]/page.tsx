@@ -717,13 +717,6 @@ export default function ShopDetail() {
           </div>
         </div>
         
-        {/* Back Button */}
-        <Link 
-          href="/" 
-          className="absolute top-4 left-4 bg-white bg-opacity-90 px-4 py-2 rounded-lg text-gray-800 hover:bg-opacity-100 transition"
-        >
-          ← กลับหน้าหลัก
-        </Link>
       </div>
 
       <div className="max-w-4xl mx-auto p-6">
