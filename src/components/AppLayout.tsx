@@ -67,7 +67,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               scrolled ? "text-lg" : "text-xl"
             }`}
           >
-            FoodPlatform
+            ZabLink
           </span>
         </Link>
 
