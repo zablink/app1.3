@@ -437,7 +437,7 @@ export default function HomePage() {
   return (
     <AppLayout>
       {/* ---------------- Hero Banner ---------------- */}
-      <div className="w-full overflow-hidden mb-6 mt-0 mb-0">
+      <div className="w-screen overflow-hidden mb-6 mt-0 pt-0 sm:pt-2 md:pt-4">
         <div className="relative h-80 sm:h-96 md:h-[28rem]">
           {banners.map((banner, i) => (
             <Link 
@@ -449,7 +449,7 @@ export default function HomePage() {
                 key={banner.id}
                 src={banner.image}
                 alt={`Banner ${banner.id}`}
-                className="w-full h-full object-contain"
+                className="w-full h-full object-contain md:object-cover"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: i === currentBanner ? 1 : 0 }}
                 transition={{ duration: 1 }}
