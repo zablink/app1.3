@@ -476,18 +476,6 @@ export default function HomePage() {
 
 
       <div className="min-h-screen bg-gray-50 p-6">
-        <h1 className="text-3xl font-bold mb-6 text-center">ค้นหาร้านใกล้คุณ 🍜</h1>
-
-        {/* Search */}
-        <div className="max-w-xl mx-auto mb-6">
-          <input
-            type="text"
-            placeholder="ค้นหาร้านหรือหมวดหมู่..."
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="w-full px-4 py-3 rounded-xl border border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-400 focus:outline-none"
-          />
-        </div>
 
         {/* Shop grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-6">
