@@ -37,7 +37,6 @@ const banners: Banner[] = [
   { id: 2, image: "/images/banner/2.jpg", link: "/shop/26"  },
   { id: 3, image: "/images/banner/3.jpg"},
 ];
-const [currentBanner, setCurrentBanner] = useState(0);
 
 // --- shops ตัวอย่าง 30 ร้าน ---
 const shops: Shop[] = [
@@ -370,6 +369,7 @@ export default function HomePage() {
 
 
   //// Hero Banner 
+  const [currentBanner, setCurrentBanner] = useState(0);
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentBanner((prev) => (prev + 1) % banners.length);
