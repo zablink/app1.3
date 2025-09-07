@@ -3,6 +3,8 @@ import type { Metadata } from 'next';
 import AppLayout from '@/components/AppLayout';
 import SessionProvider from '@/components/SessionProvider';
 
+import './globals.css';
+
 export const metadata: Metadata = {
   title: 'ZabLink แหล่งอาหารเครื่องดื่มสำหรับทุกคน',
   description: 'แพลตฟอร์มค้นหาร้านอาหารและเครื่องดื่มที่ดีที่สุดสำหรับทุกคน',
