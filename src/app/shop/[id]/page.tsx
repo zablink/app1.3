@@ -1,15 +1,11 @@
 // src/app/shop/[id]/page.tsx
-
 "use client";
 
-import { useParams } from "next/navigation";
-import Link from "next/link";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import AppLayout from "@/components/AppLayout";
+import { useParams } from "next/navigation";
+import Image from "next/image";
 
-// -----------------------------
-// TypeScript Type
-// -----------------------------
 type Shop = {
   id: number;
   name: string;
@@ -20,200 +16,392 @@ type Shop = {
   subdistrict: string;
   district: string;
   province: string;
-  menu?: string[]; // optional
+  description: string;
+  gallery: string[];
+  phone: string;
+  hours: string;
+  links: {
+    lineman: string;
+    grab: string;
+    other: string;
+  };
 };
 
-// -----------------------------
-// ร้านทั้งหมด 30 ร้าน
-// -----------------------------
-const shops: Shop[] = [
-  // --- ร้านเก่า 20 ร้าน ---
-  {
-    id: 1, name: "ร้านข้าวผัดอร่อย", category: "อาหารตามสั่ง",
-    image: "/images/friedrice.jpg", lat: 13.746, lng: 100.534,
-    subdistrict: "วังบูรพา", district: "พระนคร", province: "กรุงเทพฯ",
-    menu: ["ข้าวผัดหมู", "ข้าวผัดไก่"]
-  },
-  { id: 2, name: "ก๋วยเตี๋ยวเรืออยุธยา", category: "ก๋วยเตี๋ยว",
-    image: "/images/noodleboat.jpg", lat: 13.742, lng: 100.538,
-    subdistrict: "วังบูรพา", district: "พระนคร", province: "กรุงเทพฯ"
-  },
-  { id: 3, name: "ชานมไข่มุกนุ่มนิ่ม", category: "เครื่องดื่ม",
-    image: "/images/milktea.jpg", lat: 13.744, lng: 100.536,
-    subdistrict: "วังบูรพา", district: "พระนคร", province: "กรุงเทพฯ"
-  },
-  { id: 4, name: "ขนมปังอบใหม่", category: "เบเกอรี่",
-    image: "/images/bakery.jpg", lat: 13.745, lng: 100.539,
-    subdistrict: "วังบูรพา", district: "พระนคร", province: "กรุงเทพฯ"
-  },
-  { id: 5, name: "ส้มตำรสเด็ด", category: "อาหารตามสั่ง",
-    image: "/images/somtam.jpg", lat: 13.743, lng: 100.537,
-    subdistrict: "วังบูรพา", district: "พระนคร", province: "กรุงเทพฯ"
-  },
-  { id: 6, name: "ก๋วยเตี๋ยวต้มยำ", category: "ก๋วยเตี๋ยว",
-    image: "/images/noodletomyum.jpg", lat: 13.741, lng: 100.535,
-    subdistrict: "วังบูรพา", district: "พระนคร", province: "กรุงเทพฯ"
-  },
-  { id: 7, name: "คาเฟ่กาแฟสด", category: "เครื่องดื่ม",
-    image: "/images/coffee.jpg", lat: 13.746, lng: 100.540,
-    subdistrict: "วังบูรพา", district: "พระนคร", province: "กรุงเทพฯ"
-  },
-  { id: 8, name: "ครัวข้าวแกง", category: "อาหารตามสั่ง",
-    image: "/images/ricecurry.jpg", lat: 13.747, lng: 100.534,
-    subdistrict: "วังบูรพา", district: "พระนคร", province: "กรุงเทพฯ"
-  },
-  { id: 9, name: "ขนมเค้กวานิลลา", category: "เบเกอรี่",
-    image: "/images/cake.jpg", lat: 13.744, lng: 100.539,
-    subdistrict: "วังบูรพา", district: "พระนคร", province: "กรุงเทพฯ"
-  },
-  { id: 10, name: "ร้านชาบูหมูจุ่ม", category: "อาหารตามสั่ง",
-    image: "/images/shabu.jpg", lat: 13.745, lng: 100.537,
-    subdistrict: "วังบูรพา", district: "พระนคร", province: "กรุงเทพฯ"
-  },
-  { id: 11, name: "ก๋วยเตี๋ยวเนื้อน้ำตก", category: "ก๋วยเตี๋ยว",
-    image: "/images/noodlebeef.jpg", lat: 13.743, lng: 100.536,
-    subdistrict: "วังบูรพา", district: "พระนคร", province: "กรุงเทพฯ"
-  },
-  { id: 12, name: "น้ำผลไม้สด", category: "เครื่องดื่ม",
-    image: "/images/juice.jpg", lat: 13.746, lng: 100.538,
-    subdistrict: "วังบูรพา", district: "พระนคร", province: "กรุงเทพฯ"
-  },
-  { id: 13, name: "ครัวป้าแดง", category: "อาหารตามสั่ง",
-    image: "/images/thai-food.jpg", lat: 13.742, lng: 100.539,
-    subdistrict: "วังบูรพา", district: "พระนคร", province: "กรุงเทพฯ"
-  },
-  { id: 14, name: "ขนมครัวซองต์หอมกรุ่น", category: "เบเกอรี่",
-    image: "/images/croissant.jpg", lat: 13.744, lng: 100.535,
-    subdistrict: "วังบูรพา", district: "พระนคร", province: "กรุงเทพฯ"
-  },
-  { id: 15, name: "สเต๊กพรีเมียม", category: "อาหารตามสั่ง",
-    image: "/images/steak.jpg", lat: 13.745, lng: 100.536,
-    subdistrict: "วังบูรพา", district: "พระนคร", province: "กรุงเทพฯ"
-  },
-  { id: 16, name: "ก๋วยเตี๋ยวหมูเด้ง", category: "ก๋วยเตี๋ยว",
-    image: "/images/noodle-pork.jpg", lat: 13.746, lng: 100.537,
-    subdistrict: "วังบูรพา", district: "พระนคร", province: "กรุงเทพฯ"
-  },
-  { id: 17, name: "ชามะนาวเย็น", category: "เครื่องดื่ม",
-    image: "/images/icetea.jpg", lat: 13.747, lng: 100.536,
-    subdistrict: "วังบูรพา", district: "พระนคร", province: "กรุงเทพฯ"
-  },
-  { id: 18, name: "เบเกอรี่โฮมเมด", category: "เบเกอรี่",
-    image: "/images/homemade-bakery.jpg", lat: 13.745, lng: 100.539,
-    subdistrict: "วังบูรพา", district: "พระนคร", province: "กรุงเทพฯ"
-  },
-  { id: 19, name: "อาหารใต้จัดจ้าน", category: "อาหารตามสั่ง",
-    image: "/images/south-food.jpg", lat: 13.743, lng: 100.534,
-    subdistrict: "วังบูรพา", district: "พระนคร", province: "กรุงเทพฯ"
-  },
-  { id: 20, name: "ก๋วยเตี๋ยวไก่ตุ๋น", category: "ก๋วยเตี๋ยว",
-    image: "/images/noodle-chicken.jpg", lat: 13.742, lng: 100.538,
-    subdistrict: "วังบูรพา", district: "พระนคร", province: "กรุงเทพฯ"
-  },
+type Review = {
+  id: number;
+  userName: string;
+  rating: number;
+  comment: string;
+  date: string;
+};
 
-  // --- ร้านใหม่ 10 ร้าน สมุทรปราการ ---
-  { id: 21, name: "ร้านกาแฟกระทิงแดง", category: "เครื่องดื่ม",
-    image: "/images/coffee2.jpg", lat: 13.605, lng: 100.609,
-    subdistrict: "ในคลองบางปลากด", district: "พระประแดง", province: "สมุทรปราการ"
+// Mock data for shops with extended information
+const shops: Shop[] = [
+  {
+    id: 1,
+    name: "ร้านข้าวผัดอร่อย",
+    category: "อาหารตามสั่ง",
+    image: "/images/friedrice.jpg",
+    lat: 13.746,
+    lng: 100.534,
+    subdistrict: "วังบูรพา",
+    district: "พระนคร",
+    province: "กรุงเทพฯ",
+    description: "ร้านข้าวผัดที่มีประสบการณ์มากกว่า 20 ปี เสิร์ฟข้าวผัดรสเด็ดด้วยส่วนผสมแสนพิเศษและเครื่องเทศสูตรลับ ใช้วัตถุดิบคุณภาพสูงและเสิร์ฟในอุณหภูมิที่เหมาะสม รับประกันความอร่อยที่จะทำให้คุณต้องกลับมาอีก",
+    gallery: [
+      "/images/friedrice.jpg",
+      "/images/friedrice-gallery1.jpg", 
+      "/images/friedrice-gallery2.jpg",
+      "/images/friedrice-gallery3.jpg"
+    ],
+    phone: "02-123-4567",
+    hours: "09:00 - 22:00",
+    links: {
+      lineman: "https://lineman.onelink.me/shop/abc123",
+      grab: "https://food.grab.com/th/restaurant/abc123", 
+      other: "https://foodpanda.co.th/restaurant/abc123"
+    }
   },
-  { id: 22, name: "ข้าวต้มประชาอุทิศ 90", category: "อาหารตามสั่ง",
-    image: "/images/riceporridge.jpg", lat: 13.607, lng: 100.615,
-    subdistrict: "ในคลองบางปลากด", district: "พระประแดง", province: "สมุทรปราการ"
+  {
+    id: 2,
+    name: "ก๋วยเตี๋ยวเรืออยุธยา",
+    category: "ก๋วยเตี๋ยว",
+    image: "/images/noodleboat.jpg",
+    lat: 13.742,
+    lng: 100.538,
+    subdistrict: "วังบูรพา",
+    district: "พระนคร",
+    province: "กรุงเทพฯ",
+    description: "ก๋วยเตี๋ยวเรือสไตล์อยุธยาแท้ๆ ใช้เส้นที่ทำสดใหม่ทุกวัน น้ำซุปใส หวานมัน เข้มข้น เสิร์ฟพร้อมเครื่องเคียงครบครัน ลิ้มรสชาติดั้งเดิมที่สืบทอดมายาวนาน ร้านเปิดมาแล้ว 15 ปี",
+    gallery: [
+      "/images/noodleboat.jpg",
+      "/images/noodleboat-gallery1.jpg",
+      "/images/noodleboat-gallery2.jpg"
+    ],
+    phone: "02-234-5678",
+    hours: "07:00 - 16:00",
+    links: {
+      lineman: "https://lineman.onelink.me/shop/def456",
+      grab: "https://food.grab.com/th/restaurant/def456",
+      other: "https://robinhood.co.th/restaurant/def456"
+    }
   },
-  { id: 23, name: "ก๋วยเตี๋ยวซอยช้อยเพ็ง", category: "ก๋วยเตี๋ยว",
-    image: "/images/noodles2.jpg", lat: 13.603, lng: 100.611,
-    subdistrict: "ในคลองบางปลากด", district: "พระประแดง", province: "สมุทรปราการ"
-  },
-  { id: 24, name: "เบเกอรี่วัดคู่สร้าง", category: "เบเกอรี่",
-    image: "/images/bakery2.jpg", lat: 13.606, lng: 100.613,
-    subdistrict: "ในคลองบางปลากด", district: "พระประแดง", province: "สมุทรปราการ"
-  },
-  { id: 25, name: "ชานมไข่มุกคลองบางปลากด", category: "เครื่องดื่ม",
-    image: "/images/milktea2.jpg", lat: 13.604, lng: 100.610,
-    subdistrict: "ในคลองบางปลากด", district: "พระประแดง", province: "สมุทรปราการ"
-  },
-  { id: 26, name: "ข้าวมันไก่ประชาอุทิศ", category: "อาหารตามสั่ง",
-    image: "/images/chickenrice.jpg", lat: 13.605, lng: 100.612,
-    subdistrict: "ในคลองบางปลากด", district: "พระประแดง", province: "สมุทรปราการ"
-  },
-  { id: 27, name: "ร้านก๋วยเตี๋ยวเรือสมุทรปราการ", category: "ก๋วยเตี๋ยว",
-    image: "/images/noodleboat2.jpg", lat: 13.606, lng: 100.614,
-    subdistrict: "ในคลองบางปลากด", district: "พระประแดง", province: "สมุทรปราการ"
-  },
-  { id: 28, name: "คาเฟ่สดชื่น", category: "เครื่องดื่ม",
-    image: "/images/coffee3.jpg", lat: 13.603, lng: 100.609,
-    subdistrict: "ในคลองบางปลากด", district: "พระประแดง", province: "สมุทรปราการ"
-  },
-  { id: 29, name: "ครัวอาหารใต้บางปลากด", category: "อาหารตามสั่ง",
-    image: "/images/southfood2.jpg", lat: 13.604, lng: 100.611,
-    subdistrict: "ในคลองบางปลากด", district: "พระประแดง", province: "สมุทรปราการ"
-  },
-  { id: 30, name: "เบเกอรี่อบสดประชาอุทิศ", category: "เบเกอรี่",
-    image: "/images/bakery3.jpg", lat: 13.605, lng: 100.613,
-    subdistrict: "ในคลองบางปลากด", district: "พระประแดง", province: "สมุทรปราการ"
-  },
+  {
+    id: 3,
+    name: "ชานมไข่มุกนุ่มนิ่ม",
+    category: "เครื่องดื่ม", 
+    image: "/images/milktea.jpg",
+    lat: 13.744,
+    lng: 100.536,
+    subdistrict: "วังบูรพา",
+    district: "พระนคร",
+    province: "กรุงเทพฯ",
+    description: "ชานมไข่มุกพรีเมียม ใช้ชาคุณภาพดีนำเข้าจากต่างประเทศ ไข่มุกทำสดใหม่ทุกวัน เนื้อนุ่ม หนึบ หวานมัน เสิร์ฟในแก้วใสพร้อมหลอดขนาดใหญ่ มีให้เลือกหลากหลายรสชาติและระดับความหวาน",
+    gallery: [
+      "/images/milktea.jpg",
+      "/images/milktea-gallery1.jpg",
+      "/images/milktea-gallery2.jpg",
+      "/images/milktea-gallery3.jpg"
+    ],
+    phone: "02-345-6789",
+    hours: "10:00 - 22:00",
+    links: {
+      lineman: "https://lineman.onelink.me/shop/ghi789",
+      grab: "https://food.grab.com/th/restaurant/ghi789",
+      other: "https://foodpanda.co.th/restaurant/ghi789"
+    }
+  }
 ];
 
-// -----------------------------
-// Component
-// -----------------------------
-export default function ShopDetail() {
+// Mock reviews data
+const mockReviews: Review[] = [
+  {
+    id: 1,
+    userName: "สมศรี",
+    rating: 5,
+    comment: "อร่อยมากครับ ข้าวผัดเผ็ดน้อยหวานหน่อย กำลังดี เสิร์ฟเร็วด้วย",
+    date: "2024-01-15"
+  },
+  {
+    id: 2,
+    userName: "นายกิจ",
+    rating: 4,
+    comment: "รสชาติดี แต่ราคาเท่าไหร่ก็ไม่ระบุชัดเจน โดยรวมพอใจ",
+    date: "2024-01-10"
+  },
+  {
+    id: 3,
+    userName: "คุณแนน",
+    rating: 5,
+    comment: "เป็นลูกค้าประจำมา 3 ปีแล้ว ไม่เคยผิดหวัง อร่อยทุกครั้ง",
+    date: "2024-01-08"
+  }
+];
+
+export default function ShopDetailPage() {
   const params = useParams();
-  const shopId = Number(params?.id);
-  const shop = shops.find((s) => s.id === shopId);
+  const shopId = parseInt(params.id as string);
+  const [shop, setShop] = useState<Shop | null>(null);
+  const [reviews, setReviews] = useState<Review[]>(mockReviews);
+  const [newReview, setNewReview] = useState({
+    userName: "",
+    rating: 5,
+    comment: ""
+  });
+  const [selectedImage, setSelectedImage] = useState(0);
+
+  useEffect(() => {
+    const foundShop = shops.find(s => s.id === shopId);
+    setShop(foundShop || null);
+  }, [shopId]);
+
+  const handleSubmitReview = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newReview.userName && newReview.comment) {
+      const review: Review = {
+        id: reviews.length + 1,
+        userName: newReview.userName,
+        rating: newReview.rating,
+        comment: newReview.comment,
+        date: new Date().toISOString().split('T')[0]
+      };
+      setReviews([review, ...reviews]);
+      setNewReview({ userName: "", rating: 5, comment: "" });
+    }
+  };
+
+  const averageRating = reviews.length > 0 
+    ? reviews.reduce((acc, review) => acc + review.rating, 0) / reviews.length 
+    : 0;
 
   if (!shop) {
     return (
-      <div className="p-6 text-center">
-        <h1 className="text-xl font-bold">ไม่พบร้านที่คุณเลือก</h1>
-        <Link href="/" className="text-blue-600 underline">กลับหน้าหลัก</Link>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <p className="text-xl text-gray-500">ไม่พบร้านที่คุณต้องการ</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <AppLayout>
-        <Link href="/" className="inline-block mb-6 text-blue-600 hover:underline">
-          ← กลับหน้าหลัก
-        </Link>
+    <div className="min-h-screen bg-gray-50">
+      {/* Hero Banner */}
+      <div className="relative h-96 w-full">
+        <img
+          src={shop.gallery[selectedImage]}
+          alt={shop.name}
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-black bg-opacity-30"></div>
+        <div className="absolute bottom-4 left-4 text-white">
+          <h1 className="text-4xl font-bold mb-2">{shop.name}</h1>
+          <p className="text-lg">{shop.category}</p>
+        </div>
+      </div>
 
-        <motion.div
-          className="bg-white rounded-2xl shadow-lg overflow-hidden max-w-3xl mx-auto"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-        >
-          <img src={shop.image} alt={shop.name} className="w-full h-64 object-cover" />
-          <div className="p-6">
-            <h1 className="text-2xl font-bold mb-2">{shop.name}</h1>
-            <p className="text-gray-500 mb-2">{shop.category}</p>
-            <p className="text-gray-400 text-sm mb-4">
-              {shop.subdistrict}, {shop.district}, {shop.province}
-            </p>
-
-            {shop.menu && shop.menu.length > 0 ? (
-              <>
-                <h2 className="text-xl font-semibold mb-3">เมนูแนะนำ</h2>
-                <ul className="list-disc list-inside text-gray-700 space-y-2">
-                  {shop.menu.map((item, index) => (
-                    <motion.li
-                      key={index}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.1 * index }}
-                    >
-                      {item}
-                    </motion.li>
-                  ))}
-                </ul>
-              </>
-            ) : (
-              <p className="text-gray-500">ยังไม่มีเมนูแนะนำ</p>
-            )}
+      {/* Gallery Thumbnails */}
+      <div className="bg-white shadow-sm">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex gap-4 overflow-x-auto">
+            {shop.gallery.map((image, index) => (
+              <button
+                key={index}
+                onClick={() => setSelectedImage(index)}
+                className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition ${
+                  selectedImage === index ? "border-blue-500" : "border-gray-200"
+                }`}
+              >
+                <img src={image} alt={`${shop.name} ${index + 1}`} className="w-full h-full object-cover" />
+              </button>
+            ))}
           </div>
-        </motion.div>
-      </AppLayout>
+        </div>
+      </div>
+
+      {/* Shop Details */}
+      <div className="container mx-auto px-4 py-8">
+        <div className="grid md:grid-cols-3 gap-8">
+          {/* Left Column - Main Info */}
+          <div className="md:col-span-2 space-y-8">
+            {/* Description */}
+            <div className="bg-white rounded-lg p-6 shadow-sm">
+              <h2 className="text-2xl font-semibold mb-4">เกี่ยวกับร้าน</h2>
+              <p className="text-gray-700 leading-relaxed">{shop.description}</p>
+            </div>
+
+            {/* Reviews Section */}
+            <div className="bg-white rounded-lg p-6 shadow-sm">
+              <div className="flex items-center gap-4 mb-6">
+                <h2 className="text-2xl font-semibold">รีวิว</h2>
+                <div className="flex items-center gap-2">
+                  <div className="flex">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <span
+                        key={star}
+                        className={`text-2xl ${
+                          star <= averageRating ? "text-yellow-400" : "text-gray-300"
+                        }`}
+                      >
+                        ⭐
+                      </span>
+                    ))}
+                  </div>
+                  <span className="text-gray-600">
+                    ({averageRating.toFixed(1)} จาก {reviews.length} รีวิว)
+                  </span>
+                </div>
+              </div>
+
+              {/* Add Review Form */}
+              <div className="border-t pt-6 mb-6">
+                <h3 className="text-lg font-semibold mb-4">เขียนรีวิว</h3>
+                <form onSubmit={handleSubmitReview} className="space-y-4">
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <input
+                      type="text"
+                      placeholder="ชื่อของคุณ"
+                      value={newReview.userName}
+                      onChange={(e) => setNewReview({...newReview, userName: e.target.value})}
+                      className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+                      required
+                    />
+                    <div className="flex items-center gap-2">
+                      <span>คะแนน:</span>
+                      <select
+                        value={newReview.rating}
+                        onChange={(e) => setNewReview({...newReview, rating: parseInt(e.target.value)})}
+                        className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+                      >
+                        {[5, 4, 3, 2, 1].map((rating) => (
+                          <option key={rating} value={rating}>{rating} ดาว</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  <textarea
+                    placeholder="เขียนรีวิวของคุณ..."
+                    value={newReview.comment}
+                    onChange={(e) => setNewReview({...newReview, comment: e.target.value})}
+                    className="w-full px-4 py-2 border rounded-lg h-24 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    required
+                  />
+                  <button
+                    type="submit"
+                    className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition"
+                  >
+                    ส่งรีวิว
+                  </button>
+                </form>
+              </div>
+
+              {/* Reviews List */}
+              <div className="space-y-4">
+                {reviews.map((review) => (
+                  <motion.div
+                    key={review.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="border-b pb-4 last:border-b-0"
+                  >
+                    <div className="flex items-center gap-4 mb-2">
+                      <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                        <span className="text-blue-600 font-semibold">
+                          {review.userName.charAt(0)}
+                        </span>
+                      </div>
+                      <div>
+                        <p className="font-semibold">{review.userName}</p>
+                        <div className="flex items-center gap-2">
+                          <div className="flex">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <span
+                                key={star}
+                                className={`text-sm ${
+                                  star <= review.rating ? "text-yellow-400" : "text-gray-300"
+                                }`}
+                              >
+                                ⭐
+                              </span>
+                            ))}
+                          </div>
+                          <span className="text-sm text-gray-500">{review.date}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <p className="text-gray-700 ml-14">{review.comment}</p>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column - Sidebar */}
+          <div className="space-y-6">
+            {/* Contact Info */}
+            <div className="bg-white rounded-lg p-6 shadow-sm">
+              <h3 className="text-lg font-semibold mb-4">ข้อมูลร้าน</h3>
+              <div className="space-y-3">
+                <div>
+                  <span className="text-gray-600">📍 ที่อยู่:</span>
+                  <p className="font-medium">{shop.subdistrict}, {shop.district}</p>
+                  <p className="text-gray-600">{shop.province}</p>
+                </div>
+                <div>
+                  <span className="text-gray-600">📞 โทรศัพท์:</span>
+                  <p className="font-medium">{shop.phone}</p>
+                </div>
+                <div>
+                  <span className="text-gray-600">🕐 เวลาเปิด:</span>
+                  <p className="font-medium">{shop.hours}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Delivery Links */}
+            <div className="bg-white rounded-lg p-6 shadow-sm">
+              <h3 className="text-lg font-semibold mb-4">สั่งออนไลน์</h3>
+              <div className="space-y-3">
+                <div className="flex items-center gap-3 p-3 border rounded-lg">
+                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                    <span className="text-green-600 font-bold">L</span>
+                  </div>
+                  <div>
+                    <p className="font-semibold">LINE MAN</p>
+                    <p className="text-sm text-gray-500">ส่งฟรี เมื่อสั่งครบ 100 บาท</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-3 p-3 border rounded-lg">
+                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                    <span className="text-green-600 font-bold">G</span>
+                  </div>
+                  <div>
+                    <p className="font-semibold">Grab Food</p>
+                    <p className="text-sm text-gray-500">ส่งเร็ว ภายใน 30 นาที</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 p-3 border rounded-lg">
+                  <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+                    <span className="text-orange-600 font-bold">F</span>
+                  </div>
+                  <div>
+                    <p className="font-semibold">FoodPanda</p>
+                    <p className="text-sm text-gray-500">โปรโมชั่นพิเศษ</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Map placeholder */}
+            <div className="bg-white rounded-lg p-6 shadow-sm">
+              <h3 className="text-lg font-semibold mb-4">แผนที่</h3>
+              <div className="bg-gray-200 h-48 rounded-lg flex items-center justify-center">
+                <p className="text-gray-500">📍 แผนที่ (Coming Soon)</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
