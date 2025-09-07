@@ -440,7 +440,7 @@ export default function HomePage() {
       <div className="w-screen overflow-hidden mb-6">
         <div className="relative h-80 sm:h-96 md:h-[28rem]">
           {banners.map((banner, i) => (
-            <Link
+            <Link 
               key={banner.id}
               href={banner.link ?? "#"}
               className="absolute inset-0 w-full h-full"
