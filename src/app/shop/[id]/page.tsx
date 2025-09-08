@@ -736,61 +736,6 @@ export default function ShopDetail() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Content */}
-          <div className="lg:col-span-2">
-            {/* Shop Info */}
-            <motion.div
-              className="bg-white rounded-lg shadow-md p-6 mb-6"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-            >
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h2 className="text-2xl font-bold">{shop.name}</h2>
-                  <p className="text-gray-600">{shop.category}</p>
-                </div>
-                <StarRating rating={shop.rating || 4.0} />
-              </div>
-
-              <p className="text-gray-700 mb-4">
-                {shop.description || "ร้านอาหารคุณภาพดี บริการเป็นกันเอง"}
-              </p>
-
-              <div className="text-sm text-gray-500">
-                📍 {shop.subdistrict}, {shop.district}, {shop.province}
-              </div>
-            </motion.div>
-
-            {/* Menu */}
-            {shop.menu && shop.menu.length > 0 && (
-              <motion.div
-                className="bg-white rounded-lg shadow-md p-6 mb-6"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-              >
-                <h2 className="text-xl font-semibold mb-4">เมนูแนะนำ</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {shop.menu.map((item, index) => (
-                    <motion.div
-                      key={index}
-                      className="flex items-center p-3 bg-gray-50 rounded-lg"
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.1 * index }}
-                    >
-                      <span className="w-2 h-2 bg-blue-500 rounded-full mr-3"></span>
-                      {item}
-                    </motion.div>
-                  ))}
-                </div>
-              </motion.div>
-            )}
-
-            {/* Reviews */}
-            <ReviewSection shopId={shopId} />
-          </div>
-
           {/* Sidebar */}
           <div className="lg:col-span-1">
             {/* Delivery Links */}
@@ -850,6 +795,61 @@ export default function ShopDetail() {
               </div>
             </motion.div>
           </div>
+          {/* Main Content */}
+          <div className="lg:col-span-2">
+            {/* Shop Info */}
+            <motion.div
+              className="bg-white rounded-lg shadow-md p-6 mb-6"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-2xl font-bold">{shop.name}</h2>
+                  <p className="text-gray-600">{shop.category}</p>
+                </div>
+                <StarRating rating={shop.rating || 4.0} />
+              </div>
+
+              <p className="text-gray-700 mb-4">
+                {shop.description || "ร้านอาหารคุณภาพดี บริการเป็นกันเอง"}
+              </p>
+
+              <div className="text-sm text-gray-500">
+                📍 {shop.subdistrict}, {shop.district}, {shop.province}
+              </div>
+            </motion.div>
+
+            {/* Menu */}
+            {shop.menu && shop.menu.length > 0 && (
+              <motion.div
+                className="bg-white rounded-lg shadow-md p-6 mb-6"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+              >
+                <h2 className="text-xl font-semibold mb-4">เมนูแนะนำ</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {shop.menu.map((item, index) => (
+                    <motion.div
+                      key={index}
+                      className="flex items-center p-3 bg-gray-50 rounded-lg"
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.1 * index }}
+                    >
+                      <span className="w-2 h-2 bg-blue-500 rounded-full mr-3"></span>
+                      {item}
+                    </motion.div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+
+            {/* Reviews */}
+            <ReviewSection shopId={shopId} />
+          </div>
+
         </div>
       </div>
     </div>
