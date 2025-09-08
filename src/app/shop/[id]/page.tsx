@@ -455,7 +455,7 @@ const shops: Shop[] = [
     menu: ["เค้กวานิลลา", "ขนมปังไส้กรอก", "เค้กช็อกโกแลต"],
     description: mockDescriptions["เบเกอรี่"],
     rating: 4.4,
-    gallery: ["/images/bakery2.jpg", "/images/bakery2-2.jpg", "/images/bakery2-3.jpg"],
+    gallery: ["/images/bakery2.jpg", "/images/bakery2-2.jpg", "/images/bakery2-3.jpg", "/images/bakery2-3.jpg"],
   },
   {
     id: 25,
