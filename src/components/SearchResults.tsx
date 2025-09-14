@@ -327,7 +327,7 @@ const shops: Shop[] = [
 
 export default function SearchResults() {
   const searchParams = useSearchParams();
-  const query = (searchParams.get("q") ?? "").toLowerCase();
+  const query = (searchParams.get("query") ?? "").toLowerCase();
   const [filteredShops, setFilteredShops] = useState<Shop[]>([]);
 
   useEffect(() => {
