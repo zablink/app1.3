@@ -74,6 +74,28 @@ export default function LocationFinderPage() {
           🇹🇭 หาตำบลจาก GPS โดย ลุงเวอร์จ้า
         </h1>
 
+        {/* Status and Results */}
+        {(loading || error || locationInfo) && (
+            <div className="mt-8 p-6 rounded-xl shadow-inner bg-white border border-gray-100">
+                <h2 className="text-xl font-bold text-gray-800 mb-4">Search Status</h2>
+                
+                {error && <p className="text-red-600 font-semibold">{error}</p>}
+                
+                {locationInfo && (
+                    <div className="space-y-3">
+                        <p className="text-green-600 font-semibold text-lg">✅ เจอแว้ววว!</p>
+                        <p><strong>ข้อมูล:</strong> Lat {lat}, Lng {lng}</p>
+                        <hr className="my-2"/>
+                        <p><strong>จังหวัด</strong> <span className="font-medium text-gray-800">{locationInfo.province_name_th}</span></p>
+                        <p><strong>อำเภอ/เขต</strong> <span className="font-medium text-gray-800">{locationInfo.amphure_name_th}</span></p>
+                        <p><strong>ตำบล/แขวง</strong> <span className="font-medium text-gray-800">{locationInfo.tambon_name_th}</span></p>
+                        <p className="text-sm text-gray-500 mt-2">Tambon ID: {locationInfo.tambon_id}</p>
+                    </div>
+                )}
+            </div>
+        )}
+
+
         {/* Geolocation Button */}
         <div className="mb-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
           <p className="text-lg font-semibold mb-3 text-blue-800">1. ค้นหาจาก GPS</p>
@@ -127,27 +149,7 @@ export default function LocationFinderPage() {
             </button>
         </div>
 
-        {/* Status and Results */}
-        {(loading || error || locationInfo) && (
-            <div className="mt-8 p-6 rounded-xl shadow-inner bg-white border border-gray-100">
-                <h2 className="text-xl font-bold text-gray-800 mb-4">Search Status</h2>
-                
-                {error && <p className="text-red-600 font-semibold">{error}</p>}
-                
-                {locationInfo && (
-                    <div className="space-y-3">
-                        <p className="text-green-600 font-semibold text-lg">✅ เจอแว้ววว!</p>
-                        <p><strong>ข้อมูล:</strong> Lat {lat}, Lng {lng}</p>
-                        <hr className="my-2"/>
-                        <p><strong>จังหวัด</strong> <span className="font-medium text-gray-800">{locationInfo.province_name_th}</span></p>
-                        <p><strong>อำเภอ/เขต</strong> <span className="font-medium text-gray-800">{locationInfo.amphure_name_th}</span></p>
-                        <p><strong>ตำบล/แขวง</strong> <span className="font-medium text-gray-800">{locationInfo.tambon_name_th}</span></p>
-                        <p className="text-sm text-gray-500 mt-2">Tambon ID: {locationInfo.tambon_id}</p>
-                    </div>
-                )}
-            </div>
-        )}
-
+        
         {/* Credit/Source */}
         <div className="mt-12 pt-4 border-t border-gray-200 text-center text-sm text-gray-500">
           <p>
