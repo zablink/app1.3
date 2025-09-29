@@ -1,5 +1,3 @@
-// src/app/api/location-finder/route.ts
-
 import { NextResponse } from 'next/server';
 import { supabase, LocationInfo } from '@/lib/supabase';
 
@@ -21,16 +19,17 @@ export async function GET(request: Request) {
        return NextResponse.json({ error: 'Invalid lat or lng format' }, { status: 400 });
     }
 
-    // Call the PostgreSQL function (RPC) to find the location
-    // We expect the function to return one row (the most specific location)
-    const { data, error } = await supabase.rpc<LocationInfo[]>('find_location', {
+    // แก้ไข: เพิ่ม Type Argument ที่สองสำหรับ Parameters ของ RPC
+    const { data, error } = await supabase.rpc<LocationInfo[], { lat: number, lng: number }>('find_location', {
       lat: latitude,
       lng: longitude,
     });
 
     if (error) {
       console.error('Supabase RPC Error:', error);
-      return NextResponse.json({ error: 'Failed to query database', details: error.message }, { status: 500 });
+      // ตรวจสอบว่า Error เป็น JSON ได้หรือไม่ก่อนส่งกลับ
+      const errorDetail = error.message || 'Unknown database error';
+      return NextResponse.json({ error: 'Failed to query database', details: errorDetail }, { status: 500 });
     }
 
     if (!data || data.length === 0) {
