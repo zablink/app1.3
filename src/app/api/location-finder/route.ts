@@ -19,11 +19,16 @@ export async function GET(request: Request) {
        return NextResponse.json({ error: 'Invalid lat or lng format' }, { status: 400 });
     }
 
-    // แก้ไข: เพิ่ม Type Argument ที่สองสำหรับ Parameters ของ RPC
-    const { data, error } = await supabase.rpc<LocationInfo[], { lat: number, lng: number }>('find_location', {
+    // แก้ไข: นำ Generic Type ออกจาก rpc() เพื่อเลี่ยง Type Conflict ที่เกิดขึ้น
+    // และใช้ Type Casting เพื่อรักษา Type Safety ของข้อมูลที่ดึงมา
+    const { data: rawData, error } = await supabase.rpc('find_location', {
       lat: latitude,
       lng: longitude,
     });
+    
+    // Type Cast the raw data returned from RPC to our expected type
+    const data = rawData as LocationInfo[] | null;
+
 
     if (error) {
       console.error('Supabase RPC Error:', error);
