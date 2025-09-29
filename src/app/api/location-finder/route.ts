@@ -7,7 +7,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const lat = searchParams.get('lat');
     const lng = searchParams.get('lng');
-
+ 
     if (!lat || !lng) {
       return NextResponse.json({ error: 'Missing lat or lng parameters' }, { status: 400 });
     }
