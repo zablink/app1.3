@@ -116,6 +116,41 @@ model Session {
   user         User     @relation(fields: [userId], references: [id])
 }
 
+model Geography {
+  id   Int    @id
+  name String
+  provinces Province[]
+}
+
+model Province {
+  id          Int       @id
+  name_th     String
+  name_en     String
+  geography   Geography @relation(fields: [geographyId], references: [id])
+  geographyId Int
+  amphures    Amphure[]
+}
+
+model Amphure {
+  id         Int      @id
+  name_th    String
+  name_en    String
+  province   Province @relation(fields: [provinceId], references: [id])
+  provinceId Int
+  tambons    Tambon[]
+}
+
+model Tambon {
+  id         Int      @id
+  zip_code   String?
+  name_th    String
+  name_en    String
+  amphure    Amphure  @relation(fields: [amphureId], references: [id])
+  amphureId  Int
+  geom       String?  // WKT polygon
+}
+
+
 enum Role {
   USER
   SHOP
@@ -128,3 +163,5 @@ enum AdScope {
   PROVINCE
   NATIONWIDE
 }
+
+
