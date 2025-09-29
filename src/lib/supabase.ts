@@ -16,7 +16,7 @@ export const supabase = createClient(supabaseUrl || 'http://dummy.url', supabase
 
 // Interface for the data returned by the Supabase RPC function
 export interface LocationInfo {
-  tambon_id: string;
+  tambon_id: number;
   tambon_name_th: string;
   amphure_name_th: string;
   province_name_th: string;

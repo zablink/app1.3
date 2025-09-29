@@ -1,3 +1,5 @@
+// src/app/api/location-finder/route.ts
+
 import { NextResponse } from 'next/server';
 import { supabase, LocationInfo } from '@/lib/supabase';
 
