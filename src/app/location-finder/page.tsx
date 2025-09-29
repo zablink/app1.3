@@ -71,7 +71,7 @@ export default function LocationFinderPage() {
     <div className="min-h-screen bg-gray-50 p-4 sm:p-8">
       <div className="max-w-4xl mx-auto bg-white p-6 sm:p-10 rounded-xl shadow-2xl">
         <h1 className="text-3xl font-bold text-gray-800 mb-6 border-b pb-2">
-          🇹🇭 Location Finder (PostGIS Query)
+          🇹🇭 หาตำบลจาก GPS โดย ลุงเวอร์จ้า
         </h1>
 
         {/* Geolocation Button */}
@@ -136,7 +136,7 @@ export default function LocationFinderPage() {
                 
                 {locationInfo && (
                     <div className="space-y-3">
-                        <p className="text-green-600 font-semibold text-lg">✅ เจอแว้้ววว!</p>
+                        <p className="text-green-600 font-semibold text-lg">✅ เจอแว้ววว!</p>
                         <p><strong>ข้อมูล:</strong> Lat {lat}, Lng {lng}</p>
                         <hr className="my-2"/>
                         <p><strong>จังหวัด</strong> <span className="font-medium text-gray-800">{locationInfo.province_name_th}</span></p>
