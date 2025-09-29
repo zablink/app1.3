@@ -156,6 +156,7 @@ export default function LocationFinderPage() {
           <p className="text-xs mt-1">
             ไฟล์ทดสอบการค้นหาตำบล โดยลุงเว่อร์เองจ้า
           </p>
+       </div>
       </div>
     </div>
   );
