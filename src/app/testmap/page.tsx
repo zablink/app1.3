@@ -2,18 +2,20 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
+// 1. **FIX** Import Leaflet types specifically for TypeScript to recognize 'L' namespace
+import type * as L from 'leaflet'; 
+
 
 interface LatLong {
   lat: number;
   lng: number;
 }
 
-// NEW INTERFACE for Nominatim API results to replace 'any'
+// INTERFACE for Nominatim API results
 interface NominatimResult {
   lat: string;
   lon: string;
   display_name: string;
-  // Add other properties if needed later
 }
 
 const InitialMapCenter: LatLong = { lat: 13.7367, lng: 100.5231 }; // Bangkok center
@@ -22,14 +24,16 @@ const InitialZoom = 13;
 const MapComponent = () => {
   const [coords, setCoords] = useState<LatLong | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  // Use NominatimResult[] instead of any[]
   const [searchResults, setSearchResults] = useState<NominatimResult[]>([]);
-  const mapRef = useRef<L.Map | null>(null);
+  
+  // 2. **FIX** TS now recognizes L.Map and L.Marker due to the type import
+  const mapRef = useRef<L.Map | null>(null); 
   const markerRef = useRef<L.Marker | null>(null);
 
   // Function to initialize the map and set up event listeners
   useEffect(() => {
-    import('leaflet').then(L => {
+    // Dynamically import the actual Leaflet module code here
+    import('leaflet').then(L => { 
       // Load Leaflet CSS
       const link = document.createElement('link');
       link.rel = 'stylesheet';
@@ -38,7 +42,6 @@ const MapComponent = () => {
 
       // Initialize the map (only once)
       if (!mapRef.current) {
-        // Ensure map container exists before calling L.map
         if (!document.getElementById('map-container')) {
             console.error("Map container div not found!");
             return;
@@ -71,7 +74,6 @@ const MapComponent = () => {
       return () => {
         if (mapRef.current) {
           mapRef.current.remove();
-          // Remove CSS link to prevent duplicates, though often not strictly necessary for simple apps
           if (document.head.contains(link)) {
             document.head.removeChild(link);
           }
@@ -91,7 +93,6 @@ const MapComponent = () => {
 
     try {
       const response = await fetch(url);
-      // Explicitly cast data to NominatimResult[]
       const data = await response.json() as NominatimResult[]; 
       setSearchResults(data);
 
@@ -114,7 +115,6 @@ const MapComponent = () => {
   };
 
   // Function to select a result from the search list
-  // Use NominatimResult type for the result parameter
   const handleSelectResult = (result: NominatimResult) => {
     const lat = parseFloat(result.lat);
     const lng = parseFloat(result.lon);
@@ -206,7 +206,7 @@ const MapComponent = () => {
       </div>
 
       <p className="text-xs text-red-500 mt-4">
-        *ข้อควรระวัง:...
+        *ข้อควรระวัง: ..
       </p>
     </div>
   );
