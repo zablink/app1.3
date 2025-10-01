@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
-// 1. **FIX** Import Leaflet types specifically for TypeScript to recognize 'L' namespace
+// FIX: Import Leaflet types specifically for TypeScript to recognize 'L' namespace
 import type * as L from 'leaflet'; 
 
 
@@ -26,7 +26,6 @@ const MapComponent = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<NominatimResult[]>([]);
   
-  // 2. **FIX** TS now recognizes L.Map and L.Marker due to the type import
   const mapRef = useRef<L.Map | null>(null); 
   const markerRef = useRef<L.Marker | null>(null);
 
@@ -131,7 +130,8 @@ const MapComponent = () => {
     <div className="p-4 space-y-6">
       <h2 className="text-xl font-semibold text-gray-800">1. ค้นหาและปักหมุดตำแหน่งร้านค้า (Cost-Free)</h2>
       <p className="text-sm text-gray-600">
-        ใช้ช่องค้นหาเพื่อระบุตำแหน่งเบื้องต้น (ใช้ $\text{Nominatim}$ ฟรี) จากนั้นคลิกบนแผนที่เพื่อปรับตำแหน่งที่แม่นยำ
+        {/* แก้ไขบรรทัดที่ 134: ใช้ Bold แทน LaTeX เพื่อหลีกเลี่ยงการตีความผิด */}
+        ใช้ช่องค้นหาเพื่อระบุตำแหน่งเบื้องต้น (ใช้ **Nominatim** ฟรี) จากนั้นคลิกบนแผนที่เพื่อปรับตำแหน่งที่แม่นยำ
       </p>
 
       {/* Search Bar and Results */}
@@ -206,7 +206,9 @@ const MapComponent = () => {
       </div>
 
       <p className="text-xs text-red-500 mt-4">
-        *ข้อควรระวัง: ..
+        {/* แก้ไขบรรทัดที่ 184: ใช้ Bold แทน LaTeX เพื่อหลีกเลี่ยงการตีความผิด */}
+        *ข้อควรระวัง: **Nominatim** เป็นบริการ $\text{Geocoding}$ แบบ $\text{Open-Source}$ สำหรับการใช้งานที่ไม่หนักหน่วง
+        โปรดจำกัดความถี่ในการค้นหา เนื่องจากมี $\text{Fair Use Policy}$ (ไม่ควรเกิน 1 คำขอต่อวินาที) และความแม่นยำอาจไม่เท่า $\text{Google}$
       </p>
     </div>
   );
