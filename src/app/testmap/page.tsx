@@ -18,7 +18,7 @@ interface NominatimResult {
   display_name: string;
 }
 
-const InitialMapCenter: LatLong = { lat: 13.7367, lng: 100.5231 }; // Bangkok center
+const InitialMapCenter: LatLong = { lat: 13.7367, lng: 100.5231 }; // Bangkok center (Fallback)
 const InitialZoom = 13;
 
 const MapComponent = () => {
@@ -39,13 +39,16 @@ const MapComponent = () => {
       link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
       document.head.appendChild(link);
 
-      // Initialize the map (only once)
-      if (!mapRef.current) {
+      // --- NEW LOGIC: Map Initialization Function ---
+      const setupMap = (coordsToUse: LatLong, zoomToUse: number) => {
+        if (mapRef.current) return; // Prevent re-initialization
+
         if (!document.getElementById('map-container')) {
             console.error("Map container div not found!");
             return;
         }
-        const map = L.map('map-container').setView([InitialMapCenter.lat, InitialMapCenter.lng], InitialZoom);
+        
+        const map = L.map('map-container').setView([coordsToUse.lat, coordsToUse.lng], zoomToUse);
         mapRef.current = map;
 
         // Add OpenStreetMap tile layer
@@ -54,9 +57,9 @@ const MapComponent = () => {
         }).addTo(map);
 
         // Create the initial marker
-        const marker = L.marker([InitialMapCenter.lat, InitialMapCenter.lng]).addTo(map);
+        const marker = L.marker([coordsToUse.lat, coordsToUse.lng]).addTo(map);
         markerRef.current = marker;
-        setCoords(InitialMapCenter);
+        setCoords(coordsToUse);
 
         // Handle map click event
         map.on('click', (e: L.LeafletMouseEvent) => {
@@ -67,7 +70,34 @@ const MapComponent = () => {
           setCoords({ lat: newLat, lng: newLng });
           setSearchResults([]); // Clear search results after manual click
         });
+      };
+      
+      // --- GEOLOCATION ATTEMPT ---
+      if (navigator.geolocation) {
+        const success = (position: GeolocationPosition) => {
+          const currentCoords = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          };
+          // Use current location with higher zoom (16)
+          setupMap(currentCoords, 16); 
+        };
+
+        const error = (err: GeolocationPositionError) => {
+          console.warn(`Geolocation Error (${err.code}): ${err.message}. Falling back to default center.`);
+          // If error (denied or failed), use the default center
+          setupMap(InitialMapCenter, InitialZoom);
+        };
+
+        // Attempt to get user's location (with a 5-second timeout)
+        navigator.geolocation.getCurrentPosition(success, error, { timeout: 5000 });
+      } else {
+        console.log("Geolocation is not supported by this browser. Using default center.");
+        // If browser doesn't support, use the default center
+        setupMap(InitialMapCenter, InitialZoom);
       }
+      // --- END GEOLOCATION LOGIC ---
+
 
       // Cleanup function
       return () => {
@@ -130,7 +160,9 @@ const MapComponent = () => {
     <div className="p-4 space-y-6">
       <h2 className="text-xl font-semibold text-gray-800">1. ค้นหาและปักหมุดตำแหน่งร้านค้า (Cost-Free)</h2>
       <p className="text-sm text-gray-600">
-        {/* แก้ไขบรรทัดที่ 134: ใช้ Bold แทน LaTeX เพื่อหลีกเลี่ยงการตีความผิด */}
+        **โปรดอนุญาตให้เบราว์เซอร์เข้าถึงตำแหน่ง** เพื่อให้แผนที่แสดงตำแหน่งปัจจุบันของคุณ
+      </p>
+      <p className="text-sm text-gray-600">
         ใช้ช่องค้นหาเพื่อระบุตำแหน่งเบื้องต้น (ใช้ **Nominatim** ฟรี) จากนั้นคลิกบนแผนที่เพื่อปรับตำแหน่งที่แม่นยำ
       </p>
 
@@ -206,8 +238,7 @@ const MapComponent = () => {
       </div>
 
       <p className="text-xs text-red-500 mt-4">
-        {/* แก้ไขบรรทัดที่ 184: ใช้ Bold แทน LaTeX เพื่อหลีกเลี่ยงการตีความผิด */}
-        *ข้อควรระวัง: ..
+        ...
       </p>
     </div>
   );
