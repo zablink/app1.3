@@ -189,8 +189,7 @@ const MapComponent = () => {
       </div>
 
       <p className="text-xs text-red-500 mt-4">
-        *ข้อควรระวัง: $\text{Nominatim}$ เป็นบริการ $\text{Geocoding}$ แบบ $\text{Open-Source}$ สำหรับการใช้งานที่ไม่หนักหน่วง
-        โปรดจำกัดความถี่ในการค้นหา เนื่องจากมี $\text{Fair Use Policy}$ (ไม่ควรเกิน 1 คำขอต่อวินาที) และความแม่นยำอาจไม่เท่า $\text{Google}$
+        *ข้อควรระวัง: ...
       </p>
     </div>
   );
