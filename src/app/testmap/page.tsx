@@ -8,13 +8,22 @@ interface LatLong {
   lng: number;
 }
 
+// NEW INTERFACE for Nominatim API results to replace 'any'
+interface NominatimResult {
+  lat: string;
+  lon: string;
+  display_name: string;
+  // Add other properties if needed later
+}
+
 const InitialMapCenter: LatLong = { lat: 13.7367, lng: 100.5231 }; // Bangkok center
 const InitialZoom = 13;
 
 const MapComponent = () => {
   const [coords, setCoords] = useState<LatLong | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [searchResults, setSearchResults] = useState<any[]>([]);
+  // Use NominatimResult[] instead of any[]
+  const [searchResults, setSearchResults] = useState<NominatimResult[]>([]);
   const mapRef = useRef<L.Map | null>(null);
   const markerRef = useRef<L.Marker | null>(null);
 
@@ -29,6 +38,11 @@ const MapComponent = () => {
 
       // Initialize the map (only once)
       if (!mapRef.current) {
+        // Ensure map container exists before calling L.map
+        if (!document.getElementById('map-container')) {
+            console.error("Map container div not found!");
+            return;
+        }
         const map = L.map('map-container').setView([InitialMapCenter.lat, InitialMapCenter.lng], InitialZoom);
         mapRef.current = map;
 
@@ -57,26 +71,28 @@ const MapComponent = () => {
       return () => {
         if (mapRef.current) {
           mapRef.current.remove();
-          document.head.removeChild(link);
+          // Remove CSS link to prevent duplicates, though often not strictly necessary for simple apps
+          if (document.head.contains(link)) {
+            document.head.removeChild(link);
+          }
           mapRef.current = null;
           markerRef.current = null;
         }
       };
     }).catch(error => console.error("Error loading Leaflet:", error));
-  }, []);
+  }, []); // Run only once on mount
 
   // Function to search address using Nominatim API (Open-Source Geocoding)
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchTerm.trim()) return;
 
-    // NOTE: Nominatim is free but has a Fair Use Policy (max 1 req/sec). 
-    // It's suitable for Admin panels but not for public high-traffic usage.
     const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchTerm)}&format=json&limit=5&countrycodes=th`;
 
     try {
       const response = await fetch(url);
-      const data = await response.json();
+      // Explicitly cast data to NominatimResult[]
+      const data = await response.json() as NominatimResult[]; 
       setSearchResults(data);
 
       if (data.length > 0) {
@@ -98,7 +114,8 @@ const MapComponent = () => {
   };
 
   // Function to select a result from the search list
-  const handleSelectResult = (result: any) => {
+  // Use NominatimResult type for the result parameter
+  const handleSelectResult = (result: NominatimResult) => {
     const lat = parseFloat(result.lat);
     const lng = parseFloat(result.lon);
 
@@ -189,7 +206,7 @@ const MapComponent = () => {
       </div>
 
       <p className="text-xs text-red-500 mt-4">
-        *ข้อควรระวัง: ...
+        *ข้อควรระวัง:...
       </p>
     </div>
   );
