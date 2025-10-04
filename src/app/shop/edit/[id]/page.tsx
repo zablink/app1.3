@@ -428,7 +428,7 @@ export default function ShopAdminEditPage() {
                                 href="/shop/packages" 
                                 className="text-center py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition"
                             >
-                                📦 เปลี่ยน Package ร้านค้า
+                                📦 เปลี่ยน Package ร้านค้า 
                             </Link>
                             <Link 
                                 href="/shop/advertise" 
