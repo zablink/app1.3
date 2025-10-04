@@ -502,4 +502,58 @@ export default function ShopAdminEditPage({ params }) {
                                     <div className="absolute inset-0 bg-black bg-opacity-30 flex flex-col justify-end p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                                         <div className="flex justify-between items-center text-xs space-x-1">
                                             {img.isFeatured ? (
-                                                <span className="bg-green-600
+                                                <span className="bg-green-600 text-white font-bold px-2 py-1 rounded-full">⭐ หน้าปก</span>
+                                            ) : (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleSetFeatured(img.id)}
+                                                    className="bg-indigo-600 text-white hover:bg-indigo-700 px-2 py-1 rounded-full transition"
+                                                >
+                                                    ตั้งเป็นหน้าปก
+                                                </button>
+                                            )}
+                                            <button
+                                                type="button"
+                                                onClick={() => handleRemoveImage(img.id)}
+                                                className="p-1 bg-red-600 text-white rounded-full hover:bg-red-700 transition"
+                                                title="ลบรูปภาพ"
+                                            >
+                                                <X className="w-4 h-4"/>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                         {shop.gallery.length === 0 && (
+                            <p className="text-center text-gray-500 py-4 border rounded-lg">ยังไม่มีรูปภาพในแกลเลอรี่</p>
+                         )}
+                    </div>
+                    
+                    {/* --- SECTION 5: ACTIONS --- */}
+                    <div className="pt-6 space-y-4 border-t">
+                        <button
+                            type="submit"
+                            disabled={status === 'saving'}
+                            className={`w-full py-3 text-lg font-semibold rounded-lg shadow-lg transition duration-150 ${status === 'saving' ? 'bg-indigo-400' : 'bg-indigo-600 hover:bg-indigo-700 text-white'}`}
+                        >
+                            {status === 'saving' ? 'กำลังบันทึกข้อมูล...' : '💾 บันทึกการเปลี่ยนแปลงร้านค้า'}
+                        </button>
+                        
+                        {status === 'saved' && <p className="text-center text-green-600 font-medium">✅ บันทึกข้อมูลสำเร็จแล้ว!</p>}
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
+                            <Link href="/shop/packages" className="text-center py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition">
+                                📦 เปลี่ยน Package ร้านค้า
+                            </Link>
+                            <Link href="/shop/advertise" className="text-center py-2 border border-red-400 rounded-lg text-red-600 hover:bg-red-50 transition">
+                                📢 หน้าซื้อโฆษณา (บูสต์ร้าน)
+                            </Link>
+                        </div>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    );
+}
