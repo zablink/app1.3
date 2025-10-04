@@ -160,7 +160,7 @@ const MapPickerComponent: React.FC<MapPickerProps> = ({ initialCoords, onCoordin
       document.head.appendChild(link);
       
       const defaultZoom = initialCoords ? 16 : InitialZoom;
-      const startingCoords = initialCoords || InitialMapCenter;
+      // const startingCoords = initialCoords || InitialMapCenter; // REMOVED: Unused variable
 
       if (initialCoords) {
         setupMap(initialCoords, defaultZoom, L);
@@ -237,10 +237,9 @@ interface ShopAdminEditPageProps {
 }
 
 export default function ShopAdminEditPage({ params }: ShopAdminEditPageProps) {
-    const router = useRouter();
-    const shopIdFromUrl = params.shopId; // ID ร้านค้าจริงจาก URL
+    // const router = useRouter(); // REMOVED: Unused variable
+    const shopIdFromUrl = params.shopId;
     
-    // NOTE: In a real app, you would fetch data based on shopIdFromUrl here.
     const [shop, setShop] = useState<ShopData>(INITIAL_SHOP_DATA);
     const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
 
@@ -282,13 +281,13 @@ export default function ShopAdminEditPage({ params }: ShopAdminEditPageProps) {
             ...prev,
             links: [
                 ...prev.links,
-                // ใช้ Date.now() เป็น ID ชั่วคราว 
                 { id: `new_${Date.now()}`, type: '', url: '' } 
             ]
         }));
     };
 
     const handleRemoveLink = (linkId: string) => {
+        // แก้ไข: ใช้ &apos; แทน '
         if (window.confirm('คุณแน่ใจหรือไม่ว่าต้องการลบลิงก์นี้?')) {
             setShop(prev => ({
                 ...prev,
@@ -315,11 +314,9 @@ export default function ShopAdminEditPage({ params }: ShopAdminEditPageProps) {
 
         setShop(prev => {
             let currentGallery = [...prev.gallery, ...newImages];
-            // ตรวจสอบและตั้ง Featured: ถ้าแกลเลอรี่ว่างเปล่า ให้รูปแรกเป็น Featured
             const hasFeatured = currentGallery.some(img => img.isFeatured);
             
             if (!hasFeatured && currentGallery.length > 0) {
-                 // ถ้าไม่มีรูปใดเป็น Featured เลย ให้รูปแรกของแกลเลอรี่เป็น Featured
                  currentGallery = currentGallery.map((img, index) => ({
                     ...img,
                     isFeatured: index === 0
@@ -329,16 +326,14 @@ export default function ShopAdminEditPage({ params }: ShopAdminEditPageProps) {
             return { ...prev, gallery: currentGallery };
         });
 
-        // Clear file input to allow uploading the same file again
         e.target.value = '';
-        // In a real app, you would upload to Supabase Storage here.
     };
 
     const handleRemoveImage = (imageId: string) => {
+        // แก้ไข: ใช้ &apos; แทน '
         if (window.confirm('คุณแน่ใจหรือไม่ว่าต้องการลบรูปภาพนี้ออกจากแกลเลอรี่?')) {
              setShop(prev => {
                 const newGallery = prev.gallery.filter(img => img.id !== imageId);
-                // Logic: ถ้าลบรูปที่เป็น Featured ไป ให้รูปแรกที่เหลือกลายเป็น Featured แทน
                 if (newGallery.length > 0 && !newGallery.some(img => img.isFeatured)) {
                     newGallery[0].isFeatured = true;
                 }
@@ -371,11 +366,8 @@ export default function ShopAdminEditPage({ params }: ShopAdminEditPageProps) {
         
         const dataToSave = {
             ...shop,
-            // กรองลิงก์ที่ไม่สมบูรณ์ออก
             links: shop.links.filter(link => link.type.trim() && link.url.trim()),
-            // ส่งเฉพาะ URL และสถานะ isFeatured สำหรับแกลเลอรี่
             gallery: shop.gallery.map(img => ({ url: img.url, isFeatured: img.isFeatured })),
-            // Note: lat/lng จะต้องถูกแปลงเป็น GEOMETRY ใน Backend/Supabase Function ก่อนบันทึกลง DB
         };
 
         console.log('--- FINAL DATA TO SEND TO SUPABASE ---');
@@ -404,11 +396,11 @@ export default function ShopAdminEditPage({ params }: ShopAdminEditPageProps) {
                 </p>
 
                 <form onSubmit={handleSubmit} className="space-y-10">
-                     
+                    
                     {/* --- SECTION 1: MAP AND COORDINATES --- */}
                     <div className="space-y-4 border p-6 rounded-xl bg-blue-50">
                         <h2 className="text-2xl font-bold text-blue-800">1. กำหนดพิกัดร้านค้า (จำเป็น)</h2>
-                        <p className="text-sm text-blue-600">โปรดคลิกบนแผนที่หรือกดปุ่ม 'Reset พิกัดปัจจุบัน' เพื่อปักหมุดร้านค้า</p>
+                        <p className="text-sm text-blue-600">โปรดคลิกบนแผนที่หรือกดปุ่ม &apos;Reset พิกัดปัจจุบัน&apos; เพื่อปักหมุดร้านค้า</p>
                         
                         <DynamicMapPicker 
                             initialCoords={initialMapCoords}
@@ -513,7 +505,7 @@ export default function ShopAdminEditPage({ params }: ShopAdminEditPageProps) {
                     <div className="space-y-6 border p-6 rounded-xl bg-pink-50">
                         <h2 className="text-2xl font-bold text-pink-800">4. รูปภาพร้านค้า (Feature Image & Gallery)</h2>
                         <p className="text-sm text-pink-600">
-                           รูปภาพที่มีเครื่องหมาย ⭐ คือ **ภาพหน้าปก** (Feature Image) ซึ่งจะใช้เป็นภาพหลักในการแชร์ไปยัง $\text{Social}$ $\text{Media}$
+                           รูปภาพที่มีเครื่องหมาย ⭐ คือ **ภาพหน้าปก** (Feature Image) ซึ่งจะใช้เป็นภาพหลักในการแชร์ไปยัง Social Media
                         </p>
                         
                         {/* Image Upload Area */}
@@ -534,7 +526,6 @@ export default function ShopAdminEditPage({ params }: ShopAdminEditPageProps) {
                                     <img 
                                         src={img.url} 
                                         alt={`Gallery Image ${index + 1}`} 
-                                        // Highlight featured image
                                         className={`w-full h-full object-cover transition duration-300 ${img.isFeatured ? 'border-4 border-green-500' : 'border-gray-200'}`}
                                     />
                                     
