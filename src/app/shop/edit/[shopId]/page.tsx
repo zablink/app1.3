@@ -10,13 +10,14 @@ import Link from 'next/link';
 import { Trash2, Plus, Upload, X, MapPin } from 'lucide-react'; 
 
 // -------------------------------------------------------------------------
-// 1. DATA AND INTERFACES
+// 1. DATA AND INTERFACES (UNCHANGED)
 // -------------------------------------------------------------------------
 
 interface LatLong {
   lat: number;
   lng: number;
 }
+// ... (ShopLink, ShopImage, ShopData Interfaces remains the same) ...
 
 interface ShopLink {
     id: string; 
@@ -39,7 +40,7 @@ interface ShopData {
   lng: number | null; 
   address: string | null;
   categoryId: string;
-  image: string | null; // Feature image URL (Legacy/Main image)
+  image: string | null; 
   
   hasPhysicalStore: boolean;
   showLocationOnMap: boolean;
@@ -52,167 +53,158 @@ const InitialMapCenter: LatLong = { lat: 13.7367, lng: 100.5231 };
 const InitialZoom = 13;
 
 const INITIAL_SHOP_DATA: ShopData = {
-  id: MOCK_SHOP_ID,
-  ownerId: 'user_456',
-  name: 'ร้านอาหารเจริญดี',
-  description: 'ร้านนี้อร่อยมาก',
-  lat: 13.7563, 
-  lng: 100.5018, 
-  address: '123 ถนนสุขุมวิท กรุงเทพฯ',
-  categoryId: 'food',
-  image: '/path/to/feature_image.jpg',
-  hasPhysicalStore: true,
-  showLocationOnMap: false,
-  links: [
-    { id: 'link_1', type: 'GrabFood', url: 'https://grab.com/shop123' },
-    { id: 'link_2', type: 'Website', url: 'https://jareondee.com' }
-  ],
-  gallery: [
-    { id: 'img_1', url: '/path/to/feature_image.jpg', isFeatured: true },
-    { id: 'img_2', url: 'https://picsum.photos/seed/shop2/300/400', isFeatured: false },
-    { id: 'img_3', url: 'https://picsum.photos/seed/shop3/500/300', isFeatured: false }
-  ]
+    // ... (Mock data remains the same) ...
+    id: MOCK_SHOP_ID,
+    ownerId: 'user_456',
+    name: 'ร้านอาหารเจริญดี',
+    description: 'ร้านนี้อร่อยมาก',
+    lat: 13.7563, 
+    lng: 100.5018, 
+    address: '123 ถนนสุขุมวิท กรุงเทพฯ',
+    categoryId: 'food',
+    image: '/path/to/feature_image.jpg',
+    hasPhysicalStore: true,
+    showLocationOnMap: false,
+    links: [
+      { id: 'link_1', type: 'GrabFood', url: 'https://grab.com/shop123' },
+      { id: 'link_2', type: 'Website', url: 'https://jareondee.com' }
+    ],
+    gallery: [
+      { id: 'img_1', url: '/path/to/feature_image.jpg', isFeatured: true },
+      { id: 'img_2', url: 'https://picsum.photos/seed/shop2/300/400', isFeatured: false },
+      { id: 'img_3', url: 'https://picsum.photos/seed/shop3/500/300', isFeatured: false }
+    ]
 };
 
 
 // -------------------------------------------------------------------------
-// 2. MAP PICKER COMPONENT 
+// 2. MAP PICKER COMPONENT (UNCHANGED)
 // -------------------------------------------------------------------------
 
 interface MapPickerProps {
     initialCoords: LatLong | null;
     onCoordinateChange: (latLng: LatLong) => void;
 }
+// ... (MapPickerComponent and DynamicMapPicker code remains the same) ...
+
 
 const MapPickerComponent: React.FC<MapPickerProps> = ({ initialCoords, onCoordinateChange }) => {
-  const [isLocating, setIsLocating] = useState(false);
-  const mapRef = useRef<L.Map | null>(null); 
-  const markerRef = useRef<L.Marker | null>(null);
-  
-  const setupMap = useCallback((coordsToUse: LatLong, zoomToUse: number, LInstance: typeof L) => {
-    if (mapRef.current) return;
+    // ... (Map logic remains the same) ...
+    const [isLocating, setIsLocating] = useState(false);
+    const mapRef = useRef<L.Map | null>(null); 
+    const markerRef = useRef<L.Marker | null>(null);
 
-    if (!document.getElementById('shop-map-container')) {
-        console.error("Map container div not found!");
-        return;
-    }
-    
-    const map = LInstance.map('shop-map-container').setView([coordsToUse.lat, coordsToUse.lng], zoomToUse);
-    mapRef.current = map;
-
-    LInstance.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-    }).addTo(map);
-
-    const marker = LInstance.marker([coordsToUse.lat, coordsToUse.lng]).addTo(map);
-    markerRef.current = marker;
-    onCoordinateChange(coordsToUse);
-
-    map.on('click', (e: L.LeafletMouseEvent) => {
-      const newLat = e.latlng.lat;
-      const newLng = e.latlng.lng;
-      
-      markerRef.current?.setLatLng([newLat, newLng]);
-      onCoordinateChange({ lat: newLat, lng: newLng });
-    });
-  }, [onCoordinateChange]);
-
-
-  const handleLocateMe = useCallback(() => {
-    if (!mapRef.current || !markerRef.current || !navigator.geolocation) {
-        alert("ไม่รองรับ Geolocation หรือแผนที่ยังไม่พร้อม");
-        return;
-    }
-
-    setIsLocating(true);
-    
-    navigator.geolocation.getCurrentPosition(
-      (position: GeolocationPosition) => {
-        const currentCoords = {
-          lat: position.coords.latitude,
-          lng: position.coords.longitude
-        };
-        
-        mapRef.current!.setView([currentCoords.lat, currentCoords.lng], 18);
-        markerRef.current!.setLatLng([currentCoords.lat, currentCoords.lng]);
-        onCoordinateChange(currentCoords);
-        setIsLocating(false);
-      },
-      (err: GeolocationPositionError) => {
-        console.warn(`Geolocation Error (${err.code}): ${err.message}.`);
-        alert("ไม่สามารถหาตำแหน่งปัจจุบันได้ โปรดตรวจสอบว่าอนุญาตให้เข้าถึงตำแหน่งในเบราว์เซอร์แล้ว");
-        setIsLocating(false);
-      },
-      { 
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0
-      }
-    );
-  }, [onCoordinateChange]);
-
-
-  useEffect(() => {
-    import('leaflet').then(L => { 
-      const link = document.createElement('link');
-      link.rel = 'stylesheet';
-      link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
-      document.head.appendChild(link);
-      
-      const defaultZoom = initialCoords ? 16 : InitialZoom;
-      // const startingCoords = initialCoords || InitialMapCenter; // REMOVED: Unused variable
-
-      if (initialCoords) {
-        setupMap(initialCoords, defaultZoom, L);
-      } else if (navigator.geolocation) {
-         navigator.geolocation.getCurrentPosition(
-            (position: GeolocationPosition) => {
-                const currentCoords = { lat: position.coords.latitude, lng: position.coords.longitude };
-                setupMap(currentCoords, 16, L); 
-            },
-            () => {
-                setupMap(InitialMapCenter, InitialZoom, L);
-            },
-            { enableHighAccuracy: true, timeout: 5000 }
-        );
-      } else {
-          setupMap(InitialMapCenter, InitialZoom, L);
-      }
-
-      return () => {
-        if (mapRef.current) {
-          mapRef.current.remove();
-          if (document.head.contains(link)) {
-            document.head.removeChild(link);
-          }
-          mapRef.current = null;
-          markerRef.current = null;
+    const setupMap = useCallback((coordsToUse: LatLong, zoomToUse: number, LInstance: typeof L) => {
+        if (mapRef.current) return;
+        if (!document.getElementById('shop-map-container')) {
+            console.error("Map container div not found!");
+            return;
         }
-      };
-    }).catch(error => console.error("Error loading Leaflet:", error));
-  }, [initialCoords, setupMap]);
+        
+        const map = LInstance.map('shop-map-container').setView([coordsToUse.lat, coordsToUse.lng], zoomToUse);
+        mapRef.current = map;
+
+        LInstance.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        const marker = LInstance.marker([coordsToUse.lat, coordsToUse.lng]).addTo(map);
+        markerRef.current = marker;
+        onCoordinateChange(coordsToUse);
+
+        map.on('click', (e: L.LeafletMouseEvent) => {
+          const newLat = e.latlng.lat;
+          const newLng = e.latlng.lng;
+          
+          markerRef.current?.setLatLng([newLat, newLng]);
+          onCoordinateChange({ lat: newLat, lng: newLng });
+        });
+    }, [onCoordinateChange]);
+
+    const handleLocateMe = useCallback(() => {
+        if (!mapRef.current || !markerRef.current || !navigator.geolocation) {
+            alert("ไม่รองรับ Geolocation หรือแผนที่ยังไม่พร้อม");
+            return;
+        }
+
+        setIsLocating(true);
+        
+        navigator.geolocation.getCurrentPosition(
+          (position: GeolocationPosition) => {
+            const currentCoords = { lat: position.coords.latitude, lng: position.coords.longitude };
+            mapRef.current!.setView([currentCoords.lat, currentCoords.lng], 18);
+            markerRef.current!.setLatLng([currentCoords.lat, currentCoords.lng]);
+            onCoordinateChange(currentCoords);
+            setIsLocating(false);
+          },
+          (err: GeolocationPositionError) => {
+            console.warn(`Geolocation Error (${err.code}): ${err.message}.`);
+            alert("ไม่สามารถหาตำแหน่งปัจจุบันได้ โปรดตรวจสอบว่าอนุญาตให้เข้าถึงตำแหน่งในเบราว์เซอร์แล้ว");
+            setIsLocating(false);
+          },
+          { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        );
+    }, [onCoordinateChange]);
+
+    useEffect(() => {
+        import('leaflet').then(L => { 
+          const link = document.createElement('link');
+          link.rel = 'stylesheet';
+          link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+          document.head.appendChild(link);
+          
+          const defaultZoom = initialCoords ? 16 : InitialZoom;
+
+          if (initialCoords) {
+            setupMap(initialCoords, defaultZoom, L);
+          } else if (navigator.geolocation) {
+             navigator.geolocation.getCurrentPosition(
+                (position: GeolocationPosition) => {
+                    const currentCoords = { lat: position.coords.latitude, lng: position.coords.longitude };
+                    setupMap(currentCoords, 16, L); 
+                },
+                () => {
+                    setupMap(InitialMapCenter, InitialZoom, L);
+                },
+                { enableHighAccuracy: true, timeout: 5000 }
+            );
+          } else {
+              setupMap(InitialMapCenter, InitialZoom, L);
+          }
+
+          return () => {
+            if (mapRef.current) {
+              mapRef.current.remove();
+              if (document.head.contains(link)) {
+                document.head.removeChild(link);
+              }
+              mapRef.current = null;
+              markerRef.current = null;
+            }
+          };
+        }).catch(error => console.error("Error loading Leaflet:", error));
+    }, [initialCoords, setupMap]);
 
 
-  return (
-    <div className="space-y-4">
-        <div id="shop-map-container" className="w-full h-[50vh] rounded-xl shadow-md border border-gray-200">
-             {/* Fallback/Loading UI before Leaflet initializes */}
-             {!mapRef.current && (
-                 <div className="flex items-center justify-center h-full text-gray-500 bg-gray-100/50">
-                    <MapPin className="w-6 h-6 mr-2" /> กำลังโหลดแผนที่... (คลิกเพื่อปักหมุดเมื่อพร้อม)
-                 </div>
-             )}
+    return (
+        <div className="space-y-4">
+            <div id="shop-map-container" className="w-full h-[50vh] rounded-xl shadow-md border border-gray-200">
+                 {!mapRef.current && (
+                     <div className="flex items-center justify-center h-full text-gray-500 bg-gray-100/50">
+                        <MapPin className="w-6 h-6 mr-2" /> กำลังโหลดแผนที่... (คลิกเพื่อปักหมุดเมื่อพร้อม)
+                     </div>
+                 )}
+            </div>
+            <button
+                onClick={handleLocateMe}
+                disabled={isLocating}
+                type="button"
+                className={`w-full py-3 text-white rounded-lg transition duration-150 shadow-md ${isLocating ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'}`}
+            >
+                {isLocating ? 'กำลังค้นหาพิกัด...' : '📍 Reset พิกัดปัจจุบัน'}
+            </button>
         </div>
-        <button
-            onClick={handleLocateMe}
-            disabled={isLocating}
-            type="button"
-            className={`w-full py-3 text-white rounded-lg transition duration-150 shadow-md ${isLocating ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'}`}
-        >
-            {isLocating ? 'กำลังค้นหาพิกัด...' : '📍 Reset พิกัดปัจจุบัน'}
-        </button>
-    </div>
-  );
+    );
 };
 
 const DynamicMapPicker = dynamic(() => Promise.resolve(MapPickerComponent), {
@@ -229,21 +221,21 @@ const DynamicMapPicker = dynamic(() => Promise.resolve(MapPickerComponent), {
 // 3. MAIN SHOP ADMIN PAGE 
 // -------------------------------------------------------------------------
 
-// Interface สำหรับ props ที่มาจาก Dynamic Route
-interface ShopAdminEditPageProps {
-  params: {
-    shopId: string;
-  };
-}
+// REMOVED: interface ShopAdminEditPageProps 
 
-export default function ShopAdminEditPage({ params }: ShopAdminEditPageProps) {
-    // const router = useRouter(); // REMOVED: Unused variable
+// ❗ FIX: ใช้ Utility Type ใน Function Signature โดยตรง ❗
+export default function ShopAdminEditPage({ 
+    params 
+}: { 
+    params: { shopId: string }; 
+}) {
     const shopIdFromUrl = params.shopId;
     
     const [shop, setShop] = useState<ShopData>(INITIAL_SHOP_DATA);
     const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
 
-    // Handler for all non-dynamic form fields
+    // ... (Handler functions remain the same) ...
+
     const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value, type } = e.target;
         
@@ -257,7 +249,6 @@ export default function ShopAdminEditPage({ params }: ShopAdminEditPageProps) {
         }
     };
     
-    // Handler for map component
     const handleCoordinateChange = (latLng: LatLong) => {
         setShop(prev => ({
             ...prev,
@@ -266,9 +257,6 @@ export default function ShopAdminEditPage({ params }: ShopAdminEditPageProps) {
         }));
     };
     
-    // -----------------------------------
-    // LINK MANAGEMENT HANDLERS
-    // -----------------------------------
     const handleLinkChange = (index: number, field: 'type' | 'url', value: string) => {
         const newLinks = [...shop.links];
         newLinks[index][field] = value;
@@ -287,7 +275,6 @@ export default function ShopAdminEditPage({ params }: ShopAdminEditPageProps) {
     };
 
     const handleRemoveLink = (linkId: string) => {
-        // แก้ไข: ใช้ &apos; แทน '
         if (window.confirm('คุณแน่ใจหรือไม่ว่าต้องการลบลิงก์นี้?')) {
             setShop(prev => ({
                 ...prev,
@@ -296,9 +283,6 @@ export default function ShopAdminEditPage({ params }: ShopAdminEditPageProps) {
         }
     };
 
-    // -----------------------------------
-    // GALLERY MANAGEMENT HANDLERS (Mock)
-    // -----------------------------------
     const handleMockFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files || []);
         if (files.length === 0) return;
@@ -330,7 +314,6 @@ export default function ShopAdminEditPage({ params }: ShopAdminEditPageProps) {
     };
 
     const handleRemoveImage = (imageId: string) => {
-        // แก้ไข: ใช้ &apos; แทน '
         if (window.confirm('คุณแน่ใจหรือไม่ว่าต้องการลบรูปภาพนี้ออกจากแกลเลอรี่?')) {
              setShop(prev => {
                 const newGallery = prev.gallery.filter(img => img.id !== imageId);
@@ -347,14 +330,11 @@ export default function ShopAdminEditPage({ params }: ShopAdminEditPageProps) {
             ...prev,
             gallery: prev.gallery.map(img => ({
                 ...img,
-                isFeatured: img.id === imageId // Set only the selected image as featured
+                isFeatured: img.id === imageId
             }))
         }));
     };
 
-    // -----------------------------------
-    // SUBMISSION HANDLER
-    // -----------------------------------
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (shop.lat === null || shop.lng === null) {
@@ -373,7 +353,6 @@ export default function ShopAdminEditPage({ params }: ShopAdminEditPageProps) {
         console.log('--- FINAL DATA TO SEND TO SUPABASE ---');
         console.log(JSON.stringify(dataToSave, null, 2));
         
-        // Simulate API call 
         setTimeout(() => {
             setStatus('saved');
             console.log('Shop data saved successfully!');
