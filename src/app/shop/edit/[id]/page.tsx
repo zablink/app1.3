@@ -424,18 +424,18 @@ export default function ShopAdminEditPage() {
                         
                         {/* Package and Ad Links */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
-                            <a 
+                            <Link 
                                 href="/shop/packages" 
                                 className="text-center py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition"
                             >
                                 📦 เปลี่ยน $\text{Package}$ ร้านค้า
-                            </a>
-                            <a 
+                            </Link>
+                            <Link 
                                 href="/shop/advertise" 
                                 className="text-center py-2 border border-red-400 rounded-lg text-red-600 hover:bg-red-50 transition"
                             >
                                 📢 หน้าซื้อโฆษณา (บูสต์ร้าน)
-                            </a>
+                            </Link>
                         </div>
                     </div>
 
