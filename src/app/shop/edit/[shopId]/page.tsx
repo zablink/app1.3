@@ -218,9 +218,13 @@ const DynamicMapPicker = dynamic(() => Promise.resolve(MapPickerComponent), {
 // 3. MAIN SHOP ADMIN PAGE 
 // -------------------------------------------------------------------------
 
-// ❗ FINAL FIX: ลบ Type Annotation ออกทั้งหมด เพื่อเลี่ยงความขัดแย้งกับ Next.js Type ❗
-export default function ShopAdminEditPage({ params }) {
-    const shopIdFromUrl = params.shopId as string; // ใช้ Type Assertion ภายในแทน
+// ❗ FINAL FINAL FIX: กำหนด Type In-line ที่ชัดเจน เพื่อแก้ Type 'any' Implicit ❗
+export default function ShopAdminEditPage({ 
+    params 
+}: { 
+    params: { shopId: string }; 
+}) {
+    const shopIdFromUrl = params.shopId; // TypeScript ทราบว่าเป็น string แล้ว
     
     const [shop, setShop] = useState<ShopData>(INITIAL_SHOP_DATA);
     const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
