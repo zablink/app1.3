@@ -404,7 +404,7 @@ export default function ShopAdminEditPage({ params }: ShopAdminEditPageProps) {
                 </p>
 
                 <form onSubmit={handleSubmit} className="space-y-10">
-                    
+                     
                     {/* --- SECTION 1: MAP AND COORDINATES --- */}
                     <div className="space-y-4 border p-6 rounded-xl bg-blue-50">
                         <h2 className="text-2xl font-bold text-blue-800">1. กำหนดพิกัดร้านค้า (จำเป็น)</h2>
