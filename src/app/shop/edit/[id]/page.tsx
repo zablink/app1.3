@@ -144,7 +144,7 @@ const DynamicMapPicker = dynamic(() => Promise.resolve(MapPickerComponent), {
 // 3. MAIN SHOP ADMIN PAGE (NEW LOGIC)
 // -------------------------------------------------------------------------
 
-export default function ShopAdminEditPage({ params }: { params: { shopId: string } }) {
+export default function ShopAdminEditPage({ params }: { params: { id: string } }) {
     const router = useRouter();
     const [shop, setShop] = useState<ShopData>(INITIAL_SHOP_DATA);
     const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
@@ -200,7 +200,7 @@ export default function ShopAdminEditPage({ params }: { params: { shopId: string
         }
     };
 
-    // -----------------------------------
+    // -----------------------------------  
     // GALLERY MANAGEMENT HANDLERS (Mock)
     // -----------------------------------
     const handleMockFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
