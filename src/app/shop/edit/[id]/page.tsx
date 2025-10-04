@@ -375,9 +375,9 @@ export default function ShopAdminEditPage() {
                     
                     {/* --- SECTION 3: DELIVERY LINKS (Links) --- */}
                     <div className="space-y-4 border p-6 rounded-xl bg-yellow-50">
-                         <h2 className="text-2xl font-bold text-yellow-800">3. ลิงก์ $\text{Food Delivery}$ และเว็บไซต์</h2>
+                         <h2 className="text-2xl font-bold text-yellow-800">3. ลิงก์ Food Delivery และเว็บไซต์</h2>
                          <p className="text-sm text-yellow-600">
-                            เช่น ลิงก์ $\text{Grab Food}$, $\text{Lineman}$ หรือเว็บไซต์หลักของร้าน (รองรับมากกว่า 1 ลิงก์)
+                            เช่น ลิงก์ Grab Food, Lineman หรือเว็บไซต์หลักของร้าน (รองรับมากกว่า 1 ลิงก์)
                          </p>
                          {/* This area requires complex state management (add/remove links), simplified here */}
                          
