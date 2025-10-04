@@ -6,6 +6,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import type * as L from 'leaflet';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 // -------------------------------------------------------------------------
 // 1. DATA AND INTERFACES
