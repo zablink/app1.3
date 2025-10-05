@@ -433,31 +433,33 @@ export default function ShopAdminEditPage({
                          </p>
                          
                          {shop.links.map((link, index) => (
-                              <div key={link.id} className="flex space-x-3 items-center">
+                              <div key={link.id} className="flex flex-col sm:flex-row gap-3 p-3 bg-white rounded-lg border border-yellow-200">
                                 <input 
                                     type="text" 
                                     name="type"
                                     value={link.type} 
                                     onChange={(e) => handleLinkChange(index, 'type', e.target.value)}
-                                    className="p-3 border border-gray-300 rounded-lg w-1/4"
+                                    className="p-3 border border-gray-300 rounded-lg w-full sm:w-1/4"
                                     placeholder="ชื่อบริการ (e.g., GrabFood)"
                                 />
-                                <input 
-                                    type="url" 
-                                    name="url"
-                                    value={link.url} 
-                                    onChange={(e) => handleLinkChange(index, 'url', e.target.value)}
-                                    className="p-3 border border-gray-300 rounded-lg flex-grow"
-                                    placeholder="URL (e.g., https://grab.com/...)"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => handleRemoveLink(link.id)}
-                                    className="p-3 text-white bg-red-500 rounded-lg hover:bg-red-600 transition"
-                                    title="ลบลิงก์นี้"
-                                >
-                                    <Trash2 className="w-5 h-5"/>
-                                </button>
+                                <div className="flex gap-2 flex-1">
+                                    <input 
+                                        type="url" 
+                                        name="url"
+                                        value={link.url} 
+                                        onChange={(e) => handleLinkChange(index, 'url', e.target.value)}
+                                        className="p-3 border border-gray-300 rounded-lg flex-grow"
+                                        placeholder="URL (e.g., https://grab.com/...)"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => handleRemoveLink(link.id)}
+                                        className="p-3 text-white bg-red-500 rounded-lg hover:bg-red-600 transition shrink-0"
+                                        title="ลบลิงก์นี้"
+                                    >
+                                        <Trash2 className="w-5 h-5"/>
+                                    </button>
+                                </div>
                             </div>
                          ))}
                          
