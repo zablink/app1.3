@@ -5,19 +5,17 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import type * as L from 'leaflet';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Trash2, Plus, Upload, X, MapPin } from 'lucide-react'; 
 
 // -------------------------------------------------------------------------
-// 1. DATA AND INTERFACES (UNCHANGED)
+// 1. DATA AND INTERFACES
 // -------------------------------------------------------------------------
 
 interface LatLong {
   lat: number;
   lng: number;
 }
-// ... (ShopLink, ShopImage, ShopData Interfaces remains the same) ...
 
 interface ShopLink {
     id: string; 
@@ -77,7 +75,7 @@ const INITIAL_SHOP_DATA: ShopData = {
 
 
 // -------------------------------------------------------------------------
-// 2. MAP PICKER COMPONENT (UNCHANGED)
+// 2. MAP PICKER COMPONENT
 // -------------------------------------------------------------------------
 
 interface MapPickerProps {
@@ -86,7 +84,6 @@ interface MapPickerProps {
 }
 
 const MapPickerComponent: React.FC<MapPickerProps> = ({ initialCoords, onCoordinateChange }) => {
-    // ... (Map logic remains the same) ...
     const [isLocating, setIsLocating] = useState(false);
     const mapRef = useRef<L.Map | null>(null); 
     const markerRef = useRef<L.Marker | null>(null);
@@ -218,18 +215,22 @@ const DynamicMapPicker = dynamic(() => Promise.resolve(MapPickerComponent), {
 // 3. MAIN SHOP ADMIN PAGE 
 // -------------------------------------------------------------------------
 
-// ❗ FINAL FINAL FIX: กำหนด Type In-line ที่ชัดเจน เพื่อแก้ Type 'any' Implicit ❗
+// ✅ FIX: ใช้ชื่อตรงกับโฟลเดอร์ [id] และรองรับ Promise
 export default function ShopAdminEditPage({ 
     params 
 }: { 
-    params: { shopId: string }; 
+    params: Promise<{ id: string }>; 
 }) {
-    const shopIdFromUrl = params.shopId; // TypeScript ทราบว่าเป็น string แล้ว
-    
+    const [shopId, setShopId] = useState<string>('');
     const [shop, setShop] = useState<ShopData>(INITIAL_SHOP_DATA);
     const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
 
-    // ... (Handler functions remain the same) ...
+    // ✅ Unwrap params Promise
+    useEffect(() => {
+        params.then(resolvedParams => {
+            setShopId(resolvedParams.id);
+        });
+    }, [params]);
 
     const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value, type } = e.target;
@@ -366,7 +367,7 @@ export default function ShopAdminEditPage({
                     แก้ไขข้อมูลร้านค้า: {shop.name}
                 </h1>
                 <p className="text-gray-500 mb-8 border-b pb-4">
-                    ID: {shopIdFromUrl} | จัดการโดย Owner: {shop.ownerId}
+                    ID: {shopId || 'กำลังโหลด...'} | จัดการโดย Owner: {shop.ownerId}
                 </p>
 
                 <form onSubmit={handleSubmit} className="space-y-10">
@@ -374,7 +375,7 @@ export default function ShopAdminEditPage({
                     {/* --- SECTION 1: MAP AND COORDINATES --- */}
                     <div className="space-y-4 border p-6 rounded-xl bg-blue-50">
                         <h2 className="text-2xl font-bold text-blue-800">1. กำหนดพิกัดร้านค้า (จำเป็น)</h2>
-                        <p className="text-sm text-blue-600">โปรดคลิกบนแผนที่หรือกดปุ่ม &apos;Reset พิกัดปัจจุบัน&apos; เพื่อปักหมุดร้านค้า</p>
+                        <p className="text-sm text-blue-600">โปรดคลิกบนแผนที่หรือกดปุ่ม Reset พิกัดปัจจุบัน เพื่อปักหมุดร้านค้า</p>
                         
                         <DynamicMapPicker 
                             initialCoords={initialMapCoords}
@@ -428,7 +429,7 @@ export default function ShopAdminEditPage({
                     <div className="space-y-4 border p-6 rounded-xl bg-yellow-50">
                          <h2 className="text-2xl font-bold text-yellow-800">3. ลิงก์ Food Delivery และเว็บไซต์</h2>
                          <p className="text-sm text-yellow-600 mb-4">
-                            เช่น ลิงก์ **Grab Food**, **Lineman** หรือเว็บไซต์หลักของร้าน (จำกัด 0 ถึง 5 ลิงก์)
+                            เช่น ลิงก์ Grab Food, Lineman หรือเว็บไซต์หลักของร้าน (จำกัด 0 ถึง 5 ลิงก์)
                          </p>
                          
                          {shop.links.map((link, index) => (
@@ -460,7 +461,6 @@ export default function ShopAdminEditPage({
                             </div>
                          ))}
                          
-                         {/* Add Link Button */}
                          {shop.links.length < 5 && (
                              <button
                                 type="button"
@@ -479,10 +479,9 @@ export default function ShopAdminEditPage({
                     <div className="space-y-6 border p-6 rounded-xl bg-pink-50">
                         <h2 className="text-2xl font-bold text-pink-800">4. รูปภาพร้านค้า (Feature Image & Gallery)</h2>
                         <p className="text-sm text-pink-600">
-                           รูปภาพที่มีเครื่องหมาย ⭐ คือ **ภาพหน้าปก** (Feature Image) ซึ่งจะใช้เป็นภาพหลักในการแชร์ไปยัง Social Media
+                           รูปภาพที่มีเครื่องหมาย ⭐ คือ ภาพหน้าปก (Feature Image) ซึ่งจะใช้เป็นภาพหลักในการแชร์ไปยัง Social Media
                         </p>
                         
-                        {/* Image Upload Area */}
                         <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-pink-400 border-dashed rounded-lg cursor-pointer bg-pink-100/50 hover:bg-pink-100 transition">
                             <div className="flex flex-col items-center justify-center pt-5 pb-6">
                                 <Upload className="w-8 h-8 text-pink-500"/>
@@ -492,7 +491,6 @@ export default function ShopAdminEditPage({
                             <input id="dropzone-file" type="file" className="hidden" multiple accept="image/*" onChange={handleMockFileUpload} />
                         </label>
                         
-                        {/* Gallery Display Area */}
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                             {shop.gallery.map((img, index) => (
                                 <div key={img.id} className="relative group overflow-hidden rounded-lg shadow-md border-2" style={{ aspectRatio: '1 / 1' }}>
