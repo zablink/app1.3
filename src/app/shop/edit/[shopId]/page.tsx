@@ -440,21 +440,21 @@ export default function ShopAdminEditPage({
                                     value={link.type} 
                                     onChange={(e) => handleLinkChange(index, 'type', e.target.value)}
                                     className="p-3 border border-gray-300 rounded-lg w-full sm:w-1/4"
-                                    placeholder="ชื่อบริการ (e.g., GrabFood)"
+                                    placeholder="ชื่อบริการ"
                                 />
-                                <div className="flex gap-2 flex-1">
+                                <div className="flex gap-2 flex-1 min-w-0">
                                     <input 
                                         type="url" 
                                         name="url"
                                         value={link.url} 
                                         onChange={(e) => handleLinkChange(index, 'url', e.target.value)}
-                                        className="p-3 border border-gray-300 rounded-lg flex-grow"
-                                        placeholder="URL (e.g., https://grab.com/...)"
+                                        className="p-3 border border-gray-300 rounded-lg flex-grow min-w-0"
+                                        placeholder="https://..."
                                     />
                                     <button
                                         type="button"
                                         onClick={() => handleRemoveLink(link.id)}
-                                        className="p-3 text-white bg-red-500 rounded-lg hover:bg-red-600 transition shrink-0"
+                                        className="p-2.5 text-white bg-red-500 rounded-lg hover:bg-red-600 transition shrink-0 flex items-center justify-center w-11 h-11"
                                         title="ลบลิงก์นี้"
                                     >
                                         <Trash2 className="w-5 h-5"/>
