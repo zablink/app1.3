@@ -27,7 +27,12 @@ export default function ComingSoon() {
       {/* Content Container
         - ตำแหน่ง: อยู่ด้านหน้า (z-10) และจัดกึ่งกลาง
       */}
-      <div className="relative z-10 text-center p-6 max-w-xl flex flex-col items-center">
+      <div className="relative z-10 text-center p-6 max-w-xl flex flex-col items-center">\
+
+        {/* Heading */}
+        <h2 className="text-6xl font-extrabold tracking-tight text-gray-900 sm:text-7xl mb-4 leading-tight">
+          อีกไม่นานเกินรอ
+        </h2>
         
         {/* Logo */}
         <div className="mb-8">
@@ -42,39 +47,13 @@ export default function ComingSoon() {
           />
         </div> 
         
-        {/* Heading */}
-        <h1 className="text-6xl font-extrabold tracking-tight text-gray-900 sm:text-7xl mb-4 leading-tight">
-          เว็บไซต์ใหม่<br className="sm:hidden" />**กำลังจะมา!**
-        </h1>
+        
         
         {/* Sub-text */}
         <p className="mt-4 text-xl text-gray-600 font-light">
-          เรากำลังทำงานอย่างขะมักเขม้นเพื่อสร้างประสบการณ์ที่ดีที่สุดให้กับคุณ 
-          โปรดติดตามการเปิดตัวอย่างเป็นทางการในเร็วๆ นี้
+          เว็บที่จะช่วยให้พ่อค้าแม่ค้าร้านอาหารเครื่องดื่มขายได้ดีขึ้น และ Content Creator สายรีวิวอาหาร จะมีรายได้เพิ่มขึ้น
         </p>
         
-        {/* Contact/CTA Area */}
-        <div className="mt-12 space-y-4 w-full">
-          
-          {/* Email Subscription (ตัวอย่าง) */}
-          <div className="flex justify-center flex-wrap gap-2">
-            <input 
-              type="email" 
-              placeholder="กรอกอีเมลเพื่อรับการแจ้งเตือน" 
-              className="p-3 border border-gray-300 rounded-lg shadow-sm w-full max-w-xs focus:ring-indigo-500 focus:border-indigo-500 text-base" 
-            />
-            <button 
-              className="px-5 py-3 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 transition duration-150 ease-in-out shadow-md"
-            >
-              แจ้งเตือน
-            </button>
-          </div>
-          
-          {/* Social Media/Contact */}
-          <p className="text-sm text-gray-500 pt-4">
-            ติดต่อสอบถาม: <a href="mailto:contact@yourdomain.com" className="text-indigo-600 hover:text-indigo-500 font-medium transition duration-150 ease-in-out">contact@yourdomain.com</a>
-          </p>
-        </div>
       </div>
 
       {/* Footer Placeholder */}
