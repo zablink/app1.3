@@ -35,8 +35,10 @@ export default function ComingSoon() {
             src="/images/big-logo-w-text.png" // Path ไปยังไฟล์โลโก้ของคุณในโฟลเดอร์ public
             alt="Zablink Logo" 
             width={250}    // กำหนดความกว้างของโลโก้ (ปรับได้ตามต้องการ)
-            height={auto}   // กำหนดความสูงของโลโก้ (ปรับได้ตามต้องการ)
+            height={248}   // กำหนดความสูงของโลโก้ (ปรับได้ตามต้องการ)
             priority       // โหลดรูปภาพนี้เป็นอันดับแรก (สำหรับ LCP)
+            layout="responsive"
+            style = {{ width:100%; height:'auto'}}
           />
         </div>
         
