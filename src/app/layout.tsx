@@ -57,7 +57,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="th" }>
+    <html lang="th">
       <head>
         {/* Additional meta tags if needed */}
         <meta name="theme-color" content="#ffffff" />
