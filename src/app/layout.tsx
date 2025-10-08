@@ -1,6 +1,5 @@
 // src/app/layout.tsx
 import type { Metadata } from 'next';
-import { Inter, Prompt } from 'next/font/google'; 
 import AppLayout from '@/components/AppLayout';
 import SessionProvider from '@/components/SessionProvider';
 
@@ -58,13 +57,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="th" className={`${inter.variable} ${prompt.variable}`}>
+    <html lang="th" }>
       <head>
         {/* Additional meta tags if needed */}
         <meta name="theme-color" content="#ffffff" />
         <meta name="msapplication-TileColor" content="#ffffff" />
       </head>
-      <body style={{ margin: 0, padding: 0, fontFamily: 'system-ui, sans-serif' }} className={inter.className}>
+      <body style={{ margin: 0, padding: 0, fontFamily: 'system-ui, sans-serif' }} >
         <SessionProvider>
           <AppLayout>
             {children}
