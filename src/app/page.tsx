@@ -10,7 +10,7 @@ import Image from 'next/image'; // ต้อง import Image component จาก
 export default function ComingSoon() {
   return (
     // Container หลัก: สีขาวเต็มหน้าจอ, จัดกึ่งกลาง
-    <div className="flex flex-col items-center justify-center min-h-screen bg-white overflow-hidden relative">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-white overflow-hidden relative font-prompt">
       
       {/* Blue Gradient Background Area
         - ตำแหน่ง: อยู่ด้านหลังเนื้อหา (z-0) และยึดติดด้านล่าง (bottom-0)
