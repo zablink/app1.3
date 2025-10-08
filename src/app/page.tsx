@@ -20,7 +20,7 @@ export default function ComingSoon() {
       <div 
         className="absolute inset-x-0 bottom-0 h-1/3 w-full z-0 opacity-80" 
         style={{
-          background: 'linear-gradient(to top, #e3f2fd 0%, #ffffff 100%)' // ฟ้าอ่อนไล่ไปหาขาว
+          background: 'linear-gradient(to top, #5badd4 0%, #ffffff 100%)' // ฟ้าอ่อนไล่ไปหาขาว
         }}
       ></div>
 
@@ -39,8 +39,8 @@ export default function ComingSoon() {
           <Image 
             src="/images/big-logo-w-text.png" // Path ไปยังไฟล์โลโก้ของคุณในโฟลเดอร์ public
             alt="Zablink Logo" 
-            width={250}    // กำหนดความกว้างของโลโก้ (ปรับได้ตามต้องการ)
-            height={248}   // กำหนดความสูงของโลโก้ (ปรับได้ตามต้องการ)
+            width={160}    // กำหนดความกว้างของโลโก้ (ปรับได้ตามต้องการ)
+            height={158}   // กำหนดความสูงของโลโก้ (ปรับได้ตามต้องการ)
             priority       // โหลดรูปภาพนี้เป็นอันดับแรก (สำหรับ LCP)
             layout="responsive" 
             style = {{ width:'100%', height:'auto'}}
