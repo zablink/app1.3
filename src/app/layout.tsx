@@ -5,12 +5,6 @@ import SessionProvider from '@/components/SessionProvider';
 
 import './globals.css';
 
-const inter = Inter({ subsets: ['latin'] });
-const prompt = Prompt({
-  subsets: ['latin', 'thai'], // 2. ระบุ subset 'thai'
-  weight: ['100', '300', '400', '500', '700', '900'], // 3. กำหนด Weight ที่ต้องการใช้
-  variable: '--font-prompt', // 4. ตั้งชื่อตัวแปร CSS
-});
 
 
 export const metadata: Metadata = {
