@@ -38,7 +38,7 @@ export default function ComingSoon() {
             height={248}   // กำหนดความสูงของโลโก้ (ปรับได้ตามต้องการ)
             priority       // โหลดรูปภาพนี้เป็นอันดับแรก (สำหรับ LCP)
             layout="responsive" 
-            style = {{ width:'100%'; height:'auto'}}
+            style = {{ width:'100%', height:'auto'}}
           />
         </div> 
         
