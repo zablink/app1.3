@@ -18,7 +18,7 @@ export default function ComingSoon() {
         - Gradient: จากสีฟ้าอ่อน (#e3f2fd) ขึ้นไปหาขาว (#ffffff)
       */}
       <div 
-        className="absolute inset-x-0 bottom-0 h-1/3 w-full z-0 opacity-80" 
+        className="absolute inset-x-0 bottom-0 h-1/2 w-full z-0 opacity-80" 
         style={{
           background: 'linear-gradient(to top, #5badd4 0%, #ffffff 100%)' // ฟ้าอ่อนไล่ไปหาขาว
         }}
@@ -57,7 +57,7 @@ export default function ComingSoon() {
       </div>
 
       {/* Footer Placeholder */}
-      <footer className="absolute bottom-4 text-xs text-gray-400 z-10">
+      <footer className="absolute bottom-4 text-xs text-white-400 z-10">
         © {new Date().getFullYear()} Vertex Horizon Co.,Ltd. All rights reserved.
       </footer>
     </div>
