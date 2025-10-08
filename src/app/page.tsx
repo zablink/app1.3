@@ -37,10 +37,10 @@ export default function ComingSoon() {
             width={250}    // กำหนดความกว้างของโลโก้ (ปรับได้ตามต้องการ)
             height={248}   // กำหนดความสูงของโลโก้ (ปรับได้ตามต้องการ)
             priority       // โหลดรูปภาพนี้เป็นอันดับแรก (สำหรับ LCP)
-            layout="responsive"
-            style = {{ width:100%; height:'auto'}}
+            layout="responsive" 
+            style = {{ width:'100%'; height:'auto'}}
           />
-        </div>
+        </div> 
         
         {/* Heading */}
         <h1 className="text-6xl font-extrabold tracking-tight text-gray-900 sm:text-7xl mb-4 leading-tight">
