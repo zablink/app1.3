@@ -331,8 +331,9 @@ export default function ShopAdminEditPage({
         }));
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        
         if (shop.lat === null || shop.lng === null) {
             alert('กรุณาปักหมุดพิกัดร้านค้าก่อนบันทึก');
             return;
@@ -340,19 +341,89 @@ export default function ShopAdminEditPage({
 
         setStatus('saving');
         
-        const dataToSave = {
-            ...shop,
-            links: shop.links.filter(link => link.type.trim() && link.url.trim()),
-            gallery: shop.gallery.map(img => ({ url: img.url, isFeatured: img.isFeatured })),
-        };
+        try {
+            // 1. Prepare Shop data
+            const shopData = {
+                id: shop.id,
+                ownerId: shop.ownerId,
+                name: shop.name,
+                description: shop.description,
+                address: shop.address,
+                categoryId: shop.categoryId,
+                image: shop.gallery.find(img => img.isFeatured)?.url || shop.gallery[0]?.url || null,
+                has_physical_store: shop.hasPhysicalStore,
+                show_location_on_map: shop.showLocationOnMap,
+                updatedAt: new Date().toISOString(),
+                // Convert lat/lng to PostGIS POINT geometry
+                location: `POINT(${shop.lng} ${shop.lat})` // Note: PostGIS uses (lng, lat) order
+            };
 
-        console.log('--- FINAL DATA TO SEND TO SUPABASE ---');
-        console.log(JSON.stringify(dataToSave, null, 2));
-        
-        setTimeout(() => {
+            // 2. Prepare Links data (filter out empty entries)
+            const linksData = shop.links
+                .filter(link => link.type.trim() && link.url.trim())
+                .map(link => ({
+                    shop_id: shop.id,
+                    type: link.type.trim(),
+                    url: link.url.trim()
+                }));
+
+            // 3. Prepare Gallery data
+            const galleryData = shop.gallery.map(img => ({
+                shop_id: shop.id,
+                image_url: img.url,
+                is_featured: img.isFeatured
+            }));
+
+            console.log('=== DATA TO SEND TO SUPABASE ===');
+            console.log('Shop:', JSON.stringify(shopData, null, 2));
+            console.log('Links:', JSON.stringify(linksData, null, 2));
+            console.log('Gallery:', JSON.stringify(galleryData, null, 2));
+
+            // 4. Send to Supabase (uncomment when ready)
+            /*
+            const { createClient } = require('@supabase/supabase-js');
+            const supabase = createClient(
+                process.env.NEXT_PUBLIC_SUPABASE_URL!,
+                process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+            );
+
+            // Update Shop table
+            const { error: shopError } = await supabase
+                .from('Shop')
+                .upsert(shopData);
+
+            if (shopError) throw shopError;
+
+            // Delete existing links and gallery, then insert new ones
+            await supabase.from('shop_links').delete().eq('shop_id', shop.id);
+            await supabase.from('shop_gallery').delete().eq('shop_id', shop.id);
+
+            if (linksData.length > 0) {
+                const { error: linksError } = await supabase
+                    .from('shop_links')
+                    .insert(linksData);
+                if (linksError) throw linksError;
+            }
+
+            if (galleryData.length > 0) {
+                const { error: galleryError } = await supabase
+                    .from('shop_gallery')
+                    .insert(galleryData);
+                if (galleryError) throw galleryError;
+            }
+            */
+
+            // Simulate API call
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
             setStatus('saved');
-            console.log('Shop data saved successfully!');
-        }, 1500);
+            setTimeout(() => setStatus('idle'), 3000);
+            
+        } catch (error) {
+            console.error('Error saving shop data:', error);
+            setStatus('error');
+            alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล: ' + (error as Error).message);
+        }
     };
     
     const initialMapCoords = (shop.lat !== null && shop.lng !== null) 
