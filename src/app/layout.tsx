@@ -61,10 +61,10 @@ export default function RootLayout({
       <body style={{ margin: 0, padding: 0, fontFamily: 'system-ui, sans-serif' }} >
         <SessionProvider>
           <AuthProvider>
-          </AuthProvider>
           <AppLayout>
             {children}
           </AppLayout>
+          </AuthProvider>
         </SessionProvider>
       </body>
     </html>
