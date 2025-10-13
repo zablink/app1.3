@@ -119,8 +119,18 @@ export async function POST(
         .delete()
         .eq('shop_id', shopId);
 
-      // Insert new daily hours
-      const dailyHoursToInsert = dailyHours.map((dh: any) => ({
+      interface DailyHoursInput {
+        dayOfWeek: number;
+        isClosed: boolean;
+        openTime?: string | null;
+        closeTime?: string | null;
+        openTime2?: string | null;
+        closeTime2?: string | null;
+      }
+
+      // แล้วเปลี่ยนตรง map เป็น:
+      const dailyHoursToInsert = dailyHours.map((dh: DailyHoursInput) => ({
+        
         shop_id: shopId,
         day_of_week: dh.dayOfWeek,
         is_closed: dh.isClosed,
