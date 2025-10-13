@@ -17,64 +17,6 @@ export const runtime = 'nodejs';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { shopId, title, description, budget, deadline } = body;
-
-    if (!shopId || !title || !description || !budget || !deadline) {
-      return NextResponse.json(
-        { success: false, error: 'Missing required fields' },
-        { status: 400 }
-      );
-    }
-
-    // Get shop location
-    const { data: shop, error: shopError } = await supabase
-      .from('Shop')
-      .select('*, location')
-      .eq('id', shopId)
-      .single();
-
-    if (shopError || !shop) {
-      return NextResponse.json(
-        { success: false, error: 'Shop not found' },
-        { status: 404 }
-      );
-    }
-
-    // Parse location (POINT geometry)
-    let provinceId, amphureId, tambonId;
-    
-    // You'll need to reverse geocode or have location IDs stored
-    // For now, we'll require them to be sent in the request
-    provinceId = body.provinceId;
-    amphureId = body.amphureId;
-    tambonId = body.tambonId;
-
-    if (!provinceId || !amphureId || !tambonId) {
-      return NextResponse.json(
-        { success: false, error: 'Location IDs required' },
-        { status: 400 }
-      );
-    }
-
-// src/app/api/review-request/route.ts
-
-import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
-export const runtime = 'nodejs';
-
-/**
- * POST /api/review-request
- * Create new review request from shop owner
- */
-export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
     const { shopId, title, description, budget, deadline, provinceId, amphureId, tambonId } = body;
 
     if (!shopId || !title || !description || !budget || !deadline) {
