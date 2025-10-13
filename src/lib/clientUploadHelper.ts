@@ -7,24 +7,38 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-interface UploadResult {
+export interface UploadResult {
   success: boolean;
   url?: string;
   error?: string;
-} 
+}
+
+export type ProgressCallback = (progress: number) => void;
 
 /**
  * Upload shop image to Supabase Storage
  * @param file - Image file to upload
  * @param shopId - Shop ID
+ * @param onProgress - Optional progress callback (0-100)
  * @param folder - Optional folder name (default: 'shop-images')
  * @returns Upload result with URL
  */
 export async function uploadShopImage(
   file: File,
   shopId: string,
+  onProgress?: ProgressCallback | string,
   folder: string = 'shop-images'
 ): Promise<UploadResult> {
+  // Handle if third parameter is a string (folder name)
+  let progressCallback: ProgressCallback | undefined;
+  let actualFolder = folder;
+  
+  if (typeof onProgress === 'string') {
+    actualFolder = onProgress;
+    progressCallback = undefined;
+  } else {
+    progressCallback = onProgress;
+  }
   try {
     // Validate file
     if (!file) {
@@ -49,12 +63,17 @@ export async function uploadShopImage(
       };
     }
 
+    // Report initial progress
+    if (progressCallback) progressCallback(10);
+
     // Generate unique filename
     const timestamp = Date.now();
     const randomString = Math.random().toString(36).substring(2, 15);
     const fileExt = file.name.split('.').pop();
     const fileName = `${shopId}_${timestamp}_${randomString}.${fileExt}`;
-    const filePath = `${folder}/${fileName}`;
+    const filePath = `${actualFolder}/${fileName}`;
+
+    if (progressCallback) progressCallback(30);
 
     // Upload to Supabase Storage
     const { data, error } = await supabase.storage
@@ -64,15 +83,21 @@ export async function uploadShopImage(
         upsert: false,
       });
 
+    if (progressCallback) progressCallback(70);
+
     if (error) {
       console.error('Upload error:', error);
       return { success: false, error: error.message };
     }
 
+    if (progressCallback) progressCallback(90);
+
     // Get public URL
     const { data: { publicUrl } } = supabase.storage
       .from('shop-images')
       .getPublicUrl(filePath);
+
+    if (progressCallback) progressCallback(100);
 
     return {
       success: true,
@@ -127,14 +152,30 @@ export async function deleteShopImage(imageUrl: string): Promise<boolean> {
  * Upload multiple shop images
  * @param files - Array of image files
  * @param shopId - Shop ID
+ * @param onProgress - Optional progress callback for overall progress (0-100)
  * @returns Array of upload results
  */
 export async function uploadMultipleShopImages(
   files: File[],
-  shopId: string
+  shopId: string,
+  onProgress?: ProgressCallback
 ): Promise<UploadResult[]> {
-  const uploadPromises = files.map(file => uploadShopImage(file, shopId));
-  return Promise.all(uploadPromises);
+  const results: UploadResult[] = [];
+  const totalFiles = files.length;
+  
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    const result = await uploadShopImage(file, shopId);
+    results.push(result);
+    
+    // Update overall progress
+    if (onProgress) {
+      const progress = Math.round(((i + 1) / totalFiles) * 100);
+      onProgress(progress);
+    }
+  }
+  
+  return results;
 }
 
 /**
