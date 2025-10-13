@@ -2,6 +2,7 @@
 import type { Metadata } from 'next';
 import AppLayout from '@/components/AppLayout';
 import SessionProvider from '@/components/SessionProvider';
+import { AuthProvider } from '@/contexts/AuthContext';
 
 import './globals.css';
 
@@ -59,6 +60,8 @@ export default function RootLayout({
       </head>
       <body style={{ margin: 0, padding: 0, fontFamily: 'system-ui, sans-serif' }} >
         <SessionProvider>
+          <AuthProvider>
+          </AuthProvider">
           <AppLayout>
             {children}
           </AppLayout>
