@@ -1,21 +1,33 @@
 // src/utils/validators.ts
 
+export interface ValidationResult {
+  valid: boolean;
+  message?: string;
+}
+
 /**
  * Validate URL format
  * @param url - URL string to validate
- * @returns true if valid, false otherwise
+ * @returns Validation result with valid flag and optional error message
  */
-export function validateURL(url: string): boolean {
+export function validateURL(url: string): ValidationResult {
   if (!url || typeof url !== 'string') {
-    return false;
+    return { valid: false, message: 'URL is required' };
+  }
+
+  if (url.trim().length === 0) {
+    return { valid: false, message: 'URL cannot be empty' };
   }
 
   try {
     const urlObj = new URL(url);
     // Check if protocol is http or https
-    return urlObj.protocol === 'http:' || urlObj.protocol === 'https:';
+    if (urlObj.protocol !== 'http:' && urlObj.protocol !== 'https:') {
+      return { valid: false, message: 'URL must start with http:// or https://' };
+    }
+    return { valid: true };
   } catch (error) {
-    return false;
+    return { valid: false, message: 'Invalid URL format' };
   }
 }
 
@@ -96,27 +108,50 @@ export function validateLineID(lineId: string): boolean {
  * Validate social media URL
  * @param url - Social media URL
  * @param platform - Platform name (facebook, instagram, tiktok, youtube, twitter)
- * @returns true if valid for the platform, false otherwise
+ * @returns Validation result with valid flag and optional error message
  */
-export function validateSocialMediaURL(url: string, platform: string): boolean {
-  if (!validateURL(url)) {
-    return false;
+export function validateSocialMediaURL(url: string, platform: string): ValidationResult {
+  const urlValidation = validateURL(url);
+  if (!urlValidation.valid) {
+    return urlValidation;
   }
 
-  const platformPatterns: Record<string, RegExp> = {
-    facebook: /^https?:\/\/(www\.)?facebook\.com\/.+/i,
-    instagram: /^https?:\/\/(www\.)?instagram\.com\/.+/i,
-    tiktok: /^https?:\/\/(www\.)?tiktok\.com\/@.+/i,
-    youtube: /^https?:\/\/(www\.)?(youtube\.com|youtu\.be)\/.+/i,
-    twitter: /^https?:\/\/(www\.)?(twitter\.com|x\.com)\/.+/i,
+  const platformPatterns: Record<string, { pattern: RegExp; name: string }> = {
+    facebook: { 
+      pattern: /^https?:\/\/(www\.)?facebook\.com\/.+/i,
+      name: 'Facebook'
+    },
+    instagram: { 
+      pattern: /^https?:\/\/(www\.)?instagram\.com\/.+/i,
+      name: 'Instagram'
+    },
+    tiktok: { 
+      pattern: /^https?:\/\/(www\.)?tiktok\.com\/@.+/i,
+      name: 'TikTok'
+    },
+    youtube: { 
+      pattern: /^https?:\/\/(www\.)?(youtube\.com|youtu\.be)\/.+/i,
+      name: 'YouTube'
+    },
+    twitter: { 
+      pattern: /^https?:\/\/(www\.)?(twitter\.com|x\.com)\/.+/i,
+      name: 'Twitter/X'
+    },
   };
 
-  const pattern = platformPatterns[platform.toLowerCase()];
-  if (!pattern) {
-    return validateURL(url); // Unknown platform, just validate URL format
+  const platformInfo = platformPatterns[platform.toLowerCase()];
+  if (!platformInfo) {
+    return { valid: true }; // Unknown platform, just validate URL format
   }
 
-  return pattern.test(url);
+  if (!platformInfo.pattern.test(url)) {
+    return { 
+      valid: false, 
+      message: `Invalid ${platformInfo.name} URL format` 
+    };
+  }
+
+  return { valid: true };
 }
 
 /**
