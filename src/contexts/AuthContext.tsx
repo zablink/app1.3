@@ -95,15 +95,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signInWithTikTok = async () => {
     try {
       // TikTok OAuth implementation
-      // Note: Supabase may not support TikTok directly, you might need custom implementation
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'tiktok' as any, // Custom provider
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-        },
-      });
-
-      if (error) throw error;
+      // Note: Supabase doesn't support TikTok natively yet
+      // You'll need to implement custom OAuth flow or wait for Supabase support
+      console.warn('TikTok login not yet implemented');
+      throw new Error('TikTok login is not available yet. Please use Google, Facebook, or Twitter.');
     } catch (error) {
       console.error('TikTok sign in error:', error);
       throw error;
