@@ -7,10 +7,19 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
+export interface UploadMetadata {
+  originalSize: number;
+  compressedSize: number;
+  compressionRatio: number;
+  fileName: string;
+  fileType: string;
+}
+
 export interface UploadResult {
   success: boolean;
   url?: string;
   error?: string;
+  metadata?: UploadMetadata;
 }
 
 export type ProgressCallback = (progress: number) => void;
@@ -44,6 +53,9 @@ export async function uploadShopImage(
     if (!file) {
       return { success: false, error: 'No file provided' };
     }
+
+    // Store original file size
+    const originalSize = file.size;
 
     // Check file type
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
@@ -99,9 +111,22 @@ export async function uploadShopImage(
 
     if (progressCallback) progressCallback(100);
 
+    // Calculate compression ratio (file.size might be different after upload)
+    const compressedSize = file.size;
+    const compressionRatio = originalSize > 0 
+      ? ((originalSize - compressedSize) / originalSize) * 100 
+      : 0;
+
     return {
       success: true,
       url: publicUrl,
+      metadata: {
+        originalSize,
+        compressedSize,
+        compressionRatio,
+        fileName: file.name,
+        fileType: file.type,
+      },
     };
   } catch (error) {
     console.error('Unexpected upload error:', error);
