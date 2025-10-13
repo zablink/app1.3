@@ -23,7 +23,7 @@ interface AuthContextType {
   loading: boolean;
   signInWithProvider: (provider: 'google' | 'facebook' | 'twitter') => Promise<void>;
   signInWithTikTok: () => Promise<void>;
-  signOut: () => Promise<void>;
+  signOut: () => Promise<void>; 
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
