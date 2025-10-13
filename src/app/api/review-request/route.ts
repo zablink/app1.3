@@ -108,7 +108,16 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    let updateData: any = {};
+    interface UpdateData {
+      creator_id?: string;
+      status?: string;
+      assigned_at?: string;
+      completed_at?: string;
+      video_url?: string;
+      notes?: string;
+    }
+
+    let updateData: UpdateData = {};
 
     switch (action) {
       case 'assign':

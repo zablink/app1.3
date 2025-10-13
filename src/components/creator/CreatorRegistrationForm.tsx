@@ -5,11 +5,33 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 
-interface LocationData {
-  provinces: any[];
-  amphures: any[];
-  tambons: any[];
+interface Province {
+  id: number;
+  name_th: string;
+  name_en: string;
 }
+
+interface Amphure {
+  id: number;
+  name_th: string;
+  name_en: string;
+  province_id: number;
+}
+
+interface Tambon {
+  id: number;
+  name_th: string;
+  name_en: string;
+  amphure_id: number;
+}
+
+interface LocationData {
+  provinces: Province[];
+  amphures: Amphure[];
+  tambons: Tambon[];
+}
+
+type CoverageLevel = 'tambon' | 'amphure' | 'province';
 
 export const CreatorRegistrationForm: React.FC = () => {
   const { user } = useAuth();
@@ -29,7 +51,7 @@ export const CreatorRegistrationForm: React.FC = () => {
     provinceId: 0,
     amphureId: 0,
     tambonId: 0,
-    coverageLevel: 'tambon' as 'tambon' | 'amphure' | 'province',
+    coverageLevel: 'tambon' as CoverageLevel,
   });
 
   // Location data
@@ -375,7 +397,7 @@ export const CreatorRegistrationForm: React.FC = () => {
                       type="radio"
                       value="tambon"
                       checked={formData.coverageLevel === 'tambon'}
-                      onChange={(e) => setFormData({ ...formData, coverageLevel: e.target.value as any })}
+                      onChange={(e) => setFormData({ ...formData, coverageLevel: e.target.value as CoverageLevel })}
                       className="mr-2"
                     />
                     <span className="text-sm">เฉพาะตำบลที่เลือก</span>
@@ -385,7 +407,7 @@ export const CreatorRegistrationForm: React.FC = () => {
                       type="radio"
                       value="amphure"
                       checked={formData.coverageLevel === 'amphure'}
-                      onChange={(e) => setFormData({ ...formData, coverageLevel: e.target.value as any })}
+                      onChange={(e) => setFormData({ ...formData, coverageLevel: e.target.value as CoverageLevel })}
                       className="mr-2"
                     />
                     <span className="text-sm">ทั้งอำเภอที่เลือก</span>
@@ -395,7 +417,7 @@ export const CreatorRegistrationForm: React.FC = () => {
                       type="radio"
                       value="province"
                       checked={formData.coverageLevel === 'province'}
-                      onChange={(e) => setFormData({ ...formData, coverageLevel: e.target.value as any })}
+                      onChange={(e) => setFormData({ ...formData, coverageLevel: e.target.value as CoverageLevel })}
                       className="mr-2"
                     />
                     <span className="text-sm">ทั้งจังหวัดที่เลือก</span>
