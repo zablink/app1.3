@@ -4,13 +4,13 @@
 
 import { useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
+import Link from "next/link"; // ⭐ เพิ่มบรรทัดนี้
 
 export const dynamic = 'force-dynamic';
 
 type Role = "user" | "admin" | "shop";
 
 export default function ProfilePage() {
-  // ⭐ เปลี่ยนจาก destructure เป็นเรียกใช้แบบปลอดภัย
   const sessionData = useSession();
   const session = sessionData?.data;
   const status = sessionData?.status || 'loading';
@@ -39,12 +39,13 @@ export default function ProfilePage() {
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <p className="text-xl mb-4">กรุณาเข้าสู่ระบบก่อน</p>
-          <a 
+          {/* ⭐ เปลี่ยนจาก <a> เป็น <Link> */}
+          <Link 
             href="/api/auth/signin" 
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition inline-block"
           >
             เข้าสู่ระบบ
-          </a>
+          </Link>
         </div>
       </div>
     );
