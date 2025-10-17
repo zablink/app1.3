@@ -4,6 +4,9 @@
 import { useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
 
+
+export const dynamic = 'force-dynamic';
+
 type Role = "user" | "admin" | "shop";
 
 export default function ProfilePage() {
