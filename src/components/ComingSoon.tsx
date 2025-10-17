@@ -80,29 +80,3 @@ export default function ComingSoon() {
     </div>
   );
 }
-```
-
----
-
-### ขั้นตอนที่ 5: จัดการหน้าอื่นๆ (สำหรับ dev branch)
-
-เมื่อคุณสลับไป `dev` branch ในอนาคต คุณจะต้องย้ายหน้าอื่นๆ ไปอยู่ใน Route Group `(main)`
-
-**โครงสร้างใน dev branch:**
-```
-src/app/
-├── (coming-soon)/
-│   ├── layout.tsx
-│   └── page.tsx
-│
-├── (main)/                    ← สร้างใหม่
-│   ├── layout.tsx             ← ไม่จำเป็น (ใช้ root layout ได้)
-│   ├── dashboard/
-│   │   └── page.tsx           → URL: /dashboard
-│   ├── profile/
-│   │   └── page.tsx           → URL: /profile
-│   └── restaurants/
-│       └── page.tsx           → URL: /restaurants
-│
-├── layout.tsx                 ← Root layout (มี Navbar)
-└── globals.css
