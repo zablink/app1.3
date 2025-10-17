@@ -12,8 +12,41 @@ const prompt = Prompt({
 
 export const metadata: Metadata = {
   title: 'Zablink - Coming Soon',
-  description: 'เว็บที่ช่วยให้เติมฝันและลมหายใจของคุณ',
+  description: 'ช่วยเติมฝันและลมหายใจของคุณ',
+  
+  // ⭐ เพิ่มส่วนนี้!
+  openGraph: {
+    title: 'Zablink - Coming Soon',
+    description: 'ช่วยเติมฝันและลมหายใจของคุณ',
+    url: 'https://zablink.vercel.app', // เปลี่ยนเป็น URL จริง
+    siteName: 'Zablink',
+    images: [
+      {
+        url: '/og-image.png', // path ของรูปใน public/
+        width: 1200,
+        height: 630,
+        alt: 'Zablink Logo',
+      },
+    ],
+    locale: 'th_TH',
+    type: 'website',
+  },
+  
+  // ⭐ สำหรับ Twitter
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Zablink - Coming Soon',
+    description: 'ช่วยเติมฝันและลมหายใจของคุณ',
+    images: ['/og-image.png'],
+  },
+  
+  // ⭐ Favicon (optional)
+  icons: {
+    icon: '/favicon.png',
+    apple: '/zablink-logo-cir.png',
+  },
 };
+
 
 export default function RootLayout({
   children,
