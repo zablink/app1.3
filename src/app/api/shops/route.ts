@@ -34,7 +34,7 @@ export async function GET(req: Request) {
     console.log('Total shops from DB:', allShops.length);
 
     // แปลง type ให้ตรงกับ Shop type
-    let shops: Shop[] = allShops
+    const shops: Shop[] = allShops
       .filter(shop => shop.lat !== null && shop.lng !== null)
       .map(shop => ({
         id: shop.id,
