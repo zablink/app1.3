@@ -135,17 +135,3 @@ function sortByDistance(a: Shop, b: Shop) {
   return (a.distance ?? 0) - (b.distance ?? 0);
 }
 
-// ⭐ เตรียมไว้สำหรับอนาคต เมื่อมี subscription
-// function sortByPackageAndDistance(a: Shop, b: Shop) {
-//   const rank: Record<string, number> = { 
-//     PREMIUM: 5, 
-//     PRO: 4, 
-//     BASIC: 3, 
-//     FREE: 1 
-//   };
-//   const pkgA = rank[a.packageType?.toUpperCase() || 'FREE'] || 0;
-//   const pkgB = rank[b.packageType?.toUpperCase() || 'FREE'] || 0;
-//   if (pkgA !== pkgB) return pkgB - pkgA;
-//   return (a.distance ?? 0) - (b.distance ?? 0);
-// }
-```
