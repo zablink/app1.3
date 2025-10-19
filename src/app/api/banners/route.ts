@@ -5,15 +5,20 @@ import { prisma } from '@/lib/prisma';
 
 export async function GET() {
   try {
-    const shops = await prisma.simple_shops.findMany({
-      orderBy: { created_at: 'desc' },
+    console.log('Fetching banners...'); // ⭐ เพิ่ม log
+
+    const banners = await prisma.banners.findMany({
+      where: { is_active: true },
+      orderBy: { order: 'asc' },
     });
 
-    return NextResponse.json(shops);
+    console.log('Banners count:', banners.length); // ⭐ เพิ่ม log
+
+    return NextResponse.json(banners);
   } catch (error) {
-    console.error('Error fetching shops:', error);
+    console.error('Error fetching banners:', error); // ⭐ แสดง error detail
     return NextResponse.json(
-      { error: 'Failed to fetch shops' },
+      { error: 'Failed to fetch banners', detail: error.message }, // ⭐ แก้ message + เพิ่ม detail
       { status: 500 }
     );
   }
