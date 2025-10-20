@@ -17,6 +17,7 @@ type Shop = {
   subdistrict: string | null;
   district: string | null;
   province: string | null;
+  package_tier?: string | null;
 };
 
 interface AddressComponent {
@@ -32,9 +33,41 @@ type Banner = {
   order: number;
 };
 
-// --- Haversine formula (เหมือนเดิม) ---
+// Package configurations
+const PACKAGES = {
+  PREMIUM: {
+    name: 'พรีเมียม',
+    emoji: '👑',
+    bg: 'bg-amber-50',
+    border: 'border-amber-200',
+    badge: 'bg-gradient-to-r from-yellow-400 to-amber-500 text-white',
+  },
+  PRO: {
+    name: 'โปร',
+    emoji: '🔥',
+    bg: 'bg-purple-50',
+    border: 'border-purple-200',
+    badge: 'bg-gradient-to-r from-purple-500 to-pink-500 text-white',
+  },
+  BASIC: {
+    name: 'เบสิค',
+    emoji: '⭐',
+    bg: 'bg-blue-50',
+    border: 'border-blue-200',
+    badge: 'bg-gradient-to-r from-blue-400 to-cyan-400 text-white',
+  },
+  FREE: {
+    name: 'ฟรี',
+    emoji: '',
+    bg: 'bg-slate-50',
+    border: 'border-slate-200',
+    badge: 'bg-slate-400 text-white',
+  },
+};
+
+// Haversine formula
 function getDistance(lat1: number, lng1: number, lat2: number, lng2: number) {
-  const R = 6371; // km
+  const R = 6371;
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
   const dLng = ((lng2 - lng1) * Math.PI) / 180;
   const a =
@@ -46,44 +79,53 @@ function getDistance(lat1: number, lng1: number, lat2: number, lng2: number) {
   return R * c;
 }
 
-// --- HomePage ---
 export default function HomePage() {
   const [userLat, setUserLat] = useState<number | null>(null);
   const [userLng, setUserLng] = useState<number | null>(null);
   const [userLocation, setUserLocation] = useState<{ province?: string }>({});
-  const [displayShops, setDisplayShops] = useState<Shop[]>([]);
   
-  // ⭐ State สำหรับ fetch data
   const [allShops, setAllShops] = useState<Shop[]>([]);
   const [banners, setBanners] = useState<Banner[]>([]);
+  
+  // แยก shops ตาม package
+  const [premiumShops, setPremiumShops] = useState<Shop[]>([]);
+  const [proShops, setProShops] = useState<Shop[]>([]);
+  const [basicShops, setBasicShops] = useState<Shop[]>([]);
+  const [freeShops, setFreeShops] = useState<Shop[]>([]);
+  
   const [loading, setLoading] = useState(true);
-
-  // Hero Banner
+  const [error, setError] = useState<string | null>(null);
   const [currentBanner, setCurrentBanner] = useState(0);
 
-  // ⭐ Fetch data from API
+  // Fetch data from API
   useEffect(() => {
     async function fetchData() {
       try {
         setLoading(true);
+        setError(null);
 
-        // Fetch shops and banners in parallel
         const [shopsRes, bannersRes] = await Promise.all([
           fetch('/api/shops'),
           fetch('/api/banners'),
         ]);
 
-        if (!shopsRes.ok || !bannersRes.ok) {
-          throw new Error('Failed to fetch data');
+        if (!shopsRes.ok) {
+          throw new Error(`Failed to fetch shops: ${shopsRes.status}`);
+        }
+        if (!bannersRes.ok) {
+          throw new Error(`Failed to fetch banners: ${bannersRes.status}`);
         }
 
         const shopsData = await shopsRes.json();
         const bannersData = await bannersRes.json();
 
+        const sortedBanners = bannersData.sort((a: Banner, b: Banner) => a.order - b.order);
+
         setAllShops(shopsData);
-        setBanners(bannersData);
-      } catch (error) {
-        console.error('Error fetching data:', error);
+        setBanners(sortedBanners);
+      } catch (err) {
+        console.error('Error fetching data:', err);
+        setError(err instanceof Error ? err.message : 'เกิดข้อผิดพลาดในการโหลดข้อมูล');
       } finally {
         setLoading(false);
       }
@@ -92,81 +134,93 @@ export default function HomePage() {
     fetchData();
   }, []);
 
-  // Banner carousel
+  // Auto-rotate banners
   useEffect(() => {
     if (banners.length === 0) return;
 
     const interval = setInterval(() => {
       setCurrentBanner((prev) => (prev + 1) % banners.length);
-    }, 8000);
+    }, 5000);
 
     return () => clearInterval(interval);
   }, [banners.length]);
 
-  // --- Get user location ---
+  // Get user location
   useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        async (pos) => {
-          setUserLat(pos.coords.latitude);
-          setUserLng(pos.coords.longitude);
+    if (!navigator.geolocation) return;
 
-          // --- Google reverse geocode ---
-          if (process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY) {
-            const res = await fetch(
-              `https://maps.googleapis.com/maps/api/geocode/json?latlng=${pos.coords.latitude},${pos.coords.longitude}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
-            );
-            const data: { results?: { address_components: AddressComponent[] }[] } =
-              await res.json();
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const { latitude, longitude } = pos.coords;
+        setUserLat(latitude);
+        setUserLng(longitude);
 
-            const province = data.results?.[0]?.address_components?.find((c) =>
+        const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+        if (!apiKey) return;
+
+        try {
+          const res = await fetch(
+            `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`
+          );
+          const data = await res.json();
+
+          if (data.results && data.results[0]) {
+            const province = data.results[0].address_components?.find((c: AddressComponent) =>
               c.types.includes("administrative_area_level_1")
             )?.long_name;
 
-            if (province) setUserLocation({ province });
+            if (province) {
+              setUserLocation({ province });
+            }
           }
-        },
-        (err) => console.log("Location error:", err)
-      );
-    }
+        } catch (err) {
+          console.log("Reverse geocoding error:", err);
+        }
+      },
+      (err) => console.log("Location permission denied:", err)
+    );
   }, []);
 
-  // --- Determine shops to display ---
+  // จัดกลุ่ม shops ตาม package และ location
   useEffect(() => {
     if (allShops.length === 0) return;
 
-    let result: Shop[] = [];
+    // กรองร้านตาม location
+    let filteredShops = allShops;
 
     if (userLat !== null && userLng !== null) {
-      // 1. ร้านใกล้ ≤ 5 กม.
       const nearby = allShops.filter((shop) => {
         if (shop.lat === null || shop.lng === null) return false;
         return getDistance(userLat, userLng, shop.lat, shop.lng) <= 5;
       });
 
       if (nearby.length > 0) {
-        result = nearby;
+        filteredShops = nearby;
       } else if (userLocation.province) {
-        // 2. ร้านใน province เดียวกัน
         const sameProv = allShops.filter(
           (shop) => shop.province === userLocation.province
         );
-        if (sameProv.length > 0) result = sameProv;
+        if (sameProv.length > 0) {
+          filteredShops = sameProv;
+        }
       }
     }
 
-    // 3. ถ้าไม่มี location หรือไม่มีร้านใกล้/ในจังหวัด → random 12 ร้าน
-    if (result.length === 0) {
-      result = [...allShops].sort(() => 0.5 - Math.random()).slice(0, 12);
-    } else if (result.length > 12) {
-      // ถ้ามีร้านมากกว่า 12 ร้าน → random 12 ร้านจากผลลัพธ์
-      result = [...result].sort(() => 0.5 - Math.random()).slice(0, 12);
-    }
+    // แยกร้านตาม package_tier
+    const premium = filteredShops.filter(s => s.package_tier === 'PREMIUM');
+    const pro = filteredShops.filter(s => s.package_tier === 'PRO');
+    const basic = filteredShops.filter(s => s.package_tier === 'BASIC');
+    const free = filteredShops.filter(s => !s.package_tier || s.package_tier === 'FREE');
 
-    setDisplayShops(result);
+    // Random และจำกัดจำนวน (สูงสุด 12 รายการต่อ section)
+    setPremiumShops(premium.sort(() => 0.5 - Math.random()).slice(0, 12));
+    setProShops(pro.sort(() => 0.5 - Math.random()).slice(0, 12));
+    setBasicShops(basic.sort(() => 0.5 - Math.random()).slice(0, 12));
+    setFreeShops(free.sort(() => 0.5 - Math.random()).slice(0, 12));
+
   }, [userLat, userLng, userLocation, allShops]);
 
-  // ⭐ Loading state
+  // Loading state
   if (loading) {
     return (
       <AppLayout>
@@ -180,12 +234,33 @@ export default function HomePage() {
     );
   }
 
+  // Error state
+  if (error) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <div className="text-red-500 text-6xl mb-4">⚠️</div>
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">เกิดข้อผิดพลาด</h2>
+            <p className="text-gray-600 mb-4">{error}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
+            >
+              โหลดใหม่
+            </button>
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
+
   return (
     <AppLayout>
-      {/* ---------------- Hero Banner ---------------- */}
+      {/* ========== Hero Banner ========== */}
       {banners.length > 0 && (
-        <div className="w-full overflow-hidden mb-6 mt-0 pt-0 sm:pt-2 md:pt-4">
-          <div className="relative h-80 sm:h-96 md:h-[28rem]">
+        <div className="w-full overflow-hidden mb-8">
+          <div className="relative h-64 sm:h-80 md:h-96 lg:h-[28rem] rounded-lg overflow-hidden shadow-lg">
             {banners.map((banner, i) => (
               <Link
                 key={banner.id}
@@ -194,71 +269,174 @@ export default function HomePage() {
               >
                 <motion.img
                   src={banner.image}
-                  alt={`Banner ${banner.id}`}
-                  className="w-full h-full object-contain md:object-cover"
+                  alt={`Banner ${banner.order}`}
+                  className="w-full h-full object-cover"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: i === currentBanner ? 1 : 0 }}
-                  transition={{ duration: 1 }}
+                  transition={{ duration: 0.8 }}
                 />
               </Link>
             ))}
 
-            {/* ---------------- Dot navigator ---------------- */}
-            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
-              {banners.map((_, i) => (
+            {banners.length > 1 && (
+              <>
+                <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2 z-10">
+                  {banners.map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setCurrentBanner(i)}
+                      aria-label={`Go to banner ${i + 1}`}
+                      className={`w-3 h-3 rounded-full transition-all ${
+                        i === currentBanner
+                          ? "bg-white scale-110 shadow-lg"
+                          : "bg-white/50 hover:bg-white/70"
+                      }`}
+                    />
+                  ))}
+                </div>
+
                 <button
-                  key={i}
-                  onClick={() => setCurrentBanner(i)}
-                  className={`w-3 h-3 rounded-full ${
-                    i === currentBanner
-                      ? "bg-white shadow-md"
-                      : "bg-white/50 shadow-sm"
-                  }`}
-                ></button>
-              ))}
-            </div>
+                  onClick={() =>
+                    setCurrentBanner((prev) =>
+                      prev === 0 ? banners.length - 1 : prev - 1
+                    )
+                  }
+                  className="hidden md:block absolute left-4 top-1/2 transform -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white p-3 rounded-lg transition z-10"
+                >
+                  ‹
+                </button>
+                <button
+                  onClick={() =>
+                    setCurrentBanner((prev) => (prev + 1) % banners.length)
+                  }
+                  className="hidden md:block absolute right-4 top-1/2 transform -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white p-3 rounded-lg transition z-10"
+                >
+                  ›
+                </button>
+              </>
+            )}
           </div>
         </div>
       )}
 
-      <h2 className="text-2xl font-bold mb-6">รายชื่อร้าน</h2>
-      <div className="min-h-screen bg-gray-50 p-6">
-        {/* Shop grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-6">
-          {displayShops.map((shop, i) => (
-            <motion.div
-              key={shop.id}
-              className="bg-white shadow-md rounded-2xl overflow-hidden hover:shadow-xl transition"
-              whileHover={{ scale: 1.03 }}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.05 }}
-            >
-              <Link href={`/shop/${shop.id}`}>
+      {/* ========== Package Sections ========== */}
+      
+      {/* Premium Section */}
+      {premiumShops.length > 0 && (
+        <PackageSection
+          title="ร้านค้าพรีเมียม"
+          shops={premiumShops}
+          config={PACKAGES.PREMIUM}
+        />
+      )}
+
+      {/* Pro Section */}
+      {proShops.length > 0 && (
+        <PackageSection
+          title="ร้านค้าโปร"
+          shops={proShops}
+          config={PACKAGES.PRO}
+        />
+      )}
+
+      {/* Basic Section */}
+      {basicShops.length > 0 && (
+        <PackageSection
+          title="ร้านค้าเบสิค"
+          shops={basicShops}
+          config={PACKAGES.BASIC}
+        />
+      )}
+
+      {/* Free Section */}
+      {freeShops.length > 0 && (
+        <PackageSection
+          title="ร้านค้าทั่วไป"
+          shops={freeShops}
+          config={PACKAGES.FREE}
+        />
+      )}
+
+      {/* No shops */}
+      {premiumShops.length === 0 && proShops.length === 0 && basicShops.length === 0 && freeShops.length === 0 && (
+        <div className="text-center py-16">
+          <p className="text-gray-500 text-lg">ไม่พบร้านค้าในขณะนี้</p>
+        </div>
+      )}
+
+      {/* View all button */}
+      <div className="text-center mt-12 mb-8">
+        <Link
+          href="/shop"
+          className="inline-block px-8 py-3 bg-blue-500 text-white font-semibold rounded-lg shadow-lg hover:bg-blue-600 hover:shadow-xl transition-all"
+        >
+          ดูร้านค้าทั้งหมด
+        </Link>
+      </div>
+    </AppLayout>
+  );
+}
+
+// ========== Package Section Component ==========
+type PackageSectionProps = {
+  title: string;
+  shops: Shop[];
+  config: typeof PACKAGES.PREMIUM;
+};
+
+function PackageSection({ title, shops, config }: PackageSectionProps) {
+  return (
+    <div className={`${config.bg} border ${config.border} rounded-lg p-6 mb-8 shadow-sm`}>
+      {/* Section Header */}
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-2xl font-bold flex items-center gap-2">
+          <span className="text-3xl">{config.emoji}</span>
+          {title}
+        </h2>
+        <span className={`${config.badge} px-4 py-1 rounded-md text-sm font-semibold shadow-md`}>
+          {config.name}
+        </span>
+      </div>
+
+      {/* Shop Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {shops.map((shop, i) => (
+          <motion.div
+            key={shop.id}
+            className="bg-white shadow-md rounded-lg overflow-hidden hover:shadow-xl transition-all"
+            whileHover={{ scale: 1.02, y: -4 }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.05, duration: 0.3 }}
+          >
+            <Link href={`/shop/${shop.id}`}>
+              <div className="relative h-48 bg-gray-200 rounded-t-lg">
                 <img
                   src={shop.image || '/images/placeholder.jpg'}
                   alt={shop.name}
-                  className="w-full h-40 object-cover"
+                  className="w-full h-full object-cover"
+                  loading="lazy"
                 />
-                <div className="p-4">
-                  <h2 className="font-semibold text-lg">{shop.name}</h2>
-                  <p className="text-sm text-gray-500">{shop.category}</p>
-                </div>
-              </Link>
-            </motion.div>
-          ))}
-        </div>
-
-        {/* View all button */}
-        <div className="text-center">
-          <Link
-            href="/shop"
-            className="inline-block px-6 py-3 bg-blue-500 text-white font-semibold rounded-xl shadow hover:bg-blue-600 transition"
-          >
-            ดูทั้งหมด
-          </Link>
-        </div>
+              </div>
+              <div className="p-4">
+                <h3 className="font-semibold text-lg mb-1 line-clamp-1">
+                  {shop.name}
+                </h3>
+                {shop.category && (
+                  <p className="text-sm text-gray-500 mb-2">
+                    {shop.category}
+                  </p>
+                )}
+                {(shop.district || shop.province) && (
+                  <p className="text-xs text-gray-400">
+                    📍 {shop.district}{shop.district && shop.province ? ', ' : ''}{shop.province}
+                  </p>
+                )}
+              </div>
+            </Link>
+          </motion.div>
+        ))}
       </div>
-    </AppLayout>
+    </div>
   );
 }
