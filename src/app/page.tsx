@@ -59,9 +59,9 @@ const PACKAGES = {
   FREE: {
     name: 'ฟรี',
     emoji: '',
-    bg: 'bg-slate-50',
-    border: 'border-slate-200',
-    badge: 'bg-slate-400 text-white',
+    bg: 'bg-gray-50',
+    border: 'border-gray-200',
+    badge: 'bg-gray-400 text-white',
   },
 };
 
@@ -260,7 +260,7 @@ export default function HomePage() {
       {/* ========== Hero Banner ========== */}
       {banners.length > 0 && (
         <div className="w-full overflow-hidden mb-8">
-          <div className="relative h-64 sm:h-80 md:h-96 lg:h-[28rem] rounded-lg overflow-hidden shadow-lg">
+          <div className="relative h-64 sm:h-80 md:h-96 lg:h-[28rem] rounded-2xl overflow-hidden shadow-lg">
             {banners.map((banner, i) => (
               <Link
                 key={banner.id}
@@ -301,7 +301,7 @@ export default function HomePage() {
                       prev === 0 ? banners.length - 1 : prev - 1
                     )
                   }
-                  className="hidden md:block absolute left-4 top-1/2 transform -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white p-3 rounded-lg transition z-10"
+                  className="hidden md:block absolute left-4 top-1/2 transform -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white p-3 rounded-full transition z-10"
                 >
                   ‹
                 </button>
@@ -309,7 +309,7 @@ export default function HomePage() {
                   onClick={() =>
                     setCurrentBanner((prev) => (prev + 1) % banners.length)
                   }
-                  className="hidden md:block absolute right-4 top-1/2 transform -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white p-3 rounded-lg transition z-10"
+                  className="hidden md:block absolute right-4 top-1/2 transform -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white p-3 rounded-full transition z-10"
                 >
                   ›
                 </button>
@@ -368,7 +368,7 @@ export default function HomePage() {
       <div className="text-center mt-12 mb-8">
         <Link
           href="/shop"
-          className="inline-block px-8 py-3 bg-blue-500 text-white font-semibold rounded-lg shadow-lg hover:bg-blue-600 hover:shadow-xl transition-all"
+          className="inline-block px-8 py-3 bg-blue-500 text-white font-semibold rounded-xl shadow-lg hover:bg-blue-600 hover:shadow-xl transition-all"
         >
           ดูร้านค้าทั้งหมด
         </Link>
@@ -386,14 +386,14 @@ type PackageSectionProps = {
 
 function PackageSection({ title, shops, config }: PackageSectionProps) {
   return (
-    <div className={`${config.bg} border ${config.border} rounded-lg p-6 mb-8 shadow-sm`}>
+    <div className={`${config.bg} border ${config.border} rounded-2xl p-6 mb-8 shadow-sm`}>
       {/* Section Header */}
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold flex items-center gap-2">
           <span className="text-3xl">{config.emoji}</span>
           {title}
         </h2>
-        <span className={`${config.badge} px-4 py-1 rounded-md text-sm font-semibold shadow-md`}>
+        <span className={`${config.badge} px-4 py-1 rounded-full text-sm font-semibold shadow-md`}>
           {config.name}
         </span>
       </div>
@@ -403,14 +403,14 @@ function PackageSection({ title, shops, config }: PackageSectionProps) {
         {shops.map((shop, i) => (
           <motion.div
             key={shop.id}
-            className="bg-white shadow-md rounded-lg overflow-hidden hover:shadow-xl transition-all"
+            className="bg-white shadow-md rounded-xl overflow-hidden hover:shadow-xl transition-all"
             whileHover={{ scale: 1.02, y: -4 }}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.05, duration: 0.3 }}
           >
             <Link href={`/shop/${shop.id}`}>
-              <div className="relative h-48 bg-gray-200 rounded-t-lg">
+              <div className="relative h-48 bg-gray-200">
                 <img
                   src={shop.image || '/images/placeholder.jpg'}
                   alt={shop.name}
