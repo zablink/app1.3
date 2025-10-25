@@ -1,8 +1,3 @@
-// ================================
-// ZABLINK PROJECT - FINAL SCHEMA
-// Complete Schema with Token System
-// ================================
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -13,582 +8,42 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-// ================================
-// ENUMS
-// ================================
-
-enum Role {
-  USER
-  SHOP_OWNER
-  CREATOR
-  ADMIN
-}
-
-enum ShopStatus {
-  PENDING
-  APPROVED
-  REJECTED
-  SUSPENDED
-}
-
-enum CreatorStatus {
-  PENDING
-  ACTIVE
-  SUSPENDED
-  REJECTED
-}
-
-enum PackageType {
-  FREE
-  PRO1
-  PRO2
-  SPECIAL
-}
-
-enum AdScope {
-  NATIONAL
-  PROVINCE
-  AMPHURE
-  TAMBON
-}
-
-enum CreatorTier {
-  BRONZE    // 100 tokens/review
-  SILVER    // 150 tokens/review
-  GOLD      // 200 tokens/review
-  PLATINUM  // 300 tokens/review
-}
-
-// ================================
-// AUTHENTICATION MODELS
-// ================================
-
-model User {
-  id            String    @id @default(cuid())
-  email         String?   @unique
-  emailVerified DateTime?
-  name          String?
-  image         String?
-  phone         String?
-  password      String?
-  
-  // Role & Status
-  role          Role      @default(USER)
-  isActive      Boolean   @default(true)
-  
-  // Timestamps
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  lastLoginAt   DateTime?
-  
-  // Relations
-  accounts      Account[]
-  sessions      Session[]
-  shops         Shop[]
-  creator       Creator?
-  
-  @@index([email])
-  @@index([role])
-  @@map("users")
-}
-
-model Account {
-  id                String  @id @default(cuid())
-  userId            String
-  type              String
-  provider          String
-  providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
-  expires_at        Int?
-  token_type        String?
-  scope             String?
-  id_token          String? @db.Text
-  session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([provider, providerAccountId])
-  @@index([userId])
-  @@map("accounts")
-}
-
-model Session {
-  id           String   @id @default(cuid())
-  sessionToken String   @unique
-  userId       String
-  expires      DateTime
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@map("sessions")
-}
-
-model VerificationToken {
-  identifier String
-  token      String   @unique
-  expires    DateTime
-
-  @@unique([identifier, token])
-  @@map("verification_tokens")
-}
-
-// ================================
-// SHOP MODELS
-// ================================
-
-model Shop {
-  id                   String                   @id @default(cuid())
-  ownerId              String
-  name                 String
-  slug                 String?                  @unique
-  description          String?                  @db.Text
-  
-  // Location
-  address              String?
-  lat                  Float?
-  lng                  Float?
-  location             Unsupported("geometry")?
-  provinceId           Int?
-  amphureId            Int?
-  tambonId             Int?
-  
-  // Contact
-  phone                String?
-  email                String?
-  website              String?
-  lineId               String?
-  
-  // Categories
-  categoryId           String
-  
-  // Images
-  image                String?
-  featuredImage        String?
-  
-  // Package & Status
-  adPackageId          String?
-  packageType          PackageType              @default(FREE)
-  status               ShopStatus               @default(PENDING)
-  
-  // Settings
-  has_physical_store   Boolean                  @default(true)
-  show_location_on_map Boolean                  @default(false)
-  
-  // Token System
-  tokenBalance         Int                      @default(0)
-  
-  // Timestamps
-  createdAt            DateTime                 @default(now())
-  updatedAt            DateTime                 @updatedAt
-  approvedAt           DateTime?
-  rejectedAt           DateTime?
-  
-  // Relations
-  owner                User                     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  category             ShopCategory             @relation(fields: [categoryId], references: [id])
-  adPackage            AdPackage?               @relation(fields: [adPackageId], references: [id])
-  
-  images               ShopImage[]
-  links                shop_links[]
-  menus                Menu[]
-  analytics            Analytics[]
-  
-  shop_daily_hours     shop_daily_hours[]
-  shop_gallery         shop_gallery[]
-  shop_hours           shop_hours?
-  shop_reviews         shop_reviews[]
-  shop_special_hours   shop_special_hours[]
-  shop_stats           shop_stats[]
-  
-  subscription         ShopSubscription?
-  reviewRequests       ReviewRequest[]
-  tokenPurchases       TokenPurchase[]
-  
-  @@index([ownerId])
-  @@index([status])
-  @@index([packageType])
-  @@index([categoryId])
-  @@index([slug])
-  @@index([location], map: "shops_location_gix", type: Gist)
-  @@map("shops")
-}
-
-model ShopCategory {
-  id          String   @id @default(cuid())
-  name        String   @unique
-  slug        String?  @unique
-  description String?
-  icon        String?
-  order       Int      @default(0)
-  isActive    Boolean  @default(true)
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
-  shops       Shop[]
-  
-  @@map("shop_categories")
-}
-
-model ShopImage {
-  id          String   @id @default(cuid())
-  shopId      String
-  url         String
-  isFeatured  Boolean  @default(false)
-  order       Int      @default(0)
-  
-  createdAt   DateTime @default(now())
-  
-  shop        Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
-  
-  @@index([shopId])
-  @@map("shop_images")
-}
-
-model Menu {
-  id        String   @id @default(cuid())
-  name      String
-  price     Float
-  image     String?
-  shopId    String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  shop      Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
-  
-  @@index([shopId])
-  @@map("menus")
-}
-
-model AdPackage {
-  id        String   @id @default(cuid())
-  name      String
-  scope     AdScope
-  priority  Int
-  price     Float    @default(0.0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  shops     Shop[]
-  
-  @@map("ad_packages")
-}
-
-model Analytics {
-  id     String   @id @default(cuid())
-  shopId String
-  date   DateTime @default(now())
-  views  Int      @default(0)
-  clicks Int      @default(0)
-  shop   Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
-  
-  @@index([shopId])
-  @@map("analytics")
-}
-
-// ================================
-// SUBSCRIPTION & PAYMENT MODELS
-// ================================
-
 model ShopSubscription {
-  id              String      @id @default(cuid())
-  shopId          String      @unique
-  packageType     PackageType
-  
-  startDate       DateTime
-  endDate         DateTime
-  
-  isActive        Boolean     @default(true)
-  autoRenew       Boolean     @default(true)
-  
-  price           Float
-  currency        String      @default("THB")
-  
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
-  
-  shop            Shop        @relation(fields: [shopId], references: [id], onDelete: Cascade)
-  payments        Payment[]
-  
-  @@index([shopId])
-  @@index([endDate])
+  id                       String                @id @default(dbgenerated("(gen_random_uuid())::text"))
+  shop_id                  String
+  package_id               String
+  start_date               DateTime              @db.Date
+  end_date                 DateTime              @db.Date
+  status                   subscription_status?  @default(ACTIVE)
+  original_price           Decimal               @db.Decimal(10, 2)
+  discount_amount          Decimal?              @default(0) @db.Decimal(10, 2)
+  final_price              Decimal               @db.Decimal(10, 2)
+  payment_status           String?               @default("PENDING")
+  paid_at                  DateTime?             @db.Timestamptz(6)
+  auto_renew               Boolean?              @default(true)
+  cancelled_at             DateTime?             @db.Timestamptz(6)
+  cancellation_reason      String?
+  parent_subscription_id   String?
+  renewal_count            Int?                  @default(1)
+  created_at               DateTime?             @default(now()) @db.Timestamptz(6)
+  updated_at               DateTime?             @default(now()) @db.Timestamptz(6)
+  subscription_packages    subscription_packages @relation(fields: [package_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  shop_subscriptions       ShopSubscription?     @relation("shop_subscriptionsToshop_subscriptions", fields: [parent_subscription_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  other_shop_subscriptions ShopSubscription[]    @relation("shop_subscriptionsToshop_subscriptions")
+  Shop                     Shop                  @relation(fields: [shop_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([start_date, end_date], map: "shop_subscriptions_dates_idx")
+  @@index([package_id], map: "shop_subscriptions_package_idx")
+  @@index([shop_id], map: "shop_subscriptions_shop_idx")
+  @@index([status])
   @@map("shop_subscriptions")
 }
-
-model Payment {
-  id              String   @id @default(cuid())
-  subscriptionId  String
-  
-  amount          Float
-  currency        String   @default("THB")
-  status          String   // pending, completed, failed, refunded
-  
-  paymentMethod   String?  // credit_card, bank_transfer, promptpay
-  transactionId   String?
-  
-  paidAt          DateTime?
-  createdAt       DateTime @default(now())
-  
-  subscription    ShopSubscription @relation(fields: [subscriptionId], references: [id])
-  
-  @@index([subscriptionId])
-  @@index([status])
-  @@map("payments")
-}
-
-// ================================
-// TOKEN SYSTEM MODELS
-// ================================
-
-model Token {
-  id          String   @id @default(cuid())
-  name        String   // "Basic Token Pack", "Premium Token Pack"
-  amount      Int      // 100, 500, 1000 tokens
-  price       Float    // ราคาในบาท
-  bonus       Int      @default(0) // โบนัสเพิ่ม
-  
-  isActive    Boolean  @default(true)
-  displayOrder Int     @default(0)
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
-  purchases   TokenPurchase[]
-  
-  @@map("tokens")
-}
-
-model TokenPurchase {
-  id              String   @id @default(cuid())
-  shopId          String
-  tokenId         String
-  
-  amount          Int      // จำนวน token ที่ซื้อ
-  bonus           Int      @default(0) // โบนัสที่ได้
-  totalTokens     Int      // amount + bonus
-  price           Float
-  
-  paymentMethod   String?  // credit_card, bank_transfer, promptpay
-  paymentStatus   String   @default("pending") // pending, completed, failed
-  transactionId   String?
-  
-  paidAt          DateTime?
-  createdAt       DateTime @default(now())
-  
-  shop            Shop     @relation(fields: [shopId], references: [id])
-  token           Token    @relation(fields: [tokenId], references: [id])
-  
-  @@index([shopId])
-  @@index([tokenId])
-  @@index([paymentStatus])
-  @@map("token_purchases")
-}
-
-model TokenTransaction {
-  id              String   @id @default(cuid())
-  shopId          String?
-  creatorId       String?
-  
-  type            String   // purchase, spend, earn, refund
-  amount          Int      // จำนวน token (+ หรือ -)
-  balance         Int      // balance หลังทำธุรกรรม
-  
-  description     String
-  referenceId     String?  // อ้างอิง review_request_id, token_purchase_id
-  referenceType   String?  // review_request, token_purchase
-  
-  createdAt       DateTime @default(now())
-  
-  @@index([shopId])
-  @@index([creatorId])
-  @@index([type])
-  @@map("token_transactions")
-}
-
-model TokenPrice {
-  id              String   @id @default(cuid())
-  tier            CreatorTier
-  tokensPerReview Int      // 100, 150, 200, 300 tokens
-  
-  isActive        Boolean  @default(true)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  
-  @@unique([tier])
-  @@map("token_prices")
-}
-
-// ================================
-// CREATOR/REVIEWER MODELS
-// ================================
-
-model Creator {
-  id              String         @id @default(cuid())
-  userId          String         @unique
-  displayName     String
-  bio             String?        @db.Text
-  
-  // Contact
-  phone           String?
-  lineId          String?
-  
-  // Social Media
-  tiktokUrl       String?
-  youtubeUrl      String?
-  facebookUrl     String?
-  instagramUrl    String?
-  
-  // Coverage Area
-  provinceId      Int
-  amphureId       Int?
-  tambonId        Int?
-  coverageLevel   String         // tambon, amphure, province
-  
-  // Token System
-  tier            CreatorTier    @default(BRONZE)
-  tokenPrice      Int            @default(100) // tokens ต่อ review
-  
-  // Stats
-  totalReviews    Int            @default(0)
-  completedReviews Int           @default(0)
-  rating          Float          @default(0)
-  
-  // Financial
-  totalEarnings   Float          @default(0)
-  availableBalance Float         @default(0)
-  totalWithdrawn  Float          @default(0)
-  
-  // Status
-  status          CreatorStatus  @default(PENDING)
-  
-  // Timestamps
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
-  approvedAt      DateTime?
-  
-  // Relations
-  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  reviews         ReviewRequest[]
-  earnings        CreatorEarning[]
-  withdrawals     CreatorWithdrawal[]
-  
-  @@index([userId])
-  @@index([status])
-  @@index([provinceId])
-  @@index([tier])
-  @@map("creators")
-}
-
-model ReviewRequest {
-  id              String   @id @default(cuid())
-  shopId          String
-  creatorId       String?
-  
-  title           String
-  description     String   @db.Text
-  budget          Float
-  deadline        DateTime
-  
-  status          String   @default("pending") // pending, assigned, in_progress, completed, cancelled
-  
-  // Token System
-  tokenCost       Int?
-  tokensRefunded  Boolean  @default(false)
-  
-  // Results
-  reviewUrl       String?
-  completedAt     DateTime?
-  shopRating      Int?     // 1-5 stars from shop owner
-  shopFeedback    String?  @db.Text
-  
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  
-  // Relations
-  shop            Shop     @relation(fields: [shopId], references: [id])
-  creator         Creator? @relation(fields: [creatorId], references: [id])
-  
-  @@index([shopId])
-  @@index([creatorId])
-  @@index([status])
-  @@map("review_requests")
-}
-
-model CreatorEarning {
-  id              String   @id @default(cuid())
-  creatorId       String
-  reviewRequestId String?
-  
-  amount          Float
-  description     String
-  
-  createdAt       DateTime @default(now())
-  
-  creator         Creator  @relation(fields: [creatorId], references: [id])
-  
-  @@index([creatorId])
-  @@map("creator_earnings")
-}
-
-model CreatorWithdrawal {
-  id              String   @id @default(cuid())
-  creatorId       String
-  
-  amount          Float
-  status          String   @default("pending") // pending, processing, completed, rejected
-  
-  bankName        String
-  bankAccount     String
-  accountName     String
-  
-  processedAt     DateTime?
-  completedAt     DateTime?
-  rejectedReason  String?
-  
-  createdAt       DateTime @default(now())
-  
-  creator         Creator  @relation(fields: [creatorId], references: [id])
-  
-  @@index([creatorId])
-  @@index([status])
-  @@map("creator_withdrawals")
-}
-
-// ================================
-// BANNER & ADVERTISING MODELS
-// ================================
-
-model Banner {
-  id          String   @id @default(cuid())
-  title       String
-  imageUrl    String
-  linkUrl     String?
-  
-  scope       AdScope  // NATIONAL, PROVINCE, AMPHURE, TAMBON
-  locationId  Int?     // province_id, amphure_id, or tambon_id
-  
-  displayOrder Int     @default(0)
-  isActive    Boolean  @default(true)
-  
-  startDate   DateTime
-  endDate     DateTime
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
-  @@index([scope])
-  @@index([isActive])
-  @@map("banners")
-}
-
-// ================================
-// LOCATION MODELS (Thai Location Database)
-// ================================
 
 model loc_geographies {
   id            Int             @id
   name          String
   loc_provinces loc_provinces[]
-  
+
   @@map("loc_geographies")
 }
 
@@ -602,7 +57,7 @@ model loc_provinces {
   deleted_at      DateTime?       @db.Timestamp(6)
   loc_amphures    loc_amphures[]
   loc_geographies loc_geographies @relation(fields: [geography_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  
+
   @@map("loc_provinces")
 }
 
@@ -616,7 +71,7 @@ model loc_amphures {
   deleted_at    DateTime?     @db.Timestamp(6)
   loc_provinces loc_provinces @relation(fields: [province_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   loc_tambons   loc_tambons[]
-  
+
   @@map("loc_amphures")
 }
 
@@ -635,10 +90,6 @@ model loc_tambons {
   @@index([geom], map: "geom_idx", type: Gist)
   @@map("loc_tambons")
 }
-
-// ================================
-// SHOP DETAILED MODELS
-// ================================
 
 model shop_daily_hours {
   id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
@@ -665,8 +116,7 @@ model shop_gallery {
   is_featured Boolean   @default(false)
   uploaded_at DateTime? @default(now()) @db.Timestamptz(6)
   Shop        Shop      @relation(fields: [shop_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  
-  @@index([shop_id])
+
   @@map("shop_gallery")
 }
 
@@ -692,8 +142,7 @@ model shop_links {
   type    String
   url     String
   Shop    Shop   @relation(fields: [shop_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  
-  @@index([shop_id])
+
   @@map("shop_links")
 }
 
@@ -706,8 +155,7 @@ model shop_reviews {
   is_disabled Boolean   @default(false)
   created_at  DateTime? @default(now()) @db.Timestamptz(6)
   Shop        Shop      @relation(fields: [shop_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  
-  @@index([shop_id])
+
   @@map("shop_reviews")
 }
 
@@ -734,388 +182,269 @@ model shop_stats {
   event_type String
   user_id    String?
   session_id String?
-  ip_address String?
-  user_agent String?
   created_at DateTime? @default(now()) @db.Timestamptz(6)
   Shop       Shop      @relation(fields: [shop_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
-  @@index([event_type], map: "shop_stats_event_idx")
-  @@index([shop_id])
   @@map("shop_stats")
 }
 
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model Account {
+  id                String  @id
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  User              User    @relation(fields: [userId], references: [id])
 
-// TOKEN BALANCE
-// -- Token System Schema
-// -- เพิ่มเข้าไปใน Prisma Schema
-
-// -- ================================
-// -- TOKEN MODELS
-// -- ================================
-
-model TokenBalance {
-  id              String   @id @default(cuid())
-  shopId          String   @unique
-  
-  // Current balance
-  totalTokens     Int      @default(0)
-  usedTokens      Int      @default(0)
-  availableTokens Int      @default(0)
-  
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  
-  // Relations
-  shop            Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
-  batches         TokenBatch[]
-  transactions    TokenTransaction[]
-  
-  @@index([shopId])
-  @@map("token_balances")
+  @@unique([provider, providerAccountId])
 }
 
-model TokenBatch {
-  id              String   @id @default(cuid())
-  balanceId       String
-  
-  // Batch info
-  amount          Int
-  remainingAmount Int
-  source          String   // subscription, purchase, bonus
-  
-  // Expiry
-  receivedAt      DateTime @default(now())
-  expiresAt       DateTime
-  isExpired       Boolean  @default(false)
-  
-  // Metadata
-  subscriptionId  String?  // Link to subscription if from package
-  orderId         String?  // Link to purchase order
-  
-  createdAt       DateTime @default(now())
-  
-  // Relations
-  balance         TokenBalance @relation(fields: [balanceId], references: [id], onDelete: Cascade)
-  
-  @@index([balanceId])
-  @@index([expiresAt])
-  @@index([isExpired])
-  @@map("token_batches")
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model AdPackage {
+  id        String   @id
+  name      String
+  scope     AdScope
+  priority  Int
+  price     Float    @default(0.0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+  Shop      Shop[]
 }
 
-model TokenTransaction {
-  id              String   @id @default(cuid())
-  balanceId       String
-  
-  // Transaction details
-  type            String   // earn, spend, refund, expire, convert
-  amount          Int
-  balance         Int      // Balance after transaction
-  
-  // References
-  referenceType   String?  // review_request, ad_purchase, subscription
-  referenceId     String?
-  
-  description     String
-  
-  createdAt       DateTime @default(now())
-  
-  // Relations
-  tokenBalance    TokenBalance @relation(fields: [balanceId], references: [id], onDelete: Cascade)
-  
-  @@index([balanceId])
-  @@index([type])
-  @@index([createdAt])
-  @@map("token_transactions")
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model Analytics {
+  id     String   @id
+  shopId String
+  date   DateTime @default(now())
+  views  Int      @default(0)
+  clicks Int      @default(0)
+  Shop   Shop     @relation(fields: [shopId], references: [id])
 }
 
-model TokenPurchase {
-  id              String   @id @default(cuid())
-  shopId          String
-  
-  // Purchase details
-  amount          Int
-  pricePerToken   Float
-  totalPrice      Float
-  discount        Float    @default(0)
-  finalPrice      Float
-  
-  // Payment
-  paymentStatus   String   @default("pending") // pending, completed, failed
-  paymentMethod   String?
-  paidAt          DateTime?
-  
-  createdAt       DateTime @default(now())
-  
-  // Relations
-  shop            Shop     @relation(fields: [shopId], references: [id])
-  
-  @@index([shopId])
-  @@index([paymentStatus])
-  @@map("token_purchases")
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model Menu {
+  id        String   @id
+  name      String
+  price     Float
+  image     String?
+  shopId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+  Shop      Shop     @relation(fields: [shopId], references: [id])
 }
 
-// ================================
-// UPDATE CREATOR MODEL
-// ================================
-
-model Creator {
-  // ... existing fields
-  
-  // Add tier pricing
-  tier            String   @default("micro") // micro, small, medium, large
-  tokenPrice      Int      @default(80)      // Price in tokens
-  
-  // Add to existing model
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model Session {
+  id           String   @id
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  User         User     @relation(fields: [userId], references: [id])
 }
 
-// ================================
-// UPDATE SHOP MODEL
-// ================================
-
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model Shop {
-  // ... existing fields
-  
-  // Add relations
-  tokenBalance    TokenBalance?
-  tokenPurchases  TokenPurchase[]
-  
-  // Add to existing model
+  id                   String                   @id
+  ownerId              String
+  name                 String
+  description          String?
+  createdAt            DateTime                 @default(now())
+  updatedAt            DateTime
+  adPackageId          String?
+  address              String?
+  categoryId           String
+  image                String?
+  location             Unsupported("geometry")?
+  has_physical_store   Boolean                  @default(false)
+  show_location_on_map Boolean                  @default(false)
+  Analytics            Analytics[]
+  Menu                 Menu[]
+  AdPackage            AdPackage?               @relation(fields: [adPackageId], references: [id])
+  ShopCategory         ShopCategory             @relation(fields: [categoryId], references: [id])
+  User                 User                     @relation(fields: [ownerId], references: [id])
+  shop_daily_hours     shop_daily_hours[]
+  shop_gallery         shop_gallery[]
+  shop_hours           shop_hours?
+  links                shop_links[]
+  shop_reviews         shop_reviews[]
+  shop_special_hours   shop_special_hours[]
+  shop_stats           shop_stats[]
+  shop_subscriptions   ShopSubscription[]
+
+  @@index([location], map: "shops_location_gix", type: Gist)
 }
 
-// ================================
-// UPDATE REVIEWREQUEST MODEL
-// ================================
-
-model ReviewRequest {
-  // ... existing fields
-  
-  // Add token info
-  tokenCost       Int?     // Cost in tokens
-  tokensRefunded  Boolean  @default(false)
-  
-  // Add to existing model
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model ShopCategory {
+  id        String   @id
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+  Shop      Shop[]
 }
 
-// -- ================================
-// -- TRIGGERS & FUNCTIONS
-// -- ================================
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model User {
+  id        String    @id
+  email     String?   @unique
+  name      String?
+  createdAt DateTime  @default(now())
+  image     String?
+  password  String?
+  role      Role      @default(USER)
+  updatedAt DateTime
+  Account   Account[]
+  Session   Session[]
+  Shop      Shop[]
+}
 
-// -- Function: Auto-expire tokens
-CREATE OR REPLACE FUNCTION expire_tokens()
-RETURNS void AS $$
-BEGIN
-  // -- Mark expired batches
-  UPDATE token_batches
-  SET is_expired = true
-  WHERE expires_at < NOW()
-    AND is_expired = false;
-    
-  // -- Create expiry transactions
-  INSERT INTO token_transactions (
-    id, balance_id, type, amount, balance, 
-    description, created_at
-  )
-  SELECT 
-    gen_random_uuid(),
-    tb.balance_id,
-    'expire',
-    // -- tb.remaining_amount,
-    (SELECT available_tokens FROM token_balances WHERE id = tb.balance_id),
-    'Token หมดอายุ ' || tb.remaining_amount || ' tokens',
-    NOW()
-  FROM token_batches tb
-  WHERE tb.expires_at < NOW()
-    AND tb.is_expired = false
-    AND tb.remaining_amount > 0;
-    
-  // -- Update balances
-  UPDATE token_balances tb
-  SET 
-    available_tokens = available_tokens - (
-      SELECT COALESCE(SUM(remaining_amount), 0)
-      FROM token_batches
-      WHERE balance_id = tb.id
-        AND expires_at < NOW()
-        AND is_expired = false
-    ),
-    updated_at = NOW();
-    
-  // -- Zero out expired batches
-  UPDATE token_batches
-  SET remaining_amount = 0
-  WHERE expires_at < NOW()
-    AND is_expired = false;
-END;
-$$ LANGUAGE plpgsql;
+model banners {
+  id         Int       @id @default(autoincrement())
+  image      String
+  link       String?
+  order      Int?      @default(0)
+  is_active  Boolean?  @default(true)
+  created_at DateTime? @default(now()) @db.Timestamptz(6)
+  updated_at DateTime? @default(now()) @db.Timestamptz(6)
 
-// -- Schedule: Run daily
-// -- CREATE EXTENSION IF NOT EXISTS pg_cron;
-// -- SELECT cron.schedule('expire-tokens-daily', '0 0 * * *', 'SELECT expire_tokens()');
+  @@index([order])
+}
 
-// -- Function: Spend tokens (FIFO)
-CREATE OR REPLACE FUNCTION spend_tokens(
-  p_balance_id TEXT,
-  p_amount INT,
-  p_reference_type TEXT,
-  p_reference_id TEXT,
-  p_description TEXT
-)
-RETURNS BOOLEAN AS $$
-DECLARE
-  v_available INT;
-  v_remaining INT;
-  v_batch RECORD;
-  v_to_deduct INT;
-BEGIN
-  // -- Check available balance
-  SELECT available_tokens INTO v_available
-  FROM token_balances
-  WHERE id = p_balance_id;
-  
-  IF v_available < p_amount THEN
-    RAISE EXCEPTION 'Insufficient tokens';
-  END IF;
-  
-  v_remaining := p_amount;
-  
-  // -- Deduct from batches (FIFO)
-  FOR v_batch IN 
-    SELECT * FROM token_batches
-    WHERE balance_id = p_balance_id
-      AND remaining_amount > 0
-      AND is_expired = false
-    ORDER BY received_at ASC
-  LOOP
-    IF v_remaining <= 0 THEN
-      EXIT;
-    END IF;
-    
-    v_to_deduct := LEAST(v_batch.remaining_amount, v_remaining);
-    
-    UPDATE token_batches
-    SET remaining_amount = remaining_amount - v_to_deduct
-    WHERE id = v_batch.id;
-    
-    v_remaining := v_remaining - v_to_deduct;
-  END LOOP;
-  
-  // -- Update balance
-  UPDATE token_balances
-  SET 
-    used_tokens = used_tokens + p_amount,
-    available_tokens = available_tokens - p_amount,
-    updated_at = NOW()
-  WHERE id = p_balance_id;
-  
-  // -- Create transaction
-  INSERT INTO token_transactions (
-    id, balance_id, type, amount, balance,
-    reference_type, reference_id, description, created_at
-  )
-  SELECT 
-    gen_random_uuid(),
-    p_balance_id,
-    'spend',
-    -p_amount,
-    available_tokens,
-    p_reference_type,
-    p_reference_id,
-    p_description,
-    NOW()
-  FROM token_balances
-  WHERE id = p_balance_id;
-  
-  RETURN TRUE;
-END;
-$$ LANGUAGE plpgsql;
+model simple_shops {
+  id          Int       @id @default(autoincrement())
+  name        String
+  category    String?
+  image       String?
+  lat         Float?
+  lng         Float?
+  subdistrict String?
+  district    String?
+  province    String?
+  created_at  DateTime? @default(now()) @db.Timestamptz(6)
+  updated_at  DateTime? @default(now()) @db.Timestamptz(6)
 
-// -- Function: Add tokens
-CREATE OR REPLACE FUNCTION add_tokens(
-  p_balance_id TEXT,
-  p_amount INT,
-  p_source TEXT,
-  p_subscription_id TEXT DEFAULT NULL,
-  p_order_id TEXT DEFAULT NULL
-)
-RETURNS TEXT AS $$
-DECLARE
-  v_batch_id TEXT;
-  v_expires_at TIMESTAMP;
-BEGIN
-  // -- Calculate expiry (3 months)
-  v_expires_at := NOW() + INTERVAL '3 months';
-  
-  // -- Create batch
-  INSERT INTO token_batches (
-    id, balance_id, amount, remaining_amount,
-    source, received_at, expires_at,
-    subscription_id, order_id
-  )
-  VALUES (
-    gen_random_uuid(),
-    p_balance_id,
-    p_amount,
-    p_amount,
-    p_source,
-    NOW(),
-    v_expires_at,
-    p_subscription_id,
-    p_order_id
-  )
-  RETURNING id INTO v_batch_id;
-  
-  // -- Update balance
-  UPDATE token_balances
-  SET 
-    total_tokens = total_tokens + p_amount,
-    available_tokens = available_tokens + p_amount,
-    updated_at = NOW()
-  WHERE id = p_balance_id;
-  
-  // -- Create transaction
-  INSERT INTO token_transactions (
-    id, balance_id, type, amount, balance,
-    description, created_at
-  )
-  SELECT 
-    gen_random_uuid(),
-    p_balance_id,
-    'earn',
-    p_amount,
-    available_tokens,
-    'ได้รับ ' || p_amount || ' tokens จาก ' || p_source,
-    NOW()
-  FROM token_balances
-  WHERE id = p_balance_id;
-  
-  RETURN v_batch_id;
-END;
-$$ LANGUAGE plpgsql;
+  @@index([category])
+  @@index([province])
+}
 
-// -- ================================
-// -- PRICING CONFIGURATION
-// -- ================================
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model spatial_ref_sys {
+  srid      Int     @id
+  auth_name String? @db.VarChar(256)
+  auth_srid Int?
+  srtext    String? @db.VarChar(2048)
+  proj4text String? @db.VarChar(2048)
+}
 
-CREATE TABLE IF NOT EXISTS token_pricing (
-  id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
-  tier TEXT NOT NULL, // -- subscription or purchase
-  min_amount INT,
-  max_amount INT,
-  price_per_token DECIMAL(10,2) NOT NULL,
-  discount_percent DECIMAL(5,2) DEFAULT 0,
-  created_at TIMESTAMP DEFAULT NOW()
-);
+model subscription_packages {
+  id                         String             @id @default(dbgenerated("(gen_random_uuid())::text"))
+  tier                       subscription_tier  @unique
+  name                       String
+  price_monthly              Decimal            @db.Decimal(10, 2)
+  display_order              Int
+  display_weight             Int
+  badge_text                 String?
+  badge_emoji                String?
+  max_images                 Int?               @default(1)
+  max_menu_items             Int?               @default(5)
+  max_delivery_links         Int?               @default(1)
+  max_promotions             Int?               @default(0)
+  analytics_retention_days   Int?               @default(0)
+  has_advanced_analytics     Boolean?           @default(false)
+  can_pin_on_map             Boolean?           @default(false)
+  can_reply_reviews          Boolean?           @default(false)
+  can_set_special_hours      Boolean?           @default(false)
+  can_create_coupons         Boolean?           @default(false)
+  has_verified_badge         Boolean?           @default(false)
+  has_social_integration     Boolean?           @default(false)
+  monthly_commission_tokens  Int?               @default(0)
+  banner_ad_discount_percent Decimal?           @default(0) @db.Decimal(5, 2)
+  support_level              String?            @default("EMAIL")
+  is_active                  Boolean?           @default(true)
+  created_at                 DateTime?          @default(now()) @db.Timestamptz(6)
+  updated_at                 DateTime?          @default(now()) @db.Timestamptz(6)
+  shop_subscriptions         ShopSubscription[]
+}
 
-// -- Subscription token allocation
-INSERT INTO token_pricing (tier, min_amount, max_amount, price_per_token, discount_percent) VALUES
-  ('FREE', 0, 0, 0, 0),
-  ('BASIC', 5, 5, 0, 0),      // -- Included in package
-  ('PRO', 10, 10, 0, 0),       // -- Included in package
-  ('PREMIUM', 20, 20, 0, 0);   // -- Included in package
+enum Role {
+  USER
+  SHOP
+  CREATOR
+  MCN_MANAGER
+  AD_MANAGER
+  ADMIN
+}
 
-// -- Purchase pricing (example - adjust as needed)
-INSERT INTO token_pricing (tier, min_amount, max_amount, price_per_token, discount_percent) VALUES
-  ('purchase_small', 1, 99, 10.00, 0),
-  ('purchase_medium', 100, 499, 9.00, 10),
-  ('purchase_large', 500, NULL, 8.00, 20);
+enum ShopStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+enum CreatorStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+  REJECTED
+}
+
+enum PackageType {
+  FREE
+  PRO1
+  PRO2
+  SPECIAL
+}
+
+enum AdScope {
+  SUBDISTRICT
+  DISTRICT
+  PROVINCE
+  NATIONWIDE
+}
+
+enum CreatorTier {
+  BRONZE
+  SILVER
+  GOLD
+  PLATINUM
+}
+
+enum ReviewStatus {
+  PENDING
+  ACCEPTED
+  IN_PROGRESS
+  SUBMITTED
+  COMPLETED
+  REJECTED
+  CANCELLED
+}
+
+enum WithdrawalStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  REJECTED
+}
+
+enum subscription_status {
+  ACTIVE
+  EXPIRED
+  CANCELLED
+  SUSPENDED
+}
+
+enum subscription_tier {
+  FREE
+  BASIC
+  PRO
+  PREMIUM
+}
