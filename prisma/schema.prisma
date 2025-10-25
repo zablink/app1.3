@@ -743,3 +743,383 @@ model shop_stats {
   @@index([shop_id])
   @@map("shop_stats")
 }
+
+
+// TOKEN BALANCE
+-- Token System Schema
+-- เพิ่มเข้าไปใน Prisma Schema
+
+-- ================================
+-- TOKEN MODELS
+-- ================================
+
+model TokenBalance {
+  id              String   @id @default(cuid())
+  shopId          String   @unique
+  
+  // Current balance
+  totalTokens     Int      @default(0)
+  usedTokens      Int      @default(0)
+  availableTokens Int      @default(0)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Relations
+  shop            Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  batches         TokenBatch[]
+  transactions    TokenTransaction[]
+  
+  @@index([shopId])
+  @@map("token_balances")
+}
+
+model TokenBatch {
+  id              String   @id @default(cuid())
+  balanceId       String
+  
+  // Batch info
+  amount          Int
+  remainingAmount Int
+  source          String   // subscription, purchase, bonus
+  
+  // Expiry
+  receivedAt      DateTime @default(now())
+  expiresAt       DateTime
+  isExpired       Boolean  @default(false)
+  
+  // Metadata
+  subscriptionId  String?  // Link to subscription if from package
+  orderId         String?  // Link to purchase order
+  
+  createdAt       DateTime @default(now())
+  
+  // Relations
+  balance         TokenBalance @relation(fields: [balanceId], references: [id], onDelete: Cascade)
+  
+  @@index([balanceId])
+  @@index([expiresAt])
+  @@index([isExpired])
+  @@map("token_batches")
+}
+
+model TokenTransaction {
+  id              String   @id @default(cuid())
+  balanceId       String
+  
+  // Transaction details
+  type            String   // earn, spend, refund, expire, convert
+  amount          Int
+  balance         Int      // Balance after transaction
+  
+  // References
+  referenceType   String?  // review_request, ad_purchase, subscription
+  referenceId     String?
+  
+  description     String
+  
+  createdAt       DateTime @default(now())
+  
+  // Relations
+  tokenBalance    TokenBalance @relation(fields: [balanceId], references: [id], onDelete: Cascade)
+  
+  @@index([balanceId])
+  @@index([type])
+  @@index([createdAt])
+  @@map("token_transactions")
+}
+
+model TokenPurchase {
+  id              String   @id @default(cuid())
+  shopId          String
+  
+  // Purchase details
+  amount          Int
+  pricePerToken   Float
+  totalPrice      Float
+  discount        Float    @default(0)
+  finalPrice      Float
+  
+  // Payment
+  paymentStatus   String   @default("pending") // pending, completed, failed
+  paymentMethod   String?
+  paidAt          DateTime?
+  
+  createdAt       DateTime @default(now())
+  
+  // Relations
+  shop            Shop     @relation(fields: [shopId], references: [id])
+  
+  @@index([shopId])
+  @@index([paymentStatus])
+  @@map("token_purchases")
+}
+
+// ================================
+// UPDATE CREATOR MODEL
+// ================================
+
+model Creator {
+  // ... existing fields
+  
+  // Add tier pricing
+  tier            String   @default("micro") // micro, small, medium, large
+  tokenPrice      Int      @default(80)      // Price in tokens
+  
+  // Add to existing model
+}
+
+// ================================
+// UPDATE SHOP MODEL
+// ================================
+
+model Shop {
+  // ... existing fields
+  
+  // Add relations
+  tokenBalance    TokenBalance?
+  tokenPurchases  TokenPurchase[]
+  
+  // Add to existing model
+}
+
+// ================================
+// UPDATE REVIEWREQUEST MODEL
+// ================================
+
+model ReviewRequest {
+  // ... existing fields
+  
+  // Add token info
+  tokenCost       Int?     // Cost in tokens
+  tokensRefunded  Boolean  @default(false)
+  
+  // Add to existing model
+}
+
+-- ================================
+-- TRIGGERS & FUNCTIONS
+-- ================================
+
+-- Function: Auto-expire tokens
+CREATE OR REPLACE FUNCTION expire_tokens()
+RETURNS void AS $$
+BEGIN
+  -- Mark expired batches
+  UPDATE token_batches
+  SET is_expired = true
+  WHERE expires_at < NOW()
+    AND is_expired = false;
+    
+  -- Create expiry transactions
+  INSERT INTO token_transactions (
+    id, balance_id, type, amount, balance, 
+    description, created_at
+  )
+  SELECT 
+    gen_random_uuid(),
+    tb.balance_id,
+    'expire',
+    -tb.remaining_amount,
+    (SELECT available_tokens FROM token_balances WHERE id = tb.balance_id),
+    'Token หมดอายุ ' || tb.remaining_amount || ' tokens',
+    NOW()
+  FROM token_batches tb
+  WHERE tb.expires_at < NOW()
+    AND tb.is_expired = false
+    AND tb.remaining_amount > 0;
+    
+  -- Update balances
+  UPDATE token_balances tb
+  SET 
+    available_tokens = available_tokens - (
+      SELECT COALESCE(SUM(remaining_amount), 0)
+      FROM token_batches
+      WHERE balance_id = tb.id
+        AND expires_at < NOW()
+        AND is_expired = false
+    ),
+    updated_at = NOW();
+    
+  -- Zero out expired batches
+  UPDATE token_batches
+  SET remaining_amount = 0
+  WHERE expires_at < NOW()
+    AND is_expired = false;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Schedule: Run daily
+-- CREATE EXTENSION IF NOT EXISTS pg_cron;
+-- SELECT cron.schedule('expire-tokens-daily', '0 0 * * *', 'SELECT expire_tokens()');
+
+-- Function: Spend tokens (FIFO)
+CREATE OR REPLACE FUNCTION spend_tokens(
+  p_balance_id TEXT,
+  p_amount INT,
+  p_reference_type TEXT,
+  p_reference_id TEXT,
+  p_description TEXT
+)
+RETURNS BOOLEAN AS $$
+DECLARE
+  v_available INT;
+  v_remaining INT;
+  v_batch RECORD;
+  v_to_deduct INT;
+BEGIN
+  -- Check available balance
+  SELECT available_tokens INTO v_available
+  FROM token_balances
+  WHERE id = p_balance_id;
+  
+  IF v_available < p_amount THEN
+    RAISE EXCEPTION 'Insufficient tokens';
+  END IF;
+  
+  v_remaining := p_amount;
+  
+  -- Deduct from batches (FIFO)
+  FOR v_batch IN 
+    SELECT * FROM token_batches
+    WHERE balance_id = p_balance_id
+      AND remaining_amount > 0
+      AND is_expired = false
+    ORDER BY received_at ASC
+  LOOP
+    IF v_remaining <= 0 THEN
+      EXIT;
+    END IF;
+    
+    v_to_deduct := LEAST(v_batch.remaining_amount, v_remaining);
+    
+    UPDATE token_batches
+    SET remaining_amount = remaining_amount - v_to_deduct
+    WHERE id = v_batch.id;
+    
+    v_remaining := v_remaining - v_to_deduct;
+  END LOOP;
+  
+  -- Update balance
+  UPDATE token_balances
+  SET 
+    used_tokens = used_tokens + p_amount,
+    available_tokens = available_tokens - p_amount,
+    updated_at = NOW()
+  WHERE id = p_balance_id;
+  
+  -- Create transaction
+  INSERT INTO token_transactions (
+    id, balance_id, type, amount, balance,
+    reference_type, reference_id, description, created_at
+  )
+  SELECT 
+    gen_random_uuid(),
+    p_balance_id,
+    'spend',
+    -p_amount,
+    available_tokens,
+    p_reference_type,
+    p_reference_id,
+    p_description,
+    NOW()
+  FROM token_balances
+  WHERE id = p_balance_id;
+  
+  RETURN TRUE;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Function: Add tokens
+CREATE OR REPLACE FUNCTION add_tokens(
+  p_balance_id TEXT,
+  p_amount INT,
+  p_source TEXT,
+  p_subscription_id TEXT DEFAULT NULL,
+  p_order_id TEXT DEFAULT NULL
+)
+RETURNS TEXT AS $$
+DECLARE
+  v_batch_id TEXT;
+  v_expires_at TIMESTAMP;
+BEGIN
+  -- Calculate expiry (3 months)
+  v_expires_at := NOW() + INTERVAL '3 months';
+  
+  -- Create batch
+  INSERT INTO token_batches (
+    id, balance_id, amount, remaining_amount,
+    source, received_at, expires_at,
+    subscription_id, order_id
+  )
+  VALUES (
+    gen_random_uuid(),
+    p_balance_id,
+    p_amount,
+    p_amount,
+    p_source,
+    NOW(),
+    v_expires_at,
+    p_subscription_id,
+    p_order_id
+  )
+  RETURNING id INTO v_batch_id;
+  
+  -- Update balance
+  UPDATE token_balances
+  SET 
+    total_tokens = total_tokens + p_amount,
+    available_tokens = available_tokens + p_amount,
+    updated_at = NOW()
+  WHERE id = p_balance_id;
+  
+  -- Create transaction
+  INSERT INTO token_transactions (
+    id, balance_id, type, amount, balance,
+    description, created_at
+  )
+  SELECT 
+    gen_random_uuid(),
+    p_balance_id,
+    'earn',
+    p_amount,
+    available_tokens,
+    'ได้รับ ' || p_amount || ' tokens จาก ' || p_source,
+    NOW()
+  FROM token_balances
+  WHERE id = p_balance_id;
+  
+  RETURN v_batch_id;
+END;
+$$ LANGUAGE plpgsql;
+
+-- ================================
+-- PRICING CONFIGURATION
+-- ================================
+
+CREATE TABLE IF NOT EXISTS token_pricing (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
+  tier TEXT NOT NULL, -- subscription or purchase
+  min_amount INT,
+  max_amount INT,
+  price_per_token DECIMAL(10,2) NOT NULL,
+  discount_percent DECIMAL(5,2) DEFAULT 0,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Subscription token allocation
+INSERT INTO token_pricing (tier, min_amount, max_amount, price_per_token, discount_percent) VALUES
+  ('FREE', 0, 0, 0, 0),
+  ('BASIC', 5, 5, 0, 0),      -- Included in package
+  ('PRO', 10, 10, 0, 0),       -- Included in package
+  ('PREMIUM', 20, 20, 0, 0);   -- Included in package
+
+-- Purchase pricing (example - adjust as needed)
+INSERT INTO token_pricing (tier, min_amount, max_amount, price_per_token, discount_percent) VALUES
+  ('purchase_small', 1, 99, 10.00, 0),
+  ('purchase_medium', 100, 499, 9.00, 10),
+  ('purchase_large', 500, NULL, 8.00, 20);
+
+
+
+  
