@@ -200,7 +200,6 @@ model Shop {
   shop_reviews         shop_reviews[]
   shop_special_hours   shop_special_hours[]
   shop_stats           shop_stats[]
-  shop_subscriptions   shop_subscriptions[]
   
   subscription         ShopSubscription?
   reviewRequests       ReviewRequest[]
@@ -743,21 +742,4 @@ model shop_stats {
   @@index([event_type], map: "shop_stats_event_idx")
   @@index([shop_id])
   @@map("shop_stats")
-}
-
-model shop_subscriptions {
-  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  shop_id      String
-  package_type String
-  start_date   DateTime  @db.Date
-  end_date     DateTime  @db.Date
-  is_active    Boolean   @default(true)
-  auto_renew   Boolean   @default(false)
-  created_at   DateTime  @default(now()) @db.Timestamptz(6)
-  updated_at   DateTime  @default(now()) @db.Timestamptz(6)
-  Shop         Shop      @relation(fields: [shop_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-
-  @@index([is_active], map: "shop_subscriptions_active_idx")
-  @@index([shop_id])
-  @@map("shop_subscriptions")
 }
