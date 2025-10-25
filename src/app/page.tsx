@@ -260,7 +260,7 @@ export default function HomePage() {
       {/* ========== Hero Banner ========== */}
       {banners.length > 0 && (
         <div className="w-full overflow-hidden mb-8">
-          <div className="relative h-64 sm:h-80 md:h-96 lg:h-[28rem] rounded-2xl overflow-hidden shadow-lg">
+          <div className="relative h-64 sm:h-80 md:h-96 lg:h-[28rem] rounded-lg overflow-hidden shadow-lg">
             {banners.map((banner, i) => (
               <Link
                 key={banner.id}

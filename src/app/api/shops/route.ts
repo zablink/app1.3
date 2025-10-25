@@ -1,137 +1,130 @@
-import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+// src/app/api/shops/route.ts
 
-type Shop = {
-  id: number;
-  name: string;
-  category: string | null;
-  image: string | null;
-  lat: number;
-  lng: number;
-  subdistrict: string | null;
-  district: string | null;
-  province: string | null;
-  distance?: number;
-  // packageType?: string; // เตรียมไว้สำหรับอนาคต
-};
+import { NextResponse } from 'next/server';
+import { PrismaClient } from '@prisma/client';
 
-export async function GET(req: Request) {
+const prisma = new PrismaClient();
+
+export const dynamic = 'force-dynamic';
+
+/**
+ * GET /api/shops
+ * ดึงรายการร้านค้าทั้งหมด พร้อม package tier
+ */
+export async function GET() {
   try {
-    const { searchParams } = new URL(req.url);
-    const lat = parseFloat(searchParams.get("lat") || "");
-    const lng = parseFloat(searchParams.get("lng") || "");
-    const subdistrict = searchParams.get("subdistrict");
-    const district = searchParams.get("district");
-    const province = searchParams.get("province");
-
-    console.log('Fetching shops with params:', { lat, lng, subdistrict, district, province });
-
-    // ดึงร้านทั้งหมดจาก database
-    const allShops = await prisma.simple_shops.findMany({
-      orderBy: { created_at: 'desc' },
-    });
-
-    console.log('Total shops from DB:', allShops.length);
-
-    // แปลง type ให้ตรงกับ Shop type
-    const shops: Shop[] = allShops
-      .filter(shop => shop.lat !== null && shop.lng !== null)
-      .map(shop => ({
-        id: shop.id,
-        name: shop.name,
-        category: shop.category,
-        image: shop.image,
-        lat: shop.lat!,
-        lng: shop.lng!,
-        subdistrict: shop.subdistrict,
-        district: shop.district,
-        province: shop.province,
-      }));
-
-    let filteredShops: Shop[] = [];
-
-    // 1. ถ้ามี location → คำนวณหาร้านในระยะ 10 กม.
-    if (!isNaN(lat) && !isNaN(lng)) {
-      filteredShops = shops
-        .map((shop) => {
-          const distance = getDistanceFromLatLonInKm(lat, lng, shop.lat, shop.lng);
-          return { ...shop, distance };
-        })
-        .filter((s) => (s.distance ?? 999) <= 10)
-        .sort(sortByDistance);
+    // ใช้ raw query เพื่อ join กับ subscriptions
+    const shops = await prisma.$queryRaw<any[]>`
+      SELECT 
+        s.id,
+        s.name,
+        s.category,
+        s.image,
+        s.lat,
+        s.lng,
+        s.subdistrict,
+        s.district,
+        s.province,
+        s.created_at,
+        s.updated_at,
+        
+        -- ดึง package tier จาก active subscription
+        COALESCE(ss.current_package_tier, 'FREE') as package_tier,
+        
+        -- ดึง display_weight สำหรับเรียงลำดับ
+        COALESCE(sp.display_weight, 1) as display_weight,
+        
+        -- ข้อมูล subscription (ถ้ามี)
+        ss.end_date as subscription_end_date,
+        ss.status as subscription_status,
+        ss.next_package_tier as next_tier,
+        
+        -- Badge info
+        sp.badge_emoji,
+        sp.badge_text
+        
+      FROM simple_shops s
       
-      console.log(`Found ${filteredShops.length} shops within 10km`);
-    }
-
-    // 2. ถ้าไม่มีในระยะ → หา subdistrict
-    if (filteredShops.length === 0 && subdistrict) {
-      filteredShops = shops
-        .filter((s) => s.subdistrict === subdistrict)
-        .sort(sortByDistance);
+      -- Left join เพื่อรวมร้านที่ไม่มี subscription ด้วย
+      LEFT JOIN shop_subscriptions ss ON (
+        s.id = ss.shop_id 
+        AND ss.status = 'ACTIVE'
+        AND ss.end_date > NOW()
+      )
       
-      console.log(`Found ${filteredShops.length} shops in subdistrict: ${subdistrict}`);
-    }
-
-    // 3. ถ้าไม่มี → หา district
-    if (filteredShops.length === 0 && district) {
-      filteredShops = shops
-        .filter((s) => s.district === district)
-        .sort(sortByDistance);
+      -- Join package info
+      LEFT JOIN subscription_packages sp ON (
+        COALESCE(ss.current_package_tier, 'FREE') = sp.tier
+      )
       
-      console.log(`Found ${filteredShops.length} shops in district: ${district}`);
-    }
+      ORDER BY 
+        sp.display_weight DESC NULLS LAST,  -- เรียงตาม weight (premium → free)
+        s.created_at DESC                    -- ร้านใหม่ก่อน
+    `;
 
-    // 4. ถ้าไม่มี → หา province
-    if (filteredShops.length === 0 && province) {
-      filteredShops = shops
-        .filter((s) => s.province === province)
-        .sort(sortByDistance);
-      
-      console.log(`Found ${filteredShops.length} shops in province: ${province}`);
-    }
+    // แปลง BigInt เป็น Number
+    const formattedShops = shops.map(shop => ({
+      ...shop,
+      id: Number(shop.id),
+      display_weight: Number(shop.display_weight),
+      lat: shop.lat ? Number(shop.lat) : null,
+      lng: shop.lng ? Number(shop.lng) : null,
+    }));
 
-    // 5. ถ้ายังไม่มีเลย → ส่งทั้งหมด (random 20 ร้าน)
-    if (filteredShops.length === 0) {
-      filteredShops = [...shops]
-        .sort(() => 0.5 - Math.random())
-        .slice(0, 20);
-      
-      console.log(`No location match, returning ${filteredShops.length} random shops`);
-    }
-
-    return NextResponse.json(filteredShops);
+    return NextResponse.json(formattedShops);
+    
   } catch (error) {
     console.error('Error fetching shops:', error);
-    
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    
     return NextResponse.json(
-      { error: 'Failed to fetch shops', detail: errorMessage },
+      { 
+        error: 'Failed to fetch shops',
+        detail: error instanceof Error ? error.message : 'Unknown error'
+      },
       { status: 500 }
     );
   }
 }
 
-// Haversine formula คำนวณระยะทาง
-function getDistanceFromLatLonInKm(lat1: number, lon1: number, lat2: number, lon2: number) {
-  const R = 6371; // รัศมีโลก km
-  const dLat = deg2rad(lat2 - lat1);
-  const dLon = deg2rad(lon2 - lon1);
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(deg2rad(lat1)) *
-      Math.cos(deg2rad(lat2)) *
-      Math.sin(dLon / 2) ** 2;
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
-}
+/**
+ * POST /api/shops
+ * สร้างร้านค้าใหม่
+ */
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    
+    const { name, category, image, lat, lng, subdistrict, district, province } = body;
 
-function deg2rad(deg: number) {
-  return deg * (Math.PI / 180);
-}
+    if (!name) {
+      return NextResponse.json(
+        { error: 'Shop name is required' },
+        { status: 400 }
+      );
+    }
 
-// เรียงลำดับตามระยะทาง
-function sortByDistance(a: Shop, b: Shop) {
-  return (a.distance ?? 0) - (b.distance ?? 0);
-}
+    const shop = await prisma.simple_shops.create({
+      data: {
+        name,
+        category: category || null,
+        image: image || null,
+        lat: lat || null,
+        lng: lng || null,
+        subdistrict: subdistrict || null,
+        district: district || null,
+        province: province || null,
+      },
+    });
 
+    return NextResponse.json(shop, { status: 201 });
+    
+  } catch (error) {
+    console.error('Error creating shop:', error);
+    return NextResponse.json(
+      { 
+        error: 'Failed to create shop',
+        detail: error instanceof Error ? error.message : 'Unknown error'
+      },
+      { status: 500 }
+    );
+  }
+}

@@ -1,23 +1,24 @@
-// src/types/next-auth.d.ts
-import NextAuth, { DefaultSession, DefaultUser } from "next-auth";
+// types/next-auth.d.ts
+import { DefaultSession, DefaultUser } from "next-auth";
+import { JWT, DefaultJWT } from "next-auth/jwt";
 
-// เพิ่ม field role เข้าไปใน User
 declare module "next-auth" {
-  interface User extends DefaultUser {
-    role: "admin" | "shop" | "user";
-  }
-
   interface Session {
     user: {
       id: string;
-      role: "admin" | "shop" | "user";
+      role: string;
+      email: string;
     } & DefaultSession["user"];
+  }
+
+  interface User extends DefaultUser {
+    role: string;
   }
 }
 
-// ให้ JWT มี role ด้วย
 declare module "next-auth/jwt" {
-  interface JWT {
-    role?: "admin" | "shop" | "user";
+  interface JWT extends DefaultJWT {
+    id: string;
+    role: string;
   }
 }
