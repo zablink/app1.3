@@ -746,12 +746,12 @@ model shop_stats {
 
 
 // TOKEN BALANCE
--- Token System Schema
--- เพิ่มเข้าไปใน Prisma Schema
+// -- Token System Schema
+// -- เพิ่มเข้าไปใน Prisma Schema
 
--- ================================
--- TOKEN MODELS
--- ================================
+// -- ================================
+// -- TOKEN MODELS
+// -- ================================
 
 model TokenBalance {
   id              String   @id @default(cuid())
@@ -897,21 +897,21 @@ model ReviewRequest {
   // Add to existing model
 }
 
--- ================================
--- TRIGGERS & FUNCTIONS
--- ================================
+// -- ================================
+// -- TRIGGERS & FUNCTIONS
+// -- ================================
 
--- Function: Auto-expire tokens
+// -- Function: Auto-expire tokens
 CREATE OR REPLACE FUNCTION expire_tokens()
 RETURNS void AS $$
 BEGIN
-  -- Mark expired batches
+  // -- Mark expired batches
   UPDATE token_batches
   SET is_expired = true
   WHERE expires_at < NOW()
     AND is_expired = false;
     
-  -- Create expiry transactions
+  // -- Create expiry transactions
   INSERT INTO token_transactions (
     id, balance_id, type, amount, balance, 
     description, created_at
@@ -920,7 +920,7 @@ BEGIN
     gen_random_uuid(),
     tb.balance_id,
     'expire',
-    -tb.remaining_amount,
+    // -- tb.remaining_amount,
     (SELECT available_tokens FROM token_balances WHERE id = tb.balance_id),
     'Token หมดอายุ ' || tb.remaining_amount || ' tokens',
     NOW()
@@ -929,7 +929,7 @@ BEGIN
     AND tb.is_expired = false
     AND tb.remaining_amount > 0;
     
-  -- Update balances
+  // -- Update balances
   UPDATE token_balances tb
   SET 
     available_tokens = available_tokens - (
@@ -941,7 +941,7 @@ BEGIN
     ),
     updated_at = NOW();
     
-  -- Zero out expired batches
+  // -- Zero out expired batches
   UPDATE token_batches
   SET remaining_amount = 0
   WHERE expires_at < NOW()
@@ -949,11 +949,11 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Schedule: Run daily
--- CREATE EXTENSION IF NOT EXISTS pg_cron;
--- SELECT cron.schedule('expire-tokens-daily', '0 0 * * *', 'SELECT expire_tokens()');
+// -- Schedule: Run daily
+// -- CREATE EXTENSION IF NOT EXISTS pg_cron;
+// -- SELECT cron.schedule('expire-tokens-daily', '0 0 * * *', 'SELECT expire_tokens()');
 
--- Function: Spend tokens (FIFO)
+// -- Function: Spend tokens (FIFO)
 CREATE OR REPLACE FUNCTION spend_tokens(
   p_balance_id TEXT,
   p_amount INT,
@@ -968,7 +968,7 @@ DECLARE
   v_batch RECORD;
   v_to_deduct INT;
 BEGIN
-  -- Check available balance
+  // -- Check available balance
   SELECT available_tokens INTO v_available
   FROM token_balances
   WHERE id = p_balance_id;
@@ -979,7 +979,7 @@ BEGIN
   
   v_remaining := p_amount;
   
-  -- Deduct from batches (FIFO)
+  // -- Deduct from batches (FIFO)
   FOR v_batch IN 
     SELECT * FROM token_batches
     WHERE balance_id = p_balance_id
@@ -1000,7 +1000,7 @@ BEGIN
     v_remaining := v_remaining - v_to_deduct;
   END LOOP;
   
-  -- Update balance
+  // -- Update balance
   UPDATE token_balances
   SET 
     used_tokens = used_tokens + p_amount,
@@ -1008,7 +1008,7 @@ BEGIN
     updated_at = NOW()
   WHERE id = p_balance_id;
   
-  -- Create transaction
+  // -- Create transaction
   INSERT INTO token_transactions (
     id, balance_id, type, amount, balance,
     reference_type, reference_id, description, created_at
@@ -1030,7 +1030,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Function: Add tokens
+// -- Function: Add tokens
 CREATE OR REPLACE FUNCTION add_tokens(
   p_balance_id TEXT,
   p_amount INT,
@@ -1043,10 +1043,10 @@ DECLARE
   v_batch_id TEXT;
   v_expires_at TIMESTAMP;
 BEGIN
-  -- Calculate expiry (3 months)
+  // -- Calculate expiry (3 months)
   v_expires_at := NOW() + INTERVAL '3 months';
   
-  -- Create batch
+  // -- Create batch
   INSERT INTO token_batches (
     id, balance_id, amount, remaining_amount,
     source, received_at, expires_at,
@@ -1065,7 +1065,7 @@ BEGIN
   )
   RETURNING id INTO v_batch_id;
   
-  -- Update balance
+  // -- Update balance
   UPDATE token_balances
   SET 
     total_tokens = total_tokens + p_amount,
@@ -1073,7 +1073,7 @@ BEGIN
     updated_at = NOW()
   WHERE id = p_balance_id;
   
-  -- Create transaction
+  // -- Create transaction
   INSERT INTO token_transactions (
     id, balance_id, type, amount, balance,
     description, created_at
@@ -1093,13 +1093,13 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- ================================
--- PRICING CONFIGURATION
--- ================================
+// -- ================================
+// -- PRICING CONFIGURATION
+// -- ================================
 
 CREATE TABLE IF NOT EXISTS token_pricing (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
-  tier TEXT NOT NULL, -- subscription or purchase
+  tier TEXT NOT NULL, // -- subscription or purchase
   min_amount INT,
   max_amount INT,
   price_per_token DECIMAL(10,2) NOT NULL,
@@ -1107,19 +1107,15 @@ CREATE TABLE IF NOT EXISTS token_pricing (
   created_at TIMESTAMP DEFAULT NOW()
 );
 
--- Subscription token allocation
+// -- Subscription token allocation
 INSERT INTO token_pricing (tier, min_amount, max_amount, price_per_token, discount_percent) VALUES
   ('FREE', 0, 0, 0, 0),
-  ('BASIC', 5, 5, 0, 0),      -- Included in package
-  ('PRO', 10, 10, 0, 0),       -- Included in package
-  ('PREMIUM', 20, 20, 0, 0);   -- Included in package
+  ('BASIC', 5, 5, 0, 0),      // -- Included in package
+  ('PRO', 10, 10, 0, 0),       // -- Included in package
+  ('PREMIUM', 20, 20, 0, 0);   // -- Included in package
 
--- Purchase pricing (example - adjust as needed)
+// -- Purchase pricing (example - adjust as needed)
 INSERT INTO token_pricing (tier, min_amount, max_amount, price_per_token, discount_percent) VALUES
   ('purchase_small', 1, 99, 10.00, 0),
   ('purchase_medium', 100, 499, 9.00, 10),
   ('purchase_large', 500, NULL, 8.00, 20);
-
-
-
-  
