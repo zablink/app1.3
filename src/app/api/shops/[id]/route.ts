@@ -1,9 +1,6 @@
 // src/app/api/shops/[id]/route.ts
 
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-//const prisma = new PrismaClient();
 import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
@@ -26,68 +23,39 @@ export async function GET(
       );
     }
 
-    // ดึงข้อมูลร้านพร้อม subscription info
-    const shop = await prisma.$queryRaw<any[]>`
-      SELECT 
-        s.id,
-        s.name,
-        s.category,
-        s.image,
-        s.lat,
-        s.lng,
-        s.subdistrict,
-        s.district,
-        s.province,
-        s.created_at,
-        s.updated_at,
-        
-        -- ดึง package tier จาก active subscription
-        COALESCE(ss.current_package_tier, 'FREE') as package_tier,
-        
-        -- ดึง display_weight สำหรับเรียงลำดับ
-        COALESCE(sp.display_weight, 1) as display_weight,
-        
-        -- ข้อมูล subscription (ถ้ามี)
-        ss.end_date as subscription_end_date,
-        ss.status as subscription_status,
-        ss.next_package_tier as next_tier,
-        
-        -- Badge info
-        sp.badge_emoji,
-        sp.badge_text
-        
-      FROM simple_shops s
-      
-      -- Left join เพื่อรวมร้านที่ไม่มี subscription ด้วย
-      LEFT JOIN shop_subscriptions ss ON (
-        s.id = ss.shop_id 
-        AND ss.status = 'ACTIVE'
-        AND ss.end_date > NOW()
-      )
-      
-      -- Join package info
-      LEFT JOIN subscription_packages sp ON (
-        COALESCE(ss.current_package_tier, 'FREE') = sp.tier
-      )
-      
-      WHERE s.id = ${shopId}
-      LIMIT 1
-    `;
+    // ดึงข้อมูลร้านจาก simple_shops (ไม่มี subscription system)
+    const shop = await prisma.simple_shops.findUnique({
+      where: { id: shopId },
+    });
 
-    if (shop.length === 0) {
+    if (!shop) {
       return NextResponse.json(
         { error: 'Shop not found' },
         { status: 404 }
       );
     }
 
-    // แปลง BigInt เป็น Number
+    // Format response with default values (simple_shops ไม่มี subscription)
     const formattedShop = {
-      ...shop[0],
-      id: Number(shop[0].id),
-      display_weight: Number(shop[0].display_weight),
-      lat: shop[0].lat ? Number(shop[0].lat) : null,
-      lng: shop[0].lng ? Number(shop[0].lng) : null,
+      id: shop.id,
+      name: shop.name,
+      category: shop.category,
+      image: shop.image,
+      lat: shop.lat,
+      lng: shop.lng,
+      subdistrict: shop.subdistrict,
+      district: shop.district,
+      province: shop.province,
+      created_at: shop.created_at,
+      updated_at: shop.updated_at,
+      // Default values สำหรับ compatibility
+      package_tier: 'FREE',
+      display_weight: 1,
+      subscription_end_date: null,
+      subscription_status: null,
+      next_tier: null,
+      badge_emoji: null,
+      badge_text: null,
     };
 
     return NextResponse.json(formattedShop);
@@ -144,8 +112,8 @@ export async function PUT(
         name: name || existingShop.name,
         category: category !== undefined ? category : existingShop.category,
         image: image !== undefined ? image : existingShop.image,
-        lat: lat !== undefined ? lat : existingShop.lat,
-        lng: lng !== undefined ? lng : existingShop.lng,
+        lat: lat !== undefined ? (lat ? parseFloat(lat) : null) : existingShop.lat,
+        lng: lng !== undefined ? (lng ? parseFloat(lng) : null) : existingShop.lng,
         subdistrict: subdistrict !== undefined ? subdistrict : existingShop.subdistrict,
         district: district !== undefined ? district : existingShop.district,
         province: province !== undefined ? province : existingShop.province,
@@ -197,7 +165,7 @@ export async function DELETE(
       );
     }
 
-    // ลบร้าน (cascade จะลบ subscriptions ที่เกี่ยวข้องด้วย)
+    // ลบร้าน
     await prisma.simple_shops.delete({
       where: { id: shopId },
     });
