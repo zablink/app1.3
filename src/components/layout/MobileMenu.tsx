@@ -1,7 +1,7 @@
 // src/components/layout/MobileMenu.tsx
 "use client";
 import Link from "next/link";
-import { useSession, signIn, signOut } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 
 export default function MobileMenu({
   open,
@@ -25,25 +25,33 @@ export default function MobileMenu({
         ))}
 
         {!session ? (
-          <button
-            onClick={() => {
-              onClose();
-              signIn();
-            }}
-            className="px-4 py-2 rounded bg-black text-white"
+          {/* ⭐ เปลี่ยนจาก signIn() เป็น Link */}
+          <Link
+            href="/signin"
+            onClick={onClose}
+            className="px-4 py-2 rounded bg-black text-white text-center"
           >
             เข้าสู่ระบบ
-          </button>
+          </Link>
         ) : (
-          <button
-            onClick={() => {
-              onClose();
-              signOut();
-            }}
-            className="px-4 py-2 rounded border"
-          >
-            ออกจากระบบ
-          </button>
+          <>
+            <Link
+              href="/dashboard/user"
+              onClick={onClose}
+              className="py-1"
+            >
+              โปรไฟล์
+            </Link>
+            <button
+              onClick={() => {
+                onClose();
+                signOut();
+              }}
+              className="px-4 py-2 rounded border text-left"
+            >
+              ออกจากระบบ
+            </button>
+          </>
         )}
       </div>
     </div>
