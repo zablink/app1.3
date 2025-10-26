@@ -93,12 +93,3 @@ export async function POST(
     );
   }
 }
-```
-
-## โครงสร้างโฟลเดอร์:
-```
-src/app/api/admin/shops/[id]/
-├── approve/
-│   └── route.ts  ← ไฟล์ที่ 1 (อนุมัติร้าน)
-└── decline/
-    └── route.ts  ← ไฟล์ที่ 2 (ปฏิเสธร้าน) - สร้างใหม่
