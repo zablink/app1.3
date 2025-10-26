@@ -6,7 +6,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Save, ArrowLeft, Store } from "lucide-react";
 import dynamic from "next/dynamic";
-import ShopGalleryManager from "@/components/shop/ShopGalleryManager";
+import { ShopGalleryManager } from "@/components/shop/ShopGalleryManager";
 import ShopLinksManager from "@/components/shop/ShopLinksManager";
 
 const MapPicker = dynamic(() => import("@/components/shop/MapPicker"), {
