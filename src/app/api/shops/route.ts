@@ -1,73 +1,44 @@
 // src/app/api/shops/route.ts
 
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma'; // ⬅️ เปลี่ยนจาก new PrismaClient()
+import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
 /**
  * GET /api/shops
- * ดึงรายการร้านค้าทั้งหมด พร้อม package tier
+ * ดึงรายการร้านค้าทั้งหมด (simple_shops ไม่มี subscription system)
  */
 export async function GET() {
   try {
-    // ลองใช้ Prisma ORM แทน raw query ก่อน
     const shops = await prisma.simple_shops.findMany({
-      where: {
-        status: 'APPROVED',
+      orderBy: {
+        created_at: 'desc',
       },
-      include: {
-        shop_subscriptions: {
-          where: {
-            status: 'ACTIVE',
-            end_date: {
-              gt: new Date(),
-            },
-          },
-          include: {
-            subscription_packages: true,
-          },
-        },
-      },
-      orderBy: [
-        { created_at: 'desc' },
-      ],
     });
 
-    // Format ข้อมูล
-    const formattedShops = shops.map(shop => {
-      const activeSubscription = shop.shop_subscriptions?.[0];
-      const packageInfo = activeSubscription?.subscription_packages;
-
-      return {
-        id: shop.id,
-        name: shop.name,
-        category: shop.category,
-        image: shop.image,
-        lat: shop.lat,
-        lng: shop.lng,
-        subdistrict: shop.subdistrict,
-        district: shop.district,
-        province: shop.province,
-        created_at: shop.created_at,
-        updated_at: shop.updated_at,
-        package_tier: activeSubscription?.current_package_tier || 'FREE',
-        display_weight: packageInfo?.display_weight || 1,
-        subscription_end_date: activeSubscription?.end_date,
-        subscription_status: activeSubscription?.status,
-        next_tier: activeSubscription?.next_package_tier,
-        badge_emoji: packageInfo?.badge_emoji,
-        badge_text: packageInfo?.badge_text,
-      };
-    });
-
-    // เรียงตาม display_weight
-    formattedShops.sort((a, b) => {
-      if (b.display_weight !== a.display_weight) {
-        return b.display_weight - a.display_weight;
-      }
-      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-    });
+    // simple_shops ไม่มี subscription ให้ return ข้อมูลตรงๆ
+    const formattedShops = shops.map(shop => ({
+      id: shop.id,
+      name: shop.name,
+      category: shop.category,
+      image: shop.image,
+      lat: shop.lat,
+      lng: shop.lng,
+      subdistrict: shop.subdistrict,
+      district: shop.district,
+      province: shop.province,
+      created_at: shop.created_at,
+      updated_at: shop.updated_at,
+      // Default values สำหรับ compatibility
+      package_tier: 'FREE',
+      display_weight: 1,
+      subscription_end_date: null,
+      subscription_status: null,
+      next_tier: null,
+      badge_emoji: null,
+      badge_text: null,
+    }));
 
     return NextResponse.json(formattedShops);
     
@@ -110,7 +81,6 @@ export async function POST(request: Request) {
         subdistrict: subdistrict || null,
         district: district || null,
         province: province || null,
-        status: 'PENDING_APPROVAL',
       },
     });
 

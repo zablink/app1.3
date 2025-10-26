@@ -1,7 +1,7 @@
 // src/app/api/banners/route.ts
 
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma'; // ⬅️ เปลี่ยนจาก new PrismaClient()
+import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,7 +12,7 @@ export async function GET() {
         is_active: true,
       },
       orderBy: {
-        display_order: 'asc',
+        order: 'asc', // ⬅️ ใช้ 'order' ตาม schema (line 313)
       },
     });
 
