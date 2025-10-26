@@ -1,9 +1,7 @@
 // src/app/api/shops/route.ts
 
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/prisma'; // ⬅️ เปลี่ยนจาก new PrismaClient()
 
 export const dynamic = 'force-dynamic';
 
@@ -13,66 +11,63 @@ export const dynamic = 'force-dynamic';
  */
 export async function GET() {
   try {
-    // ใช้ raw query เพื่อ join กับ subscriptions
-    const shops = await prisma.$queryRaw<any[]>`
-      SELECT 
-        s.id,
-        s.name,
-        s.category,
-        s.image,
-        s.lat,
-        s.lng,
-        s.subdistrict,
-        s.district,
-        s.province,
-        s.created_at,
-        s.updated_at,
-        
-        -- ดึง package tier จาก active subscription
-        COALESCE(ss.current_package_tier, 'FREE') as package_tier,
-        
-        -- ดึง display_weight สำหรับเรียงลำดับ
-        COALESCE(sp.display_weight, 1) as display_weight,
-        
-        -- ข้อมูล subscription (ถ้ามี)
-        ss.end_date as subscription_end_date,
-        ss.status as subscription_status,
-        ss.next_package_tier as next_tier,
-        
-        -- Badge info
-        sp.badge_emoji,
-        sp.badge_text
-        
-      FROM simple_shops s
-      
-      -- Left join เพื่อรวมร้านที่ไม่มี subscription ด้วย
-      LEFT JOIN shop_subscriptions ss ON (
-        s.id = ss.shop_id 
-        AND ss.status = 'ACTIVE'
-        AND ss.end_date > NOW()
-      )
-      
-      -- Join package info
-      LEFT JOIN subscription_packages sp ON (
-        COALESCE(ss.current_package_tier::text, 'FREE') = sp.tier::text
-      )
-      
+    // ลองใช้ Prisma ORM แทน raw query ก่อน
+    const shops = await prisma.simple_shops.findMany({
+      where: {
+        status: 'APPROVED',
+      },
+      include: {
+        shop_subscriptions: {
+          where: {
+            status: 'ACTIVE',
+            end_date: {
+              gt: new Date(),
+            },
+          },
+          include: {
+            subscription_packages: true,
+          },
+        },
+      },
+      orderBy: [
+        { created_at: 'desc' },
+      ],
+    });
 
-      WHERE s.status = 'APPROVED'
-      
-      ORDER BY 
-        sp.display_weight DESC NULLS LAST,  -- เรียงตาม weight (premium → free)
-        s.created_at DESC                    -- ร้านใหม่ก่อน
-    `;
+    // Format ข้อมูล
+    const formattedShops = shops.map(shop => {
+      const activeSubscription = shop.shop_subscriptions?.[0];
+      const packageInfo = activeSubscription?.subscription_packages;
 
-    // แปลง BigInt เป็น Number
-    const formattedShops = shops.map(shop => ({
-      ...shop,
-      id: Number(shop.id),
-      display_weight: Number(shop.display_weight),
-      lat: shop.lat ? Number(shop.lat) : null,
-      lng: shop.lng ? Number(shop.lng) : null,
-    }));
+      return {
+        id: shop.id,
+        name: shop.name,
+        category: shop.category,
+        image: shop.image,
+        lat: shop.lat,
+        lng: shop.lng,
+        subdistrict: shop.subdistrict,
+        district: shop.district,
+        province: shop.province,
+        created_at: shop.created_at,
+        updated_at: shop.updated_at,
+        package_tier: activeSubscription?.current_package_tier || 'FREE',
+        display_weight: packageInfo?.display_weight || 1,
+        subscription_end_date: activeSubscription?.end_date,
+        subscription_status: activeSubscription?.status,
+        next_tier: activeSubscription?.next_package_tier,
+        badge_emoji: packageInfo?.badge_emoji,
+        badge_text: packageInfo?.badge_text,
+      };
+    });
+
+    // เรียงตาม display_weight
+    formattedShops.sort((a, b) => {
+      if (b.display_weight !== a.display_weight) {
+        return b.display_weight - a.display_weight;
+      }
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
 
     return NextResponse.json(formattedShops);
     
@@ -110,11 +105,12 @@ export async function POST(request: Request) {
         name,
         category: category || null,
         image: image || null,
-        lat: lat || null,
-        lng: lng || null,
+        lat: lat ? parseFloat(lat) : null,
+        lng: lng ? parseFloat(lng) : null,
         subdistrict: subdistrict || null,
         district: district || null,
         province: province || null,
+        status: 'PENDING_APPROVAL',
       },
     });
 

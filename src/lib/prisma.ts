@@ -1,12 +1,14 @@
 // src/lib/prisma.ts
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from '@prisma/client';
 
-declare global {
-  // เพิ่ม property prisma ลงบน globalThis
-  var prisma: PrismaClient | undefined;
+const globalForPrisma = globalThis as unknown as {
+  prisma: PrismaClient | undefined;
+};
+
+export const prisma = globalForPrisma.prisma ?? new PrismaClient({
+  log: ['error', 'warn'],
+});
+
+if (process.env.NODE_ENV !== 'production') {
+  globalForPrisma.prisma = prisma;
 }
-
-export const prisma = globalThis.prisma || new PrismaClient();
-
-// เก็บ instance ไว้ใน globalThis (เพื่อ hot-reload dev mode)
-if (process.env.NODE_ENV !== "production") globalThis.prisma = prisma;
