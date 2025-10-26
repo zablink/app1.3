@@ -54,8 +54,11 @@ export async function GET() {
       
       -- Join package info
       LEFT JOIN subscription_packages sp ON (
-        COALESCE(ss.current_package_tier, 'FREE') = sp.tier
+        COALESCE(ss.current_package_tier::text, 'FREE') = sp.tier::text
       )
+      
+
+      WHERE s.status = 'APPROVED'
       
       ORDER BY 
         sp.display_weight DESC NULLS LAST,  -- เรียงตาม weight (premium → free)
