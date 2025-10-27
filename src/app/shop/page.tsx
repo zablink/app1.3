@@ -5,7 +5,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import AppLayout from "@/components/AppLayout";
 
 type Shop = {
   id: number;
