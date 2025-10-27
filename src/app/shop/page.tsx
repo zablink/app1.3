@@ -5,7 +5,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
-//import AppLayout from "@/components/AppLayout";
+import AppLayout from "@/components/AppLayout";
 
 type Shop = {
   id: number;
@@ -103,21 +103,18 @@ export default function ShopListPage() {
   // Loading state
   if (loading) {
     return (
-      <AppLayout>
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
             <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-4"></div>
             <p className="text-lg text-gray-600">กำลังโหลดข้อมูล...</p>
           </div>
         </div>
-      </AppLayout>
     );
   }
 
   // Error state
   if (error) {
     return (
-      <AppLayout>
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
             <div className="text-red-500 text-6xl mb-4">⚠️</div>
@@ -131,12 +128,10 @@ export default function ShopListPage() {
             </button>
           </div>
         </div>
-      </AppLayout>
     );
   }
 
   return (
-    <AppLayout>
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -291,6 +286,5 @@ export default function ShopListPage() {
           </div>
         )}
       </div>
-    </AppLayout>
   );
 }
