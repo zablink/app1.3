@@ -25,7 +25,6 @@ export default function MobileMenu({
         ))}
 
         {!session ? (
-          {/* ⭐ เปลี่ยนจาก signIn() เป็น Link */}
           <Link
             href="/signin"
             onClick={onClose}

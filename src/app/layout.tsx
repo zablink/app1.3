@@ -1,6 +1,7 @@
-// app/layout.tsx
+// src/app/layout.tsx
 import { Inter } from "next/font/google";
 import SessionProvider from "@/components/SessionProvider";
+import Navbar from "@/components/layout/Navbar";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -19,6 +20,7 @@ export default function RootLayout({
     <html lang="th">
       <body className={inter.className}>
         <SessionProvider>
+          <Navbar />
           {children}
         </SessionProvider>
       </body>
