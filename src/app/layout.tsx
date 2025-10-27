@@ -7,7 +7,7 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
-  title: "Zablink - เชื่อมต่อร้านค้ากับลูกค้า",
+  title: "Zablink - แหล่งรวมร้านอาหารที่แซบๆ ใกล้คุณ",
   description: "แพลตฟอร์มเชื่อมต่อร้านอาหารและนักรีวิวทั่วประเทศไทย",
 };
 
