@@ -25,9 +25,22 @@ export default function Navbar() {
     <header className="sticky top-0 z-50 border-b bg-background/70 backdrop-blur">
       <div className="mx-auto max-w-6xl px-4 py-3 flex items-center justify-between">
         {/* Logo */}
-        <Link href="/" className="font-bold text-xl">
-          Zablink
-        </Link>
+        <Link href="/" className="flex items-center gap-2">
+            <Image
+              src="/logo.png"
+              alt="Logo"
+              width={scrolled ? 32 : 48}
+              height={scrolled ? 32 : 48}
+              className="object-contain transition-all duration-300"
+            />
+            <span
+              className={`font-bold transition-all duration-300 ${
+                scrolled ? "text-lg" : "text-xl"
+              }`}
+            >
+              ZabLink
+            </span>
+          </Link>
 
         {/* Navigation Links - แสดงเฉพาะเมื่อ login */}
         {session && (
