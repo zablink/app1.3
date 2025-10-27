@@ -6,7 +6,6 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import AppLayout from "@/components/AppLayout";
 
 type Shop = {
   id: number;
@@ -145,47 +144,48 @@ export default function ShopDetailPage() {
   // Loading state
   if (loading) {
     return (
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-lg text-gray-600">กำลังโหลดข้อมูล...</p>
-          </div>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-lg text-gray-600">กำลังโหลดข้อมูล...</p>
         </div>
+      </div>
     );
   }
 
   // Error state
   if (error || !shop) {
     return (
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-center">
-            <div className="text-red-500 text-6xl mb-4">⚠️</div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">
-              {error || 'ไม่พบร้านค้า'}
-            </h2>
-            <p className="text-gray-600 mb-4">
-              ไม่พบร้านค้าที่ท่านต้องการ หรือร้านค้าอาจถูกลบไปแล้ว
-            </p>
-            <div className="flex gap-4 justify-center">
-              <button
-                onClick={() => router.back()}
-                className="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition"
-              >
-                ย้อนกลับ
-              </button>
-              <Link
-                href="/shop"
-                className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
-              >
-                ดูร้านค้าทั้งหมด
-              </Link>
-            </div>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="text-red-500 text-6xl mb-4">⚠️</div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">
+            {error || 'ไม่พบร้านค้า'}
+          </h2>
+          <p className="text-gray-600 mb-4">
+            ไม่พบร้านค้าที่ท่านต้องการ หรือร้านค้าอาจถูกลบไปแล้ว
+          </p>
+          <div className="flex gap-4 justify-center">
+            <button
+              onClick={() => router.back()}
+              className="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition"
+            >
+              ย้อนกลับ
+            </button>
+            <Link
+              href="/shop"
+              className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
+            >
+              ดูร้านค้าทั้งหมด
+            </Link>
           </div>
         </div>
+      </div>
     );
   }
 
   return (
+    <div>
       {/* Breadcrumb */}
       <div className="max-w-7xl mx-auto px-4 py-4">
         <div className="flex items-center gap-2 text-sm text-gray-600">
@@ -216,15 +216,13 @@ export default function ShopDetailPage() {
                   <p className="text-xl mb-2">{shop.category}</p>
                 )}
                 {(shop.district || shop.province) && (
-                  <p className="text-sm opacity-90">
+                  <p className="text-lg opacity-90">
                     📍 {shop.district}{shop.district && shop.province ? ', ' : ''}{shop.province}
                   </p>
                 )}
               </div>
-              
-              {/* Package Badge */}
-              {shop.package_tier && shop.package_tier !== 'FREE' && (
-                <div className={`${PACKAGE_BADGES[shop.package_tier]?.color} text-white px-4 py-2 rounded-lg text-sm font-semibold shadow-lg flex items-center gap-2`}>
+              {shop.package_tier && PACKAGE_BADGES[shop.package_tier]?.text && (
+                <div className={`${PACKAGE_BADGES[shop.package_tier].color} px-4 py-2 rounded-full text-white font-semibold shadow-lg flex items-center gap-2`}>
                   <span className="text-xl">{PACKAGE_BADGES[shop.package_tier]?.emoji}</span>
                   <span>{PACKAGE_BADGES[shop.package_tier]?.text}</span>
                 </div>
@@ -441,5 +439,6 @@ export default function ShopDetailPage() {
           </div>
         </div>
       </div>
+    </div>
   );
 }

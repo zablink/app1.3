@@ -5,7 +5,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import AppLayout from "@/components/AppLayout";
 
 type Shop = {
   id: number;
@@ -223,35 +222,36 @@ export default function HomePage() {
   // Loading state
   if (loading) {
     return (
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-lg text-gray-600">กำลังโหลดข้อมูล...</p>
-          </div>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-lg text-gray-600">กำลังโหลดข้อมูล...</p>
         </div>
+      </div>
     );
   }
 
   // Error state
   if (error) {
     return (
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-center">
-            <div className="text-red-500 text-6xl mb-4">⚠️</div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">เกิดข้อผิดพลาด</h2>
-            <p className="text-gray-600 mb-4">{error}</p>
-            <button
-              onClick={() => window.location.reload()}
-              className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
-            >
-              โหลดใหม่
-            </button>
-          </div>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="text-red-500 text-6xl mb-4">⚠️</div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">เกิดข้อผิดพลาด</h2>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
+          >
+            โหลดใหม่
+          </button>
         </div>
+      </div>
     );
   }
 
   return (
+    <div className="max-w-7xl mx-auto px-4 py-8">
       {/* ========== Hero Banner ========== */}
       {banners.length > 0 && (
         <div className="w-full overflow-hidden mb-8">
@@ -368,6 +368,7 @@ export default function HomePage() {
           ดูร้านค้าทั้งหมด
         </Link>
       </div>
+    </div>
   );
 }
 
