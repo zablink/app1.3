@@ -1,6 +1,7 @@
 // src/components/layout/Navbar.tsx
 "use client";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { useSession, signOut } from "next-auth/react";
@@ -25,8 +26,18 @@ export default function Navbar() {
     <header className="sticky top-0 z-50 border-b bg-white shadow-sm">
       <div className="mx-auto max-w-6xl px-4 py-3 flex items-center justify-between">
         {/* Logo */}
-        <Link href="/" className="font-bold text-xl text-gray-800">
-          Zablink
+        <Link href="/" className="flex items-center gap-2">
+          <Image
+            src="/logo.png"
+            alt="Zablink Logo"
+            width={40}
+            height={40}
+            className="object-contain"
+            priority
+          />
+          <span className="font-bold text-xl text-gray-800">
+            Zablink
+          </span>
         </Link>
 
         {/* Navigation Links - แสดงเฉพาะเมื่อ login */}
@@ -142,12 +153,13 @@ function Avatar({
   image?: string | null;
 }) {
   if (image) {
-    // eslint-disable-next-line @next/next/no-img-element
     return (
-      <img 
-        src={image} 
-        alt={name || "avatar"} 
-        className="h-8 w-8 rounded-full object-cover" 
+      <Image
+        src={image}
+        alt={name || "avatar"}
+        width={32}
+        height={32}
+        className="rounded-full object-cover"
       />
     );
   }
