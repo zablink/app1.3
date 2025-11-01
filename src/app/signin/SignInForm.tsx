@@ -62,7 +62,7 @@ export default function SignInForm() {
     <div className="min-h-screen flex items-center justify-center bg-blue-50 px-4 py-12">
       <div className="max-w-md w-full">
         {/* Card Container with gradient inside */}
-        <div className="bg-gradient-to-b from-white to-blue-50 rounded-2xl shadow-xl p-8 space-y-6">
+        <div className="bg-gradient-to-b from-white to-blue-100 rounded-2xl shadow-xl p-8 space-y-6">
           
           {/* Header */}
           <div className="text-center space-y-2">
