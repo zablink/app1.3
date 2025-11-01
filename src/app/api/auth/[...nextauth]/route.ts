@@ -30,15 +30,20 @@ export const authOptions: NextAuthOptions = {
       clientSecret: process.env.FACEBOOK_CLIENT_SECRET || "",
     }),
 
-    // เพิ่ม providers อื่นๆ เมื่อตั้งค่าเสร็จแล้ว
+    // เพิ่ม providers อื่นๆ ตามต้องการ
+    // LINE, Twitter, etc.
   ],
 
+  // ⭐ สำคัญ: กำหนดหน้าที่ใช้สำหรับ sign in และ error
   pages: {
-    signIn: "/signin",
-    error: "/signin", // redirect error กลับมาที่หน้า signin
+    signIn: "/signin",       // หน้า sign in custom
+    error: "/signin",         // เมื่อเกิด error ให้กลับมาที่หน้า signin
+    verifyRequest: "/signin", // หน้ายืนยันอีเมล (ถ้าใช้ email login)
+    // newUser: "/welcome",   // optional: หน้าสำหรับ user ใหม่
   },
 
   callbacks: {
+    // เพิ่ม user id และ role เข้าไปใน session
     async session({ session, token }) {
       if (session?.user) {
         session.user.id = token.sub!;
@@ -69,24 +74,44 @@ export const authOptions: NextAuthOptions = {
 
     async signIn({ user, account, profile }) {
       try {
+        // ตรวจสอบว่ามี user email
+        if (!user.email) {
+          console.error("No email provided");
+          return false;
+        }
+
         // สำหรับ user ใหม่ ให้ set role เป็น USER
         if (account && user.email) {
           const existingUser = await prisma.user.findUnique({
             where: { email: user.email },
           });
 
-          // ถ้ายังไม่มี user ใน database
+          // Log สำหรับ debug
           if (!existingUser) {
-            // PrismaAdapter จะสร้าง user ให้อัตโนมัติ
-            // เราแค่ต้อง update role ทีหลัง
-            console.log("New user signed in:", user.email);
+            console.log("New user signing in:", user.email);
           }
         }
+        
         return true;
       } catch (error) {
         console.error("Sign in error:", error);
+        // Return false จะทำให้ redirect ไปหน้า error
         return false;
       }
+    },
+
+    // Custom redirect behavior
+    async redirect({ url, baseUrl }) {
+      // ถ้า URL เริ่มต้นด้วย "/" ให้ใช้ baseUrl + url
+      if (url.startsWith("/")) {
+        return `${baseUrl}${url}`;
+      }
+      // ถ้า URL เป็น baseUrl ให้ redirect ได้
+      else if (new URL(url).origin === baseUrl) {
+        return url;
+      }
+      // ถ้าไม่ใช่ ให้กลับไปหน้าแรก
+      return baseUrl;
     },
   },
 
@@ -97,7 +122,25 @@ export const authOptions: NextAuthOptions = {
 
   secret: process.env.NEXTAUTH_SECRET,
 
+  // เปิด debug mode สำหรับ development
   debug: process.env.NODE_ENV === "development",
+
+  // Event handlers สำหรับ logging
+  events: {
+    async signIn({ user, account, profile, isNewUser }) {
+      console.log("User signed in:", {
+        email: user.email,
+        provider: account?.provider,
+        isNewUser
+      });
+    },
+    async signOut({ token }) {
+      console.log("User signed out:", token.email);
+    },
+    async createUser({ user }) {
+      console.log("New user created:", user.email);
+    },
+  },
 };
 
 const handler = NextAuth(authOptions);
