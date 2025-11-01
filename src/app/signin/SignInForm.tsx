@@ -172,8 +172,8 @@ export default function SignInForm() {
               </span>
             </button>
 
-            {/* LINE (ถ้ามี) */}
-            {/* <button
+            {/* LINE */}
+            <button
               onClick={() => handleSocialSignIn('line')}
               className="w-full flex items-center justify-center gap-3 px-4 py-3.5 bg-[#00B900] text-white rounded-xl hover:bg-[#00A000] transition-all duration-200 shadow-sm hover:shadow-md"
             >
@@ -183,7 +183,54 @@ export default function SignInForm() {
               <span className="font-medium">
                 เข้าสู่ระบบด้วย LINE
               </span>
-            </button> */}
+            </button>
+
+            {/* Twitter/X */}
+            <button
+              onClick={() => handleSocialSignIn('twitter')}
+              className="w-full flex items-center justify-center gap-3 px-4 py-3.5 bg-black text-white rounded-xl hover:bg-gray-800 transition-all duration-200 shadow-sm hover:shadow-md"
+            >
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+              </svg>
+              <span className="font-medium">
+                เข้าสู่ระบบด้วย X
+              </span>
+            </button>
+
+            {/* TikTok - สไตล์ TikTok จริงๆ */}
+            <div className="relative">
+              <div 
+                className="absolute inset-0 rounded-xl"
+                style={{
+                  background: 'linear-gradient(135deg, #fe2c55 0%, #fe2c55 30%, #00f2ea 70%, #00f2ea 100%)',
+                  padding: '2px',
+                  borderRadius: '0.75rem',
+                }}
+              >
+                <button
+                  onClick={() => handleSocialSignIn('tiktok')}
+                  className="w-full h-full flex items-center justify-center gap-3 px-4 py-3.5 bg-white rounded-xl transition-all duration-200 relative"
+                  style={{ margin: '0' }}
+                >
+                  {/* TikTok Logo with chromatic aberration effect */}
+                  <div className="relative w-5 h-5">
+                    <svg className="absolute w-5 h-5" viewBox="0 0 24 24" style={{ left: '-1px', top: '0' }}>
+                      <path fill="#fe2c55" d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
+                    </svg>
+                    <svg className="absolute w-5 h-5" viewBox="0 0 24 24" style={{ left: '1px', top: '0' }}>
+                      <path fill="#00f2ea" d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
+                    </svg>
+                    <svg className="absolute w-5 h-5" viewBox="0 0 24 24" style={{ left: '0', top: '0' }}>
+                      <path fill="#000000" d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
+                    </svg>
+                  </div>
+                  <span className="font-medium text-gray-900">
+                    เข้าสู่ระบบด้วย TikTok
+                  </span>
+                </button>
+              </div>
+            </div>
 
           </div>
 
