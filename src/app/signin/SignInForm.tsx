@@ -59,10 +59,10 @@ export default function SignInForm() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-white via-blue-50 to-blue-100 px-4 py-12">
+    <div className="min-h-screen flex items-center justify-center bg-blue-50 px-4 py-12">
       <div className="max-w-md w-full">
-        {/* Card Container */}
-        <div className="bg-white rounded-2xl shadow-xl p-8 space-y-6">
+        {/* Card Container with gradient inside */}
+        <div className="bg-gradient-to-b from-white to-blue-50 rounded-2xl shadow-xl p-8 space-y-6">
           
           {/* Header */}
           <div className="text-center space-y-2">
@@ -134,7 +134,7 @@ export default function SignInForm() {
             {/* Google */}
             <button
               onClick={() => handleSocialSignIn('google')}
-              className="w-full flex items-center justify-center gap-3 px-4 py-3.5 border-2 border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 group"
+              className="w-full flex items-center justify-center gap-3 px-4 py-3.5 bg-white border-2 border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 group shadow-sm"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path
@@ -201,7 +201,7 @@ export default function SignInForm() {
             {/* TikTok - ปุ่มสีขาวเหมือนปุ่มอื่นๆ แต่ logo มีขอบสี */}
             <button
               onClick={() => handleSocialSignIn('tiktok')}
-              className="w-full flex items-center justify-center gap-3 px-4 py-3.5 border-2 border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 group"
+              className="w-full flex items-center justify-center gap-3 px-4 py-3.5 bg-white border-2 border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 group shadow-sm"
             >
               {/* TikTok Logo with gradient border */}
               <div className="relative w-6 h-6 flex items-center justify-center">
@@ -232,7 +232,7 @@ export default function SignInForm() {
               <div className="w-full border-t border-gray-200"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-4 bg-white text-gray-500">
+              <span className="px-4 bg-transparent text-gray-500">
                 หรือ
               </span>
             </div>
