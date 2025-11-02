@@ -85,9 +85,9 @@ export default function SignInForm() {
               <line x1="28%" y1="0" x2="32%" y2="100%" stroke="#1e40af" strokeWidth="1.1" opacity="0.19" />
               
               {/* White lines - ชุดที่ 1: สร้างความตัดกัน */}
-              <line x1="10%" y1="0" x2="12%" y2="100%" stroke="#ffffff" strokeWidth="1.5" opacity="0.25" />
-              <line x1="17%" y1="0" x2="19%" y2="100%" stroke="#ffffff" strokeWidth="1.2" opacity="0.20" />
-              <line x1="24%" y1="0" x2="22%" y2="100%" stroke="#ffffff" strokeWidth="1.4" opacity="0.22" />
+              <line x1="10%" y1="0" x2="12%" y2="100%" stroke="#ffffff" strokeWidth="1.5" opacity="0.65" />
+              <line x1="17%" y1="0" x2="19%" y2="100%" stroke="#ffffff" strokeWidth="1.2" opacity="0.50" />
+              <line x1="24%" y1="0" x2="22%" y2="100%" stroke="#ffffff" strokeWidth="1.4" opacity="0.42" />
               
               {/* Blue lines - ชุดที่ 3: มุมเอียงมาก */}
               <line x1="30%" y1="0" x2="38%" y2="100%" stroke="#1e40af" strokeWidth="1.3" opacity="0.22" />
@@ -97,9 +97,9 @@ export default function SignInForm() {
               <line x1="43%" y1="0" x2="47%" y2="100%" stroke="#1e40af" strokeWidth="1.2" opacity="0.19" />
               
               {/* White lines - ชุดที่ 2 */}
-              <line x1="31%" y1="0" x2="35%" y2="100%" stroke="#ffffff" strokeWidth="1.6" opacity="0.28" />
-              <line x1="38%" y1="0" x2="36%" y2="100%" stroke="#ffffff" strokeWidth="1.3" opacity="0.23" />
-              <line x1="44%" y1="0" x2="46%" y2="100%" stroke="#ffffff" strokeWidth="1.1" opacity="0.18" />
+              <line x1="31%" y1="0" x2="35%" y2="100%" stroke="#ffffff" strokeWidth="1.6" opacity="0.68" />
+              <line x1="38%" y1="0" x2="36%" y2="100%" stroke="#ffffff" strokeWidth="1.3" opacity="0.73" />
+              <line x1="44%" y1="0" x2="46%" y2="100%" stroke="#ffffff" strokeWidth="1.1" opacity="0.58" />
               
               {/* Blue lines - ชุดที่ 4: กลาง */}
               <line x1="46%" y1="0" x2="48%" y2="100%" stroke="#1e40af" strokeWidth="0.8" opacity="0.12" />
@@ -109,8 +109,8 @@ export default function SignInForm() {
               <line x1="56%" y1="0" x2="52%" y2="100%" stroke="#1e40af" strokeWidth="0.9" opacity="0.13" />
               
               {/* White lines - ชุดที่ 3: ตรงกลาง */}
-              <line x1="50%" y1="0" x2="51%" y2="100%" stroke="#ffffff" strokeWidth="1.7" opacity="0.30" />
-              <line x1="55%" y1="0" x2="57%" y2="100%" stroke="#ffffff" strokeWidth="1.2" opacity="0.21" />
+              <line x1="50%" y1="0" x2="51%" y2="100%" stroke="#ffffff" strokeWidth="1.7" opacity="0.80" />
+              <line x1="55%" y1="0" x2="57%" y2="100%" stroke="#ffffff" strokeWidth="1.2" opacity="0.61" />
               
               {/* Blue lines - ชุดที่ 5: มุมเอียงมากพิเศษ */}
               <line x1="59%" y1="0" x2="66%" y2="100%" stroke="#1e40af" strokeWidth="1.5" opacity="0.22" />
@@ -120,9 +120,9 @@ export default function SignInForm() {
               <line x1="70%" y1="0" x2="74%" y2="100%" stroke="#1e40af" strokeWidth="1.2" opacity="0.19" />
               
               {/* White lines - ชุดที่ 4 */}
-              <line x1="60%" y1="0" x2="64%" y2="100%" stroke="#ffffff" strokeWidth="1.4" opacity="0.24" />
-              <line x1="67%" y1="0" x2="65%" y2="100%" stroke="#ffffff" strokeWidth="1.5" opacity="0.26" />
-              <line x1="72%" y1="0" x2="75%" y2="100%" stroke="#ffffff" strokeWidth="1.1" opacity="0.19" />
+              <line x1="60%" y1="0" x2="64%" y2="100%" stroke="#ffffff" strokeWidth="1.4" opacity="0.64" />
+              <line x1="67%" y1="0" x2="65%" y2="100%" stroke="#ffffff" strokeWidth="1.5" opacity="0.76" />
+              <line x1="72%" y1="0" x2="75%" y2="100%" stroke="#ffffff" strokeWidth="1.1" opacity="0.49" />
               
               {/* Blue lines - ชุดที่ 6: มุมเอียงปานกลาง */}
               <line x1="73%" y1="0" x2="77%" y2="100%" stroke="#1e40af" strokeWidth="1.0" opacity="0.16" />
@@ -132,9 +132,9 @@ export default function SignInForm() {
               <line x1="84%" y1="0" x2="88%" y2="100%" stroke="#1e40af" strokeWidth="1.4" opacity="0.21" />
               
               {/* White lines - ชุดที่ 5 */}
-              <line x1="74%" y1="0" x2="78%" y2="100%" stroke="#ffffff" strokeWidth="1.6" opacity="0.27" />
-              <line x1="80%" y1="0" x2="82%" y2="100%" stroke="#ffffff" strokeWidth="1.2" opacity="0.22" />
-              <line x1="85%" y1="0" x2="87%" y2="100%" stroke="#ffffff" strokeWidth="1.3" opacity="0.23" />
+              <line x1="74%" y1="0" x2="78%" y2="100%" stroke="#ffffff" strokeWidth="1.6" opacity="0.67" />
+              <line x1="80%" y1="0" x2="82%" y2="100%" stroke="#ffffff" strokeWidth="1.2" opacity="0.62" />
+              <line x1="85%" y1="0" x2="87%" y2="100%" stroke="#ffffff" strokeWidth="1.3" opacity="0.63" />
               
               {/* Blue lines - ชุดที่ 7: ท้ายสุด */}
               <line x1="86%" y1="0" x2="84%" y2="100%" stroke="#1e40af" strokeWidth="0.9" opacity="0.14" />
@@ -144,9 +144,9 @@ export default function SignInForm() {
               <line x1="96%" y1="0" x2="93%" y2="100%" stroke="#1e40af" strokeWidth="1.1" opacity="0.17" />
               
               {/* White lines - ชุดที่ 6: ท้ายสุด */}
-              <line x1="88%" y1="0" x2="90%" y2="100%" stroke="#ffffff" strokeWidth="1.4" opacity="0.25" />
-              <line x1="92%" y1="0" x2="94%" y2="100%" stroke="#ffffff" strokeWidth="1.5" opacity="0.28" />
-              <line x1="95%" y1="0" x2="96%" y2="100%" stroke="#ffffff" strokeWidth="1.2" opacity="0.20" />
+              <line x1="88%" y1="0" x2="90%" y2="100%" stroke="#ffffff" strokeWidth="1.4" opacity="0.45" />
+              <line x1="92%" y1="0" x2="94%" y2="100%" stroke="#ffffff" strokeWidth="1.5" opacity="0.48" />
+              <line x1="95%" y1="0" x2="96%" y2="100%" stroke="#ffffff" strokeWidth="1.2" opacity="0.50" />
               
               {/* เส้นเพิ่มเติมระหว่างช่องว่าง - Blue */}
               <line x1="4%" y1="0" x2="7%" y2="100%" stroke="#1e40af" strokeWidth="0.7" opacity="0.10" />
@@ -165,12 +165,12 @@ export default function SignInForm() {
               <line x1="93%" y1="0" x2="91%" y2="100%" stroke="#1e40af" strokeWidth="1.0" opacity="0.16" />
               
               {/* เส้นเพิ่มเติมระหว่างช่องว่าง - White */}
-              <line x1="15%" y1="0" x2="13%" y2="100%" stroke="#ffffff" strokeWidth="1.1" opacity="0.19" />
-              <line x1="29%" y1="0" x2="31%" y2="100%" stroke="#ffffff" strokeWidth="1.3" opacity="0.21" />
-              <line x1="45%" y1="0" x2="47%" y2="100%" stroke="#ffffff" strokeWidth="1.2" opacity="0.20" />
-              <line x1="58%" y1="0" x2="61%" y2="100%" stroke="#ffffff" strokeWidth="1.4" opacity="0.24" />
-              <line x1="71%" y1="0" x2="69%" y2="100%" stroke="#ffffff" strokeWidth="1.1" opacity="0.18" />
-              <line x1="83%" y1="0" x2="86%" y2="100%" stroke="#ffffff" strokeWidth="1.5" opacity="0.26" />
+              <line x1="15%" y1="0" x2="13%" y2="100%" stroke="#ffffff" strokeWidth="1.1" opacity="0.49" />
+              <line x1="29%" y1="0" x2="31%" y2="100%" stroke="#ffffff" strokeWidth="1.3" opacity="0.51" />
+              <line x1="45%" y1="0" x2="47%" y2="100%" stroke="#ffffff" strokeWidth="1.2" opacity="0.50" />
+              <line x1="58%" y1="0" x2="61%" y2="100%" stroke="#ffffff" strokeWidth="1.4" opacity="0.54" />
+              <line x1="71%" y1="0" x2="69%" y2="100%" stroke="#ffffff" strokeWidth="1.1" opacity="0.68" />
+              <line x1="83%" y1="0" x2="86%" y2="100%" stroke="#ffffff" strokeWidth="1.5" opacity="0.66" />
             </svg>
           </div>
 
