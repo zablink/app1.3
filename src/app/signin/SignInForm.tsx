@@ -61,25 +61,53 @@ export default function SignInForm() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-blue-50 px-4 py-12">
       <div className="max-w-md w-full">
-        {/* Card Container with gradient and pattern overlay */}
+        {/* Card Container with gradient and vertical lines pattern */}
         <div className="relative bg-gradient-to-b from-white to-blue-200 rounded-2xl shadow-xl p-8 overflow-hidden">
           
-          {/* Random lines pattern overlay */}
+          {/* Random vertical lines pattern overlay - 35 lines */}
           <div 
             className="absolute inset-0 pointer-events-none opacity-30"
             style={{ mixBlendMode: 'multiply' }}
           >
-            <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-              {/* Random diagonal lines with varying opacity and thickness */}
-              <line x1="0" y1="30" x2="100%" y2="25" stroke="#1e40af" strokeWidth="1" opacity="0.15" />
-              <line x1="0" y1="95" x2="100%" y2="105" stroke="#1e40af" strokeWidth="1.5" opacity="0.2" />
-              <line x1="0" y1="160" x2="100%" y2="150" stroke="#1e40af" strokeWidth="1" opacity="0.1" />
-              <line x1="0" y1="230" x2="100%" y2="245" stroke="#1e40af" strokeWidth="2" opacity="0.15" />
-              <line x1="0" y1="310" x2="100%" y2="300" stroke="#1e40af" strokeWidth="1" opacity="0.12" />
-              <line x1="0" y1="385" x2="100%" y2="405" stroke="#1e40af" strokeWidth="1.5" opacity="0.18" />
-              <line x1="0" y1="465" x2="100%" y2="455" stroke="#1e40af" strokeWidth="1" opacity="0.1" />
-              <line x1="0" y1="545" x2="100%" y2="570" stroke="#1e40af" strokeWidth="2" opacity="0.2" />
-              <line x1="0" y1="620" x2="100%" y2="610" stroke="#1e40af" strokeWidth="1.5" opacity="0.15" />
+            <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" className="overflow-visible">
+              {/* 35 vertical lines with varying angles and opacity */}
+              <line x1="5%" y1="0" x2="8%" y2="100%" stroke="#1e40af" strokeWidth="0.8" opacity="0.12" />
+              <line x1="8%" y1="0" x2="6%" y2="100%" stroke="#1e40af" strokeWidth="1.2" opacity="0.18" />
+              <line x1="12%" y1="0" x2="14%" y2="100%" stroke="#1e40af" strokeWidth="0.6" opacity="0.10" />
+              <line x1="15%" y1="0" x2="13%" y2="100%" stroke="#1e40af" strokeWidth="1.5" opacity="0.20" />
+              <line x1="18%" y1="0" x2="20%" y2="100%" stroke="#1e40af" strokeWidth="0.7" opacity="0.14" />
+              <line x1="22%" y1="0" x2="19%" y2="100%" stroke="#1e40af" strokeWidth="1.0" opacity="0.16" />
+              <line x1="25%" y1="0" x2="27%" y2="100%" stroke="#1e40af" strokeWidth="1.3" opacity="0.22" />
+              <line x1="28%" y1="0" x2="26%" y2="100%" stroke="#1e40af" strokeWidth="0.9" opacity="0.11" />
+              <line x1="31%" y1="0" x2="33%" y2="100%" stroke="#1e40af" strokeWidth="1.1" opacity="0.17" />
+              <line x1="35%" y1="0" x2="32%" y2="100%" stroke="#1e40af" strokeWidth="0.8" opacity="0.13" />
+              <line x1="38%" y1="0" x2="40%" y2="100%" stroke="#1e40af" strokeWidth="1.4" opacity="0.19" />
+              <line x1="42%" y1="0" x2="39%" y2="100%" stroke="#1e40af" strokeWidth="0.7" opacity="0.15" />
+              <line x1="45%" y1="0" x2="47%" y2="100%" stroke="#1e40af" strokeWidth="1.2" opacity="0.21" />
+              <line x1="48%" y1="0" x2="46%" y2="100%" stroke="#1e40af" strokeWidth="1.0" opacity="0.12" />
+              <line x1="51%" y1="0" x2="53%" y2="100%" stroke="#1e40af" strokeWidth="0.9" opacity="0.18" />
+              <line x1="55%" y1="0" x2="52%" y2="100%" stroke="#1e40af" strokeWidth="1.3" opacity="0.14" />
+              <line x1="58%" y1="0" x2="60%" y2="100%" stroke="#1e40af" strokeWidth="0.8" opacity="0.16" />
+              <line x1="62%" y1="0" x2="59%" y2="100%" stroke="#1e40af" strokeWidth="1.5" opacity="0.20" />
+              <line x1="65%" y1="0" x2="67%" y2="100%" stroke="#1e40af" strokeWidth="0.6" opacity="0.11" />
+              <line x1="68%" y1="0" x2="66%" y2="100%" stroke="#1e40af" strokeWidth="1.1" opacity="0.17" />
+              <line x1="71%" y1="0" x2="73%" y2="100%" stroke="#1e40af" strokeWidth="1.0" opacity="0.19" />
+              <line x1="75%" y1="0" x2="72%" y2="100%" stroke="#1e40af" strokeWidth="0.9" opacity="0.13" />
+              <line x1="78%" y1="0" x2="80%" y2="100%" stroke="#1e40af" strokeWidth="1.4" opacity="0.22" />
+              <line x1="82%" y1="0" x2="79%" y2="100%" stroke="#1e40af" strokeWidth="0.7" opacity="0.15" />
+              <line x1="85%" y1="0" x2="87%" y2="100%" stroke="#1e40af" strokeWidth="1.2" opacity="0.18" />
+              <line x1="88%" y1="0" x2="86%" y2="100%" stroke="#1e40af" strokeWidth="1.0" opacity="0.12" />
+              <line x1="91%" y1="0" x2="93%" y2="100%" stroke="#1e40af" strokeWidth="0.8" opacity="0.16" />
+              <line x1="95%" y1="0" x2="92%" y2="100%" stroke="#1e40af" strokeWidth="1.3" opacity="0.21" />
+              
+              {/* เส้นเพิ่มเติมระหว่างช่องว่าง */}
+              <line x1="10%" y1="0" x2="11%" y2="100%" stroke="#1e40af" strokeWidth="0.6" opacity="0.09" />
+              <line x1="20%" y1="0" x2="21%" y2="100%" stroke="#1e40af" strokeWidth="1.1" opacity="0.14" />
+              <line x1="30%" y1="0" x2="29%" y2="100%" stroke="#1e40af" strokeWidth="0.8" opacity="0.11" />
+              <line x1="40%" y1="0" x2="41%" y2="100%" stroke="#1e40af" strokeWidth="1.2" opacity="0.17" />
+              <line x1="50%" y1="0" x2="49%" y2="100%" stroke="#1e40af" strokeWidth="0.9" opacity="0.13" />
+              <line x1="60%" y1="0" x2="61%" y2="100%" stroke="#1e40af" strokeWidth="1.4" opacity="0.19" />
+              <line x1="70%" y1="0" x2="69%" y2="100%" stroke="#1e40af" strokeWidth="0.7" opacity="0.12" />
             </svg>
           </div>
 
