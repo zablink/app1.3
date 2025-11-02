@@ -1,6 +1,9 @@
 // src/app/api/locations/reverse-geocode/route.ts
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { PrismaClient } from "@prisma/client";
+
+// สร้าง Prisma instance
+const prisma = new PrismaClient();
 
 // ฟังก์ชันคำนวณระยะทางระหว่าง 2 จุด (Haversine formula)
 function calculateDistance(
@@ -30,80 +33,130 @@ function toRad(value: number): number {
 // ฟังก์ชันหาตำบลที่ใกล้ที่สุดจาก GPS
 async function findNearestTambons(lat: number, lng: number, radiusKm: number = 5) {
   try {
-    // ดึงข้อมูลตำบลทั้งหมดที่มี coordinates (จาก geom)
-    // สำหรับตอนนี้ใช้วิธีง่ายๆ คือดึงตำบลในรัศมีที่กำหนด
-    // ถ้ามี PostGIS สามารถใช้ ST_Distance ได้
+    // เช็คว่ามี PostGIS หรือไม่
+    const hasPostGIS = await checkPostGIS();
     
-    const tambons = await prisma.$queryRaw<any[]>`
-      SELECT 
-        t.id,
-        t.name_th,
-        t.name_en,
-        t.amphure_id,
-        t.zip_code,
-        a.name_th as amphure_name_th,
-        a.province_id,
-        p.name_th as province_name_th,
-        ST_Y(ST_Centroid(t.geom)) as lat,
-        ST_X(ST_Centroid(t.geom)) as lng
-      FROM loc_tambons t
-      INNER JOIN loc_amphures a ON t.amphure_id = a.id
-      INNER JOIN loc_provinces p ON a.province_id = p.id
-      WHERE t.geom IS NOT NULL
-    `;
+    if (hasPostGIS) {
+      // ใช้ PostGIS query (ถ้ามี)
+      const tambons = await prisma.$queryRaw<any[]>`
+        SELECT 
+          t.id,
+          t.name_th,
+          t.name_en,
+          t.amphure_id,
+          t.zip_code,
+          a.name_th as amphure_name_th,
+          a.province_id,
+          p.name_th as province_name_th,
+          ST_Y(ST_Centroid(t.geom)) as lat,
+          ST_X(ST_Centroid(t.geom)) as lng
+        FROM loc_tambons t
+        INNER JOIN loc_amphures a ON t.amphure_id = a.id
+        INNER JOIN loc_provinces p ON a.province_id = p.id
+        WHERE t.geom IS NOT NULL
+        AND ST_DWithin(
+          t.geom::geography,
+          ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326)::geography,
+          ${radiusKm * 1000}
+        )
+        ORDER BY ST_Distance(
+          t.geom::geography,
+          ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326)::geography
+        )
+        LIMIT 10
+      `;
 
-    // คำนวณระยะทางและจัดเรียง
-    const tambonsWithDistance = tambons
-      .map((tambon) => ({
-        ...tambon,
-        distance: calculateDistance(lat, lng, tambon.lat, tambon.lng),
-      }))
-      .filter((t) => t.distance <= radiusKm)
-      .sort((a, b) => a.distance - b.distance);
-
-    return tambonsWithDistance;
+      return tambons.map((t) => ({
+        ...t,
+        distance: calculateDistance(lat, lng, Number(t.lat), Number(t.lng)),
+      }));
+    } else {
+      // Fallback: ไม่มี PostGIS ให้ใช้ Haversine formula
+      return await findNearestTambonsFallback(lat, lng, radiusKm);
+    }
   } catch (error) {
-    console.error("Error finding nearest tambons:", error);
-    // ถ้า database ไม่มี geom หรือ PostGIS ให้ใช้วิธีอื่น
+    console.error("Error in findNearestTambons:", error);
+    // ถ้า PostGIS query error ให้ fallback
+    return await findNearestTambonsFallback(lat, lng, radiusKm);
+  }
+}
+
+// Fallback method: ไม่ใช้ PostGIS
+async function findNearestTambonsFallback(lat: number, lng: number, radiusKm: number) {
+  try {
+    // ดึงตำบลทั้งหมดในจังหวัดใกล้เคียง (approximate)
+    const allTambons = await prisma.loc_tambons.findMany({
+      include: {
+        loc_amphures: {
+          include: {
+            loc_provinces: true,
+          },
+        },
+      },
+      // จำกัดจำนวนเพื่อความเร็ว
+      take: 500,
+    });
+
+    // คำนวณระยะทางแต่ละตำบล (ใช้ center ของจังหวัด)
+    // Note: นี่เป็น approximation เพราะไม่มีพิกัดแน่นอนของตำบล
+    const tambonsWithDistance = allTambons.map((tambon) => {
+      // ใช้พิกัดประมาณของจังหวัด (ต้องมี mapping table)
+      const provinceCoords = getProvinceCoords(tambon.loc_amphures.province_id);
+      const distance = calculateDistance(lat, lng, provinceCoords.lat, provinceCoords.lng);
+
+      return {
+        id: tambon.id,
+        name_th: tambon.name_th,
+        name_en: tambon.name_en,
+        amphure_id: tambon.amphure_id,
+        zip_code: tambon.zip_code,
+        amphure_name_th: tambon.loc_amphures.name_th,
+        province_id: tambon.loc_amphures.province_id,
+        province_name_th: tambon.loc_amphures.loc_provinces.name_th,
+        distance,
+      };
+    });
+
+    // เรียงตามระยะทางและกรองที่อยู่ในรัศมี
+    return tambonsWithDistance
+      .filter((t) => t.distance <= radiusKm)
+      .sort((a, b) => a.distance - b.distance)
+      .slice(0, 10);
+  } catch (error) {
+    console.error("Error in fallback method:", error);
     return [];
   }
 }
 
-// ฟังก์ชันหาตำบลจากชื่อที่คล้ายกัน (fuzzy matching)
-function fuzzyMatch(str1: string, str2: string): number {
-  // Simple similarity score (Levenshtein distance)
-  const len1 = str1.length;
-  const len2 = str2.length;
-  const matrix: number[][] = [];
-
-  for (let i = 0; i <= len1; i++) {
-    matrix[i] = [i];
+// เช็คว่ามี PostGIS extension หรือไม่
+async function checkPostGIS(): Promise<boolean> {
+  try {
+    await prisma.$queryRaw`SELECT PostGIS_Version()`;
+    return true;
+  } catch {
+    return false;
   }
+}
 
-  for (let j = 0; j <= len2; j++) {
-    matrix[0][j] = j;
-  }
+// พิกัดประมาณของแต่ละจังหวัด (center point)
+function getProvinceCoords(provinceId: number): { lat: number; lng: number } {
+  // พิกัดจังหวัดหลักๆ (เพิ่มเติมได้)
+  const provinceCoords: Record<number, { lat: number; lng: number }> = {
+    1: { lat: 13.7563, lng: 100.5018 }, // กรุงเทพฯ
+    2: { lat: 14.9930, lng: 102.0977 }, // สมุทรปราการ
+    3: { lat: 13.5391, lng: 100.9271 }, // นนทบุรี
+    10: { lat: 13.5282, lng: 100.2600 }, // สมุทรสาคร
+    11: { lat: 13.4122, lng: 100.0021 }, // สมุทรสงคราม
+    // ... เพิ่มจังหวัดอื่นๆ ได้
+  };
 
-  for (let i = 1; i <= len1; i++) {
-    for (let j = 1; j <= len2; j++) {
-      const cost = str1[i - 1] === str2[j - 1] ? 0 : 1;
-      matrix[i][j] = Math.min(
-        matrix[i - 1][j] + 1,
-        matrix[i][j - 1] + 1,
-        matrix[i - 1][j - 1] + cost
-      );
-    }
-  }
-
-  const distance = matrix[len1][len2];
-  const maxLen = Math.max(len1, len2);
-  return 1 - distance / maxLen; // Return similarity score (0-1)
+  return provinceCoords[provinceId] || { lat: 13.7367, lng: 100.5231 }; // default
 }
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { lat, lng } = body;
+    const { lat, lng, accuracy } = body;
 
     if (!lat || !lng) {
       return NextResponse.json(
@@ -112,13 +165,17 @@ export async function POST(request: Request) {
       );
     }
 
+    console.log('📍 Reverse Geocode Request:', { lat, lng, accuracy });
+
     // 1. หาตำบลที่ใกล้ที่สุดจาก GPS
     const nearestTambons = await findNearestTambons(lat, lng, 5); // หาในรัศมี 5 km
+
+    console.log('📍 Found tambons:', nearestTambons.length);
 
     if (nearestTambons.length === 0) {
       // ถ้าไม่เจอในรัศมี 5 km ให้ขยายเป็น 10 km
       const widerSearch = await findNearestTambons(lat, lng, 10);
-      
+
       if (widerSearch.length === 0) {
         return NextResponse.json(
           { error: "ไม่พบตำบลในบริเวณนี้" },
@@ -131,6 +188,7 @@ export async function POST(request: Request) {
         location: {
           lat,
           lng,
+          accuracy,
           province: {
             id: widerSearch[0].province_id,
             name_th: widerSearch[0].province_name_th,
@@ -157,6 +215,7 @@ export async function POST(request: Request) {
         location: {
           lat,
           lng,
+          accuracy,
           province: {
             id: nearestTambons[0].province_id,
             name_th: nearestTambons[0].province_name_th,
@@ -176,16 +235,16 @@ export async function POST(request: Request) {
       });
     }
 
-    // 3. ถ้าเจอหลายตำบล (อยู่ใกล้กัน) ให้ส่งตัวเลือกทั้งหมด
-    // แต่ถ้าตำบลแรกห่างจากตำบลที่ 2 มากพอ (>1km) ให้เลือกตำบลแรก
+    // 3. ถ้าเจอหลายตำบล แต่ตำบลแรกห่างจากตำบลที่ 2 มากพอ (>1km)
     if (nearestTambons[0].distance < 1 && nearestTambons.length > 1) {
       const secondDistance = nearestTambons[1].distance;
       if (secondDistance - nearestTambons[0].distance > 1) {
-        // ถ้าตำบลที่ 2 ห่างจากตำบลแรกมากกว่า 1 km ให้เลือกตำบลแรกเลย
+        // เลือกตำบลแรกเลย
         return NextResponse.json({
           location: {
             lat,
             lng,
+            accuracy,
             province: {
               id: nearestTambons[0].province_id,
               name_th: nearestTambons[0].province_name_th,
@@ -211,6 +270,7 @@ export async function POST(request: Request) {
       location: {
         lat,
         lng,
+        accuracy,
         province: {
           id: nearestTambons[0].province_id,
           name_th: nearestTambons[0].province_name_th,
@@ -225,7 +285,7 @@ export async function POST(request: Request) {
           name_en: t.name_en,
           amphure_id: t.amphure_id,
           zip_code: t.zip_code,
-          distance: t.distance,
+          distance: Math.round(t.distance * 10) / 10, // round to 1 decimal
         })),
       },
     });
