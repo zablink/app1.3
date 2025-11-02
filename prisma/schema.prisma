@@ -300,7 +300,7 @@ model User {
   image     String?
   password  String?
   role      Role      @default(USER)
-  updatedAt DateTime
+  updatedAt DateTime  @updatedAt
   Account   Account[]
   Session   Session[]
   Shop      Shop[]
