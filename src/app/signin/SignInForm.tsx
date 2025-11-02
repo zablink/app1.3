@@ -61,53 +61,116 @@ export default function SignInForm() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-blue-50 px-4 py-12">
       <div className="max-w-md w-full">
-        {/* Card Container with gradient and vertical lines pattern */}
+        {/* Card Container with gradient and rich line pattern */}
         <div className="relative bg-gradient-to-b from-white to-blue-200 rounded-2xl shadow-xl p-8 overflow-hidden">
           
-          {/* Random vertical lines pattern overlay - 35 lines */}
+          {/* Rich vertical lines pattern - 70 lines total (50 blue + 20 white) */}
           <div 
             className="absolute inset-0 pointer-events-none opacity-30"
             style={{ mixBlendMode: 'multiply' }}
           >
             <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" className="overflow-visible">
-              {/* 35 vertical lines with varying angles and opacity */}
-              <line x1="5%" y1="0" x2="8%" y2="100%" stroke="#1e40af" strokeWidth="0.8" opacity="0.12" />
-              <line x1="8%" y1="0" x2="6%" y2="100%" stroke="#1e40af" strokeWidth="1.2" opacity="0.18" />
-              <line x1="12%" y1="0" x2="14%" y2="100%" stroke="#1e40af" strokeWidth="0.6" opacity="0.10" />
-              <line x1="15%" y1="0" x2="13%" y2="100%" stroke="#1e40af" strokeWidth="1.5" opacity="0.20" />
-              <line x1="18%" y1="0" x2="20%" y2="100%" stroke="#1e40af" strokeWidth="0.7" opacity="0.14" />
-              <line x1="22%" y1="0" x2="19%" y2="100%" stroke="#1e40af" strokeWidth="1.0" opacity="0.16" />
-              <line x1="25%" y1="0" x2="27%" y2="100%" stroke="#1e40af" strokeWidth="1.3" opacity="0.22" />
-              <line x1="28%" y1="0" x2="26%" y2="100%" stroke="#1e40af" strokeWidth="0.9" opacity="0.11" />
-              <line x1="31%" y1="0" x2="33%" y2="100%" stroke="#1e40af" strokeWidth="1.1" opacity="0.17" />
-              <line x1="35%" y1="0" x2="32%" y2="100%" stroke="#1e40af" strokeWidth="0.8" opacity="0.13" />
-              <line x1="38%" y1="0" x2="40%" y2="100%" stroke="#1e40af" strokeWidth="1.4" opacity="0.19" />
-              <line x1="42%" y1="0" x2="39%" y2="100%" stroke="#1e40af" strokeWidth="0.7" opacity="0.15" />
-              <line x1="45%" y1="0" x2="47%" y2="100%" stroke="#1e40af" strokeWidth="1.2" opacity="0.21" />
-              <line x1="48%" y1="0" x2="46%" y2="100%" stroke="#1e40af" strokeWidth="1.0" opacity="0.12" />
-              <line x1="51%" y1="0" x2="53%" y2="100%" stroke="#1e40af" strokeWidth="0.9" opacity="0.18" />
-              <line x1="55%" y1="0" x2="52%" y2="100%" stroke="#1e40af" strokeWidth="1.3" opacity="0.14" />
-              <line x1="58%" y1="0" x2="60%" y2="100%" stroke="#1e40af" strokeWidth="0.8" opacity="0.16" />
-              <line x1="62%" y1="0" x2="59%" y2="100%" stroke="#1e40af" strokeWidth="1.5" opacity="0.20" />
-              <line x1="65%" y1="0" x2="67%" y2="100%" stroke="#1e40af" strokeWidth="0.6" opacity="0.11" />
-              <line x1="68%" y1="0" x2="66%" y2="100%" stroke="#1e40af" strokeWidth="1.1" opacity="0.17" />
-              <line x1="71%" y1="0" x2="73%" y2="100%" stroke="#1e40af" strokeWidth="1.0" opacity="0.19" />
-              <line x1="75%" y1="0" x2="72%" y2="100%" stroke="#1e40af" strokeWidth="0.9" opacity="0.13" />
-              <line x1="78%" y1="0" x2="80%" y2="100%" stroke="#1e40af" strokeWidth="1.4" opacity="0.22" />
-              <line x1="82%" y1="0" x2="79%" y2="100%" stroke="#1e40af" strokeWidth="0.7" opacity="0.15" />
-              <line x1="85%" y1="0" x2="87%" y2="100%" stroke="#1e40af" strokeWidth="1.2" opacity="0.18" />
-              <line x1="88%" y1="0" x2="86%" y2="100%" stroke="#1e40af" strokeWidth="1.0" opacity="0.12" />
-              <line x1="91%" y1="0" x2="93%" y2="100%" stroke="#1e40af" strokeWidth="0.8" opacity="0.16" />
-              <line x1="95%" y1="0" x2="92%" y2="100%" stroke="#1e40af" strokeWidth="1.3" opacity="0.21" />
+              {/* Blue lines - ชุดที่ 1: มุมเอียงน้อย */}
+              <line x1="3%" y1="0" x2="5%" y2="100%" stroke="#1e40af" strokeWidth="0.7" opacity="0.11" />
+              <line x1="6%" y1="0" x2="9%" y2="100%" stroke="#1e40af" strokeWidth="1.1" opacity="0.17" />
+              <line x1="8%" y1="0" x2="6%" y2="100%" stroke="#1e40af" strokeWidth="0.9" opacity="0.14" />
+              <line x1="11%" y1="0" x2="14%" y2="100%" stroke="#1e40af" strokeWidth="1.3" opacity="0.20" />
+              <line x1="13%" y1="0" x2="11%" y2="100%" stroke="#1e40af" strokeWidth="0.8" opacity="0.12" />
               
-              {/* เส้นเพิ่มเติมระหว่างช่องว่าง */}
-              <line x1="10%" y1="0" x2="11%" y2="100%" stroke="#1e40af" strokeWidth="0.6" opacity="0.09" />
-              <line x1="20%" y1="0" x2="21%" y2="100%" stroke="#1e40af" strokeWidth="1.1" opacity="0.14" />
-              <line x1="30%" y1="0" x2="29%" y2="100%" stroke="#1e40af" strokeWidth="0.8" opacity="0.11" />
-              <line x1="40%" y1="0" x2="41%" y2="100%" stroke="#1e40af" strokeWidth="1.2" opacity="0.17" />
-              <line x1="50%" y1="0" x2="49%" y2="100%" stroke="#1e40af" strokeWidth="0.9" opacity="0.13" />
-              <line x1="60%" y1="0" x2="61%" y2="100%" stroke="#1e40af" strokeWidth="1.4" opacity="0.19" />
-              <line x1="70%" y1="0" x2="69%" y2="100%" stroke="#1e40af" strokeWidth="0.7" opacity="0.12" />
+              {/* Blue lines - ชุดที่ 2: มุมเอียงปานกลาง */}
+              <line x1="16%" y1="0" x2="20%" y2="100%" stroke="#1e40af" strokeWidth="1.2" opacity="0.18" />
+              <line x1="19%" y1="0" x2="15%" y2="100%" stroke="#1e40af" strokeWidth="1.0" opacity="0.15" />
+              <line x1="22%" y1="0" x2="26%" y2="100%" stroke="#1e40af" strokeWidth="1.4" opacity="0.21" />
+              <line x1="25%" y1="0" x2="21%" y2="100%" stroke="#1e40af" strokeWidth="0.9" opacity="0.13" />
+              <line x1="28%" y1="0" x2="32%" y2="100%" stroke="#1e40af" strokeWidth="1.1" opacity="0.19" />
+              
+              {/* White lines - ชุดที่ 1: สร้างความตัดกัน */}
+              <line x1="10%" y1="0" x2="12%" y2="100%" stroke="#ffffff" strokeWidth="1.5" opacity="0.25" />
+              <line x1="17%" y1="0" x2="19%" y2="100%" stroke="#ffffff" strokeWidth="1.2" opacity="0.20" />
+              <line x1="24%" y1="0" x2="22%" y2="100%" stroke="#ffffff" strokeWidth="1.4" opacity="0.22" />
+              
+              {/* Blue lines - ชุดที่ 3: มุมเอียงมาก */}
+              <line x1="30%" y1="0" x2="38%" y2="100%" stroke="#1e40af" strokeWidth="1.3" opacity="0.22" />
+              <line x1="33%" y1="0" x2="27%" y2="100%" stroke="#1e40af" strokeWidth="1.1" opacity="0.16" />
+              <line x1="36%" y1="0" x2="42%" y2="100%" stroke="#1e40af" strokeWidth="1.5" opacity="0.23" />
+              <line x1="40%" y1="0" x2="34%" y2="100%" stroke="#1e40af" strokeWidth="0.9" opacity="0.14" />
+              <line x1="43%" y1="0" x2="47%" y2="100%" stroke="#1e40af" strokeWidth="1.2" opacity="0.19" />
+              
+              {/* White lines - ชุดที่ 2 */}
+              <line x1="31%" y1="0" x2="35%" y2="100%" stroke="#ffffff" strokeWidth="1.6" opacity="0.28" />
+              <line x1="38%" y1="0" x2="36%" y2="100%" stroke="#ffffff" strokeWidth="1.3" opacity="0.23" />
+              <line x1="44%" y1="0" x2="46%" y2="100%" stroke="#ffffff" strokeWidth="1.1" opacity="0.18" />
+              
+              {/* Blue lines - ชุดที่ 4: กลาง */}
+              <line x1="46%" y1="0" x2="48%" y2="100%" stroke="#1e40af" strokeWidth="0.8" opacity="0.12" />
+              <line x1="49%" y1="0" x2="53%" y2="100%" stroke="#1e40af" strokeWidth="1.4" opacity="0.20" />
+              <line x1="51%" y1="0" x2="49%" y2="100%" stroke="#1e40af" strokeWidth="1.0" opacity="0.15" />
+              <line x1="54%" y1="0" x2="58%" y2="100%" stroke="#1e40af" strokeWidth="1.2" opacity="0.18" />
+              <line x1="56%" y1="0" x2="52%" y2="100%" stroke="#1e40af" strokeWidth="0.9" opacity="0.13" />
+              
+              {/* White lines - ชุดที่ 3: ตรงกลาง */}
+              <line x1="50%" y1="0" x2="51%" y2="100%" stroke="#ffffff" strokeWidth="1.7" opacity="0.30" />
+              <line x1="55%" y1="0" x2="57%" y2="100%" stroke="#ffffff" strokeWidth="1.2" opacity="0.21" />
+              
+              {/* Blue lines - ชุดที่ 5: มุมเอียงมากพิเศษ */}
+              <line x1="59%" y1="0" x2="66%" y2="100%" stroke="#1e40af" strokeWidth="1.5" opacity="0.22" />
+              <line x1="62%" y1="0" x2="56%" y2="100%" stroke="#1e40af" strokeWidth="1.1" opacity="0.17" />
+              <line x1="65%" y1="0" x2="71%" y2="100%" stroke="#1e40af" strokeWidth="1.3" opacity="0.21" />
+              <line x1="68%" y1="0" x2="62%" y2="100%" stroke="#1e40af" strokeWidth="0.9" opacity="0.14" />
+              <line x1="70%" y1="0" x2="74%" y2="100%" stroke="#1e40af" strokeWidth="1.2" opacity="0.19" />
+              
+              {/* White lines - ชุดที่ 4 */}
+              <line x1="60%" y1="0" x2="64%" y2="100%" stroke="#ffffff" strokeWidth="1.4" opacity="0.24" />
+              <line x1="67%" y1="0" x2="65%" y2="100%" stroke="#ffffff" strokeWidth="1.5" opacity="0.26" />
+              <line x1="72%" y1="0" x2="75%" y2="100%" stroke="#ffffff" strokeWidth="1.1" opacity="0.19" />
+              
+              {/* Blue lines - ชุดที่ 6: มุมเอียงปานกลาง */}
+              <line x1="73%" y1="0" x2="77%" y2="100%" stroke="#1e40af" strokeWidth="1.0" opacity="0.16" />
+              <line x1="76%" y1="0" x2="72%" y2="100%" stroke="#1e40af" strokeWidth="1.3" opacity="0.20" />
+              <line x1="79%" y1="0" x2="83%" y2="100%" stroke="#1e40af" strokeWidth="1.1" opacity="0.18" />
+              <line x1="81%" y1="0" x2="77%" y2="100%" stroke="#1e40af" strokeWidth="0.8" opacity="0.13" />
+              <line x1="84%" y1="0" x2="88%" y2="100%" stroke="#1e40af" strokeWidth="1.4" opacity="0.21" />
+              
+              {/* White lines - ชุดที่ 5 */}
+              <line x1="74%" y1="0" x2="78%" y2="100%" stroke="#ffffff" strokeWidth="1.6" opacity="0.27" />
+              <line x1="80%" y1="0" x2="82%" y2="100%" stroke="#ffffff" strokeWidth="1.2" opacity="0.22" />
+              <line x1="85%" y1="0" x2="87%" y2="100%" stroke="#ffffff" strokeWidth="1.3" opacity="0.23" />
+              
+              {/* Blue lines - ชุดที่ 7: ท้ายสุด */}
+              <line x1="86%" y1="0" x2="84%" y2="100%" stroke="#1e40af" strokeWidth="0.9" opacity="0.14" />
+              <line x1="89%" y1="0" x2="92%" y2="100%" stroke="#1e40af" strokeWidth="1.2" opacity="0.19" />
+              <line x1="91%" y1="0" x2="89%" y2="100%" stroke="#1e40af" strokeWidth="1.0" opacity="0.15" />
+              <line x1="94%" y1="0" x2="97%" y2="100%" stroke="#1e40af" strokeWidth="1.3" opacity="0.20" />
+              <line x1="96%" y1="0" x2="93%" y2="100%" stroke="#1e40af" strokeWidth="1.1" opacity="0.17" />
+              
+              {/* White lines - ชุดที่ 6: ท้ายสุด */}
+              <line x1="88%" y1="0" x2="90%" y2="100%" stroke="#ffffff" strokeWidth="1.4" opacity="0.25" />
+              <line x1="92%" y1="0" x2="94%" y2="100%" stroke="#ffffff" strokeWidth="1.5" opacity="0.28" />
+              <line x1="95%" y1="0" x2="96%" y2="100%" stroke="#ffffff" strokeWidth="1.2" opacity="0.20" />
+              
+              {/* เส้นเพิ่มเติมระหว่างช่องว่าง - Blue */}
+              <line x1="4%" y1="0" x2="7%" y2="100%" stroke="#1e40af" strokeWidth="0.7" opacity="0.10" />
+              <line x1="12%" y1="0" x2="10%" y2="100%" stroke="#1e40af" strokeWidth="0.8" opacity="0.11" />
+              <line x1="20%" y1="0" x2="23%" y2="100%" stroke="#1e40af" strokeWidth="1.0" opacity="0.14" />
+              <line x1="27%" y1="0" x2="24%" y2="100%" stroke="#1e40af" strokeWidth="0.9" opacity="0.12" />
+              <line x1="35%" y1="0" x2="39%" y2="100%" stroke="#1e40af" strokeWidth="1.1" opacity="0.16" />
+              <line x1="41%" y1="0" x2="37%" y2="100%" stroke="#1e40af" strokeWidth="1.2" opacity="0.18" />
+              <line x1="48%" y1="0" x2="52%" y2="100%" stroke="#1e40af" strokeWidth="0.8" opacity="0.13" />
+              <line x1="57%" y1="0" x2="54%" y2="100%" stroke="#1e40af" strokeWidth="1.0" opacity="0.15" />
+              <line x1="63%" y1="0" x2="67%" y2="100%" stroke="#1e40af" strokeWidth="1.3" opacity="0.19" />
+              <line x1="69%" y1="0" x2="64%" y2="100%" stroke="#1e40af" strokeWidth="0.9" opacity="0.14" />
+              <line x1="75%" y1="0" x2="79%" y2="100%" stroke="#1e40af" strokeWidth="1.1" opacity="0.17" />
+              <line x1="82%" y1="0" x2="78%" y2="100%" stroke="#1e40af" strokeWidth="1.2" opacity="0.18" />
+              <line x1="87%" y1="0" x2="90%" y2="100%" stroke="#1e40af" strokeWidth="0.8" opacity="0.12" />
+              <line x1="93%" y1="0" x2="91%" y2="100%" stroke="#1e40af" strokeWidth="1.0" opacity="0.16" />
+              
+              {/* เส้นเพิ่มเติมระหว่างช่องว่าง - White */}
+              <line x1="15%" y1="0" x2="13%" y2="100%" stroke="#ffffff" strokeWidth="1.1" opacity="0.19" />
+              <line x1="29%" y1="0" x2="31%" y2="100%" stroke="#ffffff" strokeWidth="1.3" opacity="0.21" />
+              <line x1="45%" y1="0" x2="47%" y2="100%" stroke="#ffffff" strokeWidth="1.2" opacity="0.20" />
+              <line x1="58%" y1="0" x2="61%" y2="100%" stroke="#ffffff" strokeWidth="1.4" opacity="0.24" />
+              <line x1="71%" y1="0" x2="69%" y2="100%" stroke="#ffffff" strokeWidth="1.1" opacity="0.18" />
+              <line x1="83%" y1="0" x2="86%" y2="100%" stroke="#ffffff" strokeWidth="1.5" opacity="0.26" />
             </svg>
           </div>
 
