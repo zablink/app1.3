@@ -195,11 +195,14 @@ model Account {
   type              String
   provider          String
   providerAccountId String
+  refresh_token     String? @db.Text  
+  access_token      String? @db.Text  
   refresh_token     String?
   access_token      String?
   expires_at        Int?
   token_type        String?
   scope             String?
+  id_token          String? @db.Text
   id_token          String?
   session_state     String?
   user              User    @relation(fields: [userId], references: [id])
@@ -247,7 +250,7 @@ model Session {
   sessionToken String   @unique
   userId       String
   expires      DateTime
-  User         User     @relation(fields: [userId], references: [id])
+  user         User     @relation(fields: [userId], references: [id])
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
@@ -295,6 +298,7 @@ model ShopCategory {
 model User {
   id        String    @id @default(cuid())
   email     String?   @unique
+  emailVerified DateTime?
   name      String?
   createdAt DateTime  @default(now())
   image     String?
