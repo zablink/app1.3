@@ -19,6 +19,8 @@ import {
   Star,
   Heart,
   MessageSquare,
+  Sparkles,
+  ArrowRight,
 } from "lucide-react";
 
 interface UserProfile {
@@ -46,6 +48,7 @@ export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -82,6 +85,11 @@ export default function ProfilePage() {
           address: data.profile.address || "",
           province: data.profile.province || "",
         });
+
+        // ถ้ายังไม่มีข้อมูลพื้นฐาน แสดง onboarding
+        if (!data.profile.phone && !data.profile.bio) {
+          setShowOnboarding(true);
+        }
       }
     } catch (error) {
       console.error("Error fetching profile:", error);
@@ -103,6 +111,7 @@ export default function ProfilePage() {
         const data = await res.json();
         setProfile(data.profile);
         setIsEditing(false);
+        setShowOnboarding(false);
         alert("บันทึกข้อมูลเรียบร้อยแล้ว");
       } else {
         alert("เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง");
@@ -126,6 +135,7 @@ export default function ProfilePage() {
       });
     }
     setIsEditing(false);
+    setShowOnboarding(false);
   };
 
   if (status === "loading" || isLoading) {
@@ -134,6 +144,147 @@ export default function ProfilePage() {
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
           <p className="mt-4 text-gray-600">กำลังโหลดโปรไฟล์...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Onboarding Screen - แสดงเมื่อยังไม่มีข้อมูลโปรไฟล์
+  if (showOnboarding && profile) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 py-12">
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Welcome Card */}
+          <div className="bg-white rounded-2xl shadow-xl p-8 mb-6">
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full mb-4">
+                <Sparkles className="text-white" size={40} />
+              </div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                ยินดีต้อนรับ {profile.name}!
+              </h1>
+              <p className="text-lg text-gray-600">
+                มาทำความรู้จักกันให้มากขึ้นกันเถอะ
+              </p>
+            </div>
+
+            {/* Profile Avatar */}
+            <div className="flex justify-center mb-6">
+              <div className="relative">
+                <div className="w-32 h-32 rounded-full border-4 border-white shadow-lg overflow-hidden bg-gray-200">
+                  {profile.image ? (
+                    <Image
+                      src={profile.image}
+                      alt={profile.name}
+                      width={128}
+                      height={128}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-blue-100">
+                      <User size={64} className="text-blue-600" />
+                    </div>
+                  )}
+                </div>
+                <button className="absolute bottom-0 right-0 p-2 bg-white rounded-full shadow-lg hover:bg-gray-50 transition">
+                  <Camera size={20} className="text-gray-600" />
+                </button>
+              </div>
+            </div>
+
+            {/* Onboarding Form */}
+            <div className="space-y-4 mb-8">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  ชื่อ-นามสกุล <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="กรอกชื่อ-นามสกุล"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  เบอร์โทรศัพท์ <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="tel"
+                  value={formData.phone}
+                  onChange={(e) =>
+                    setFormData({ ...formData, phone: e.target.value })
+                  }
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="089-XXX-XXXX"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  เกี่ยวกับคุณ
+                </label>
+                <textarea
+                  value={formData.bio}
+                  onChange={(e) =>
+                    setFormData({ ...formData, bio: e.target.value })
+                  }
+                  rows={4}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                  placeholder="บอกเล่าเกี่ยวกับตัวคุณสักหน่อย..."
+                />
+              </div>
+            </div>
+
+            {/* Benefits */}
+            <div className="bg-blue-50 rounded-lg p-4 mb-6">
+              <h3 className="font-semibold text-blue-900 mb-3">
+                สิ่งที่คุณจะได้รับ:
+              </h3>
+              <ul className="space-y-2">
+                <li className="flex items-start gap-2">
+                  <Star className="text-blue-600 flex-shrink-0 mt-0.5" size={18} />
+                  <span className="text-sm text-blue-800">
+                    บุ๊คมาร์คร้านอาหารที่คุณชอบ
+                  </span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <MessageSquare className="text-blue-600 flex-shrink-0 mt-0.5" size={18} />
+                  <span className="text-sm text-blue-800">
+                    แชร์ประสบการณ์และรีวิวร้านต่างๆ
+                  </span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Award className="text-blue-600 flex-shrink-0 mt-0.5" size={18} />
+                  <span className="text-sm text-blue-800">
+                    อัปเกรดเป็นนักรีวิวและสร้างรายได้
+                  </span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowOnboarding(false)}
+                className="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition font-medium"
+              >
+                ข้ามไปก่อน
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={!formData.name || !formData.phone || isSaving}
+                className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSaving ? "กำลังบันทึก..." : "บันทึกและเริ่มใช้งาน"}
+                <ArrowRight size={20} />
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -149,6 +300,7 @@ export default function ProfilePage() {
     );
   }
 
+  // Normal Profile View
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
