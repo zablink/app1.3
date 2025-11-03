@@ -16,7 +16,7 @@ import {
   Youtube,
   Facebook,
   Instagram,
-  AlertCircle,
+  AlertCircle, 
   MapPin,
   Navigation,
   Loader,

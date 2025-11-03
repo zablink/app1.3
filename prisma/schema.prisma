@@ -380,7 +380,7 @@ model Creator {
   provinceId Int
   amphureId Int?
   tambonId Int?
-  coverageLevel String // "tambon" | "amphure" | "province"
+  coverageLevel String // "tambon" | "amphure" | "province" 
   coverageAreas CreatorCoverageArea[]
 }
 
