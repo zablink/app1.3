@@ -375,6 +375,33 @@ model subscription_packages {
   shop_subscriptions         ShopSubscription[]
 }
 
+model Creator {
+  id  String @id
+  provinceId Int
+  amphureId Int?
+  tambonId Int?
+  coverageLevel String // "tambon" | "amphure" | "province"
+  coverageAreas CreatorCoverageArea[]
+}
+
+model CreatorCoverageArea {
+  id String @id @default(cuid())
+  creatorId String
+  
+  // Based on coverage level, one of these will be filled
+  provinceId Int?
+  amphureId Int?
+  tambonId Int?
+  
+  creator Creator @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  
+  @@index([creatorId])
+  @@index([provinceId])
+  @@index([amphureId])
+  @@index([tambonId])
+  @@map("creator_coverage_areas")
+}
+
 enum Role {
   USER
   SHOP
