@@ -305,6 +305,7 @@ model User {
   account   Account[]
   session   Session[]
   shop      Shop[]
+  creator  Creator?
 }
 
 model banners {
@@ -376,22 +377,52 @@ model subscription_packages {
 }
 
 model Creator {
-  id  String @id
-  provinceId Int
-  amphureId Int?
-  tambonId Int?
-  coverageLevel String // "tambon" | "amphure" | "province" 
-  coverageAreas CreatorCoverageArea[]
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  displayName String
+  bio         String?  @db.Text
+  phone       String?
+  
+  // Social Media
+  youtubeUrl         String?
+  youtubeSubscribers Int?
+  facebookUrl        String?
+  facebookFollowers  Int?
+  instagramUrl       String?
+  instagramFollowers Int?
+  tiktokUrl          String?
+  tiktokFollowers    Int?
+  
+  // Coverage
+  coverageLevel String                @default("tambon") // "tambon" | "amphure" | "province"
+  coverageAreas CreatorCoverageArea[] // 👈 relation
+  
+  // Stats
+  totalReviews     Int   @default(0)
+  completedReviews Int   @default(0)
+  rating           Float @default(0.0)
+  
+  // Financial
+  totalEarnings    Float @default(0.0)
+  availableBalance Float @default(0.0)
+  totalWithdrawn   Float @default(0.0)
+  
+  // Status
+  status String @default("pending") // "pending" | "active" | "suspended"
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model CreatorCoverageArea {
-  id String @id @default(cuid())
-  creatorId String
-  
-  // Based on coverage level, one of these will be filled
+  id         String   @id @default(cuid())
+  creatorId  String
   provinceId Int?
-  amphureId Int?
-  tambonId Int?
+  amphureId  Int?
+  tambonId   Int?
+  createdAt  DateTime @default(now())
   
   creator Creator @relation(fields: [creatorId], references: [id], onDelete: Cascade)
   
@@ -399,7 +430,6 @@ model CreatorCoverageArea {
   @@index([provinceId])
   @@index([amphureId])
   @@index([tambonId])
-  @@map("creator_coverage_areas")
 }
 
 enum Role {
