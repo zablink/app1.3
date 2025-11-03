@@ -1,4 +1,4 @@
-// src/app/upgrade/reviewer/page.tsx (Fixed Version)
+// src/app/upgrade/reviewer/page.tsx (Complete All Steps)
 "use client";
 
 import { useState, useEffect } from "react";
@@ -79,7 +79,6 @@ export default function UpgradeToReviewerPage() {
   const [showTambonOptions, setShowTambonOptions] = useState(false);
   const [showManualSelection, setShowManualSelection] = useState(false);
   
-  // เพิ่ม state สำหรับแสดงตำแหน่งที่เลือก
   const [selectedLocation, setSelectedLocation] = useState<{
     provinceName: string;
     amphureName: string;
@@ -107,7 +106,6 @@ export default function UpgradeToReviewerPage() {
     agreedToTerms: false,
   });
 
-  // Load initial data
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/signin");
@@ -122,7 +120,6 @@ export default function UpgradeToReviewerPage() {
     fetchProvinces();
   }, [status, session, router]);
 
-  // Fetch provinces
   const fetchProvinces = async () => {
     try {
       console.log('🔄 Fetching provinces...');
@@ -135,22 +132,14 @@ export default function UpgradeToReviewerPage() {
       
       const data = await res.json();
       console.log('✅ Provinces loaded:', data.data?.length || 0);
-      
       setProvinces(data.data || []);
-      
-      if (!data.data || data.data.length === 0) {
-        console.warn('⚠️ No provinces data returned');
-      }
     } catch (error) {
       console.error("❌ Error fetching provinces:", error);
-      alert("ไม่สามารถโหลดรายชื่อจังหวัดได้ กรุณาลองใหม่อีกครั้ง");
     }
   };
 
-  // Fetch amphures when province changes
   useEffect(() => {
     if (formData.provinceId) {
-      console.log('🔄 Fetching amphures for province:', formData.provinceId);
       fetchAmphures(formData.provinceId);
     } else {
       setAmphures([]);
@@ -163,7 +152,6 @@ export default function UpgradeToReviewerPage() {
       const res = await fetch(`/api/locations?type=amphures&provinceId=${provinceId}`);
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
       const data = await res.json();
-      console.log('✅ Amphures loaded:', data.data?.length || 0);
       setAmphures(data.data || []);
     } catch (error) {
       console.error("❌ Error fetching amphures:", error);
@@ -171,10 +159,8 @@ export default function UpgradeToReviewerPage() {
     }
   };
 
-  // Fetch tambons when amphure changes
   useEffect(() => {
     if (formData.amphureId) {
-      console.log('🔄 Fetching tambons for amphure:', formData.amphureId);
       fetchTambons(formData.amphureId);
     } else {
       setTambons([]);
@@ -186,7 +172,6 @@ export default function UpgradeToReviewerPage() {
       const res = await fetch(`/api/locations?type=tambons&amphureId=${amphureId}`);
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
       const data = await res.json();
-      console.log('✅ Tambons loaded:', data.data?.length || 0);
       setTambons(data.data || []);
     } catch (error) {
       console.error("❌ Error fetching tambons:", error);
@@ -194,7 +179,6 @@ export default function UpgradeToReviewerPage() {
     }
   };
 
-  // Update selected location display when form data changes
   useEffect(() => {
     if (formData.provinceId && formData.amphureId && formData.tambonId) {
       const province = provinces.find(p => p.id.toString() === formData.provinceId);
@@ -207,18 +191,12 @@ export default function UpgradeToReviewerPage() {
           amphureName: amphure.name_th,
           tambonName: tambon.name_th,
         });
-        console.log('📍 Selected location:', {
-          province: province.name_th,
-          amphure: amphure.name_th,
-          tambon: tambon.name_th,
-        });
       }
     } else {
       setSelectedLocation(null);
     }
   }, [formData.provinceId, formData.amphureId, formData.tambonId, provinces, amphures, tambons]);
 
-  // GPS Handler
   const handleUseGPS = async () => {
     if (!navigator.geolocation) {
       setGpsError({
@@ -242,9 +220,6 @@ export default function UpgradeToReviewerPage() {
       async (position) => {
         const { latitude, longitude, accuracy } = position.coords;
 
-        console.log('📍 GPS Result:', { latitude, longitude, accuracy });
-
-        // ตรวจสอบ accuracy
         if (accuracy > 100) {
           setGpsError({
             type: 'low_accuracy',
@@ -252,7 +227,6 @@ export default function UpgradeToReviewerPage() {
           });
         }
 
-        // ตรวจสอบ default location
         const DEFAULT_LAT = 13.7367;
         const DEFAULT_LNG = 100.5231;
         const isDefaultLocation = 
@@ -280,7 +254,6 @@ export default function UpgradeToReviewerPage() {
           });
 
           const data = await res.json();
-          console.log('📍 Reverse geocode result:', data);
 
           if (res.ok) {
             const locationData: GPSLocation = {
@@ -291,11 +264,8 @@ export default function UpgradeToReviewerPage() {
             setGpsLocation(locationData);
 
             if (data.location.possibleTambons && data.location.possibleTambons.length > 1) {
-              // หลายตำบล - แสดงตัวเลือก
               setShowTambonOptions(true);
-              console.log('📍 Multiple tambons found:', data.location.possibleTambons.length);
             } else if (data.location.tambon) {
-              // ตำบลเดียว - ใช้เลย
               await updateLocationFromGPS(data.location);
             }
           } else {
@@ -342,11 +312,7 @@ export default function UpgradeToReviewerPage() {
     );
   };
 
-  // Update location from GPS data
   const updateLocationFromGPS = async (location: any) => {
-    console.log('📍 Updating location from GPS:', location);
-    
-    // Set province first
     const provinceId = location.province.id.toString();
     setFormData(prev => ({
       ...prev,
@@ -355,13 +321,11 @@ export default function UpgradeToReviewerPage() {
       tambonId: "",
     }));
 
-    // Wait for amphures to load
     try {
       const amphuresRes = await fetch(`/api/locations?type=amphures&provinceId=${provinceId}`);
       const amphuresData = await amphuresRes.json();
       setAmphures(amphuresData.data || []);
       
-      // Set amphure
       const amphureId = location.amphure.id.toString();
       setFormData(prev => ({
         ...prev,
@@ -369,44 +333,31 @@ export default function UpgradeToReviewerPage() {
         tambonId: "",
       }));
 
-      // Wait for tambons to load
       const tambonsRes = await fetch(`/api/locations?type=tambons&amphureId=${amphureId}`);
       const tambonsData = await tambonsRes.json();
       setTambons(tambonsData.data || []);
       
-      // Set tambon
       const tambonId = location.tambon.id.toString();
       setFormData(prev => ({
         ...prev,
         tambonId: tambonId,
       }));
 
-      // Set selected location display
       setSelectedLocation({
         provinceName: location.province.name_th,
         amphureName: location.amphure.name_th,
         tambonName: location.tambon.name_th,
       });
 
-      console.log('✅ Location updated:', {
-        province: location.province.name_th,
-        amphure: location.amphure.name_th,
-        tambon: location.tambon.name_th,
-      });
-
-      // แสดง success message
-      alert(`✅ พบตำแหน่ง: ${location.tambon.name_th}, ${location.amphure.name_th}, ${location.province.name_th}`);
+      // ✅ ลบ alert ออกแล้ว - ใช้ UI แสดงแทน
       
     } catch (error) {
       console.error('❌ Error updating location:', error);
     }
   };
 
-  // Select tambon from GPS options
   const handleSelectTambon = async (tambon: Tambon) => {
     if (gpsLocation) {
-      console.log('📍 User selected tambon:', tambon.name_th);
-      
       await updateLocationFromGPS({
         province: gpsLocation.province,
         amphure: gpsLocation.amphure,
@@ -418,7 +369,6 @@ export default function UpgradeToReviewerPage() {
     }
   };
 
-  // Submit handler
   const handleSubmit = async () => {
     if (!formData.displayName || !formData.bio || !formData.phone) {
       alert("กรุณากรอกข้อมูลพื้นฐานให้ครบถ้วน");
@@ -487,6 +437,39 @@ export default function UpgradeToReviewerPage() {
           </p>
         </div>
 
+        {/* Benefits Section */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+          <div className="bg-white rounded-lg p-6 shadow-sm text-center">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
+              <DollarSign className="text-blue-600" size={32} />
+            </div>
+            <h3 className="font-bold text-lg mb-2">รายได้มั่นคง</h3>
+            <p className="text-gray-600 text-sm">
+              รับงานรีวิวจากร้านค้าชั้นนำ
+            </p>
+          </div>
+
+          <div className="bg-white rounded-lg p-6 shadow-sm text-center">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-purple-100 rounded-full mb-4">
+              <TrendingUp className="text-purple-600" size={32} />
+            </div>
+            <h3 className="font-bold text-lg mb-2">เติบโตไปด้วยกัน</h3>
+            <p className="text-gray-600 text-sm">
+              เข้าถึงแบรนด์ชั้นนำ สร้างเครือข่าย
+            </p>
+          </div>
+
+          <div className="bg-white rounded-lg p-6 shadow-sm text-center">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
+              <Users className="text-green-600" size={32} />
+            </div>
+            <h3 className="font-bold text-lg mb-2">ชุมชนนักรีวิว</h3>
+            <p className="text-gray-600 text-sm">
+              เข้าร่วมชุมชนนักรีวิวมืออาชีพ
+            </p>
+          </div>
+        </div>
+
         {/* Steps Indicator */}
         <div className="mb-8">
           <div className="flex items-center justify-center">
@@ -511,6 +494,15 @@ export default function UpgradeToReviewerPage() {
               </div>
             ))}
           </div>
+          <div className="flex justify-center mt-4">
+            <div className="text-center">
+              <p className="text-sm font-medium text-gray-900">
+                {currentStep === 1 && "ข้อมูลพื้นฐาน"}
+                {currentStep === 2 && "Social Media"}
+                {currentStep === 3 && "ยืนยัน"}
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Form */}
@@ -520,7 +512,6 @@ export default function UpgradeToReviewerPage() {
             <div className="space-y-6">
               <h2 className="text-2xl font-bold mb-6">ข้อมูลพื้นฐาน</h2>
 
-              {/* Basic fields */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   ชื่อที่ใช้แสดง <span className="text-red-500">*</span>
@@ -604,7 +595,6 @@ export default function UpgradeToReviewerPage() {
                   </div>
                 </div>
 
-                {/* GPS Error Display */}
                 {gpsError && (
                   <div className={`mb-4 p-4 rounded-lg border ${
                     gpsError.type === 'low_accuracy' 
@@ -656,7 +646,6 @@ export default function UpgradeToReviewerPage() {
                   </div>
                 )}
 
-                {/* GPS Accuracy Display */}
                 {gpsLocation && gpsLocation.accuracy && (
                   <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
                     <div className="flex items-center gap-2">
@@ -678,7 +667,6 @@ export default function UpgradeToReviewerPage() {
                   </div>
                 )}
 
-                {/* Selected Location Display */}
                 {selectedLocation && (
                   <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                     <div className="flex items-start gap-3">
@@ -695,7 +683,6 @@ export default function UpgradeToReviewerPage() {
                   </div>
                 )}
 
-                {/* GPS Location Options */}
                 {showTambonOptions && gpsLocation?.possibleTambons && (
                   <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                     <div className="flex items-start gap-2 mb-3">
@@ -730,7 +717,6 @@ export default function UpgradeToReviewerPage() {
                   </div>
                 )}
 
-                {/* Manual Selection */}
                 {(showManualSelection || !gpsLocation || provinces.length > 0) && (
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
@@ -740,7 +726,6 @@ export default function UpgradeToReviewerPage() {
                       <select
                         value={formData.provinceId}
                         onChange={(e) => {
-                          console.log('Province selected:', e.target.value);
                           setFormData({ ...formData, provinceId: e.target.value, amphureId: "", tambonId: "" });
                         }}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -752,11 +737,6 @@ export default function UpgradeToReviewerPage() {
                           </option>
                         ))}
                       </select>
-                      {provinces.length === 0 && (
-                        <p className="text-xs text-red-600 mt-1">
-                          ⚠️ ไม่สามารถโหลดรายชื่อจังหวัดได้
-                        </p>
-                      )}
                     </div>
 
                     <div>
@@ -766,7 +746,6 @@ export default function UpgradeToReviewerPage() {
                       <select
                         value={formData.amphureId}
                         onChange={(e) => {
-                          console.log('Amphure selected:', e.target.value);
                           setFormData({ ...formData, amphureId: e.target.value, tambonId: "" });
                         }}
                         disabled={!formData.provinceId}
@@ -788,7 +767,6 @@ export default function UpgradeToReviewerPage() {
                       <select
                         value={formData.tambonId}
                         onChange={(e) => {
-                          console.log('Tambon selected:', e.target.value);
                           setFormData({ ...formData, tambonId: e.target.value });
                         }}
                         disabled={!formData.amphureId}
@@ -806,7 +784,6 @@ export default function UpgradeToReviewerPage() {
                   </div>
                 )}
 
-                {/* Coverage Level */}
                 <div className="mt-4">
                   <label className="block text-sm font-medium text-gray-700 mb-3">
                     ระดับการให้บริการ
@@ -870,18 +847,6 @@ export default function UpgradeToReviewerPage() {
                 </div>
               </div>
 
-              {/* Debug Info (remove in production) */}
-              {process.env.NODE_ENV === 'development' && (
-                <div className="mt-4 p-3 bg-gray-100 rounded text-xs">
-                  <p><strong>Debug:</strong></p>
-                  <p>Provinces loaded: {provinces.length}</p>
-                  <p>Amphures loaded: {amphures.length}</p>
-                  <p>Tambons loaded: {tambons.length}</p>
-                  <p>Selected: {formData.provinceId}/{formData.amphureId}/{formData.tambonId}</p>
-                </div>
-              )}
-
-              {/* Next Button */}
               <button
                 onClick={() => setCurrentStep(2)}
                 disabled={!formData.provinceId}
@@ -893,7 +858,311 @@ export default function UpgradeToReviewerPage() {
             </div>
           )}
 
-          {/* Step 2 & 3: ใส่โค้ดเดิมตามที่มี */}
+          {/* Step 2: Social Media */}
+          {currentStep === 2 && (
+            <div className="space-y-6">
+              <h2 className="text-2xl font-bold mb-6">Social Media</h2>
+
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start gap-3">
+                <AlertCircle className="text-blue-600 flex-shrink-0 mt-0.5" size={20} />
+                <p className="text-sm text-blue-800">
+                  กรุณากรอกข้อมูล Social Media อย่างน้อย 1 ช่องทาง พร้อมจำนวนผู้ติดตาม
+                </p>
+              </div>
+
+              {/* YouTube */}
+              <div>
+                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+                  <Youtube className="text-red-600" size={20} />
+                  YouTube
+                </label>
+                <div className="grid grid-cols-2 gap-4">
+                  <input
+                    type="url"
+                    value={formData.youtubeUrl}
+                    onChange={(e) =>
+                      setFormData({ ...formData, youtubeUrl: e.target.value })
+                    }
+                    className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="URL"
+                  />
+                  <input
+                    type="number"
+                    value={formData.youtubeSubscribers}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        youtubeSubscribers: e.target.value,
+                      })
+                    }
+                    className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="จำนวน Subscribers"
+                  />
+                </div>
+              </div>
+
+              {/* Facebook */}
+              <div>
+                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+                  <Facebook className="text-blue-600" size={20} />
+                  Facebook
+                </label>
+                <div className="grid grid-cols-2 gap-4">
+                  <input
+                    type="url"
+                    value={formData.facebookUrl}
+                    onChange={(e) =>
+                      setFormData({ ...formData, facebookUrl: e.target.value })
+                    }
+                    className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="URL"
+                  />
+                  <input
+                    type="number"
+                    value={formData.facebookFollowers}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        facebookFollowers: e.target.value,
+                      })
+                    }
+                    className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="จำนวน Followers"
+                  />
+                </div>
+              </div>
+
+              {/* Instagram */}
+              <div>
+                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+                  <Instagram className="text-pink-600" size={20} />
+                  Instagram
+                </label>
+                <div className="grid grid-cols-2 gap-4">
+                  <input
+                    type="url"
+                    value={formData.instagramUrl}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        instagramUrl: e.target.value,
+                      })
+                    }
+                    className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="URL"
+                  />
+                  <input
+                    type="number"
+                    value={formData.instagramFollowers}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        instagramFollowers: e.target.value,
+                      })
+                    }
+                    className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="จำนวน Followers"
+                  />
+                </div>
+              </div>
+
+              {/* TikTok */}
+              <div>
+                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+                  <Video className="text-gray-900" size={20} />
+                  TikTok
+                </label>
+                <div className="grid grid-cols-2 gap-4">
+                  <input
+                    type="url"
+                    value={formData.tiktokUrl}
+                    onChange={(e) =>
+                      setFormData({ ...formData, tiktokUrl: e.target.value })
+                    }
+                    className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="URL"
+                  />
+                  <input
+                    type="number"
+                    value={formData.tiktokFollowers}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        tiktokFollowers: e.target.value,
+                      })
+                    }
+                    className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="จำนวน Followers"
+                  />
+                </div>
+              </div>
+
+              {/* Portfolio Links */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  ลิงก์ผลงานรีวิว (ถ้ามี)
+                </label>
+                <p className="text-sm text-gray-600 mb-3">
+                  แชร์ลิงก์ผลงานรีวิวที่ดีที่สุดของคุณ (สูงสุด 3 ลิงก์)
+                </p>
+                {formData.portfolioLinks.map((link, index) => (
+                  <input
+                    key={index}
+                    type="url"
+                    value={link}
+                    onChange={(e) => {
+                      const newLinks = [...formData.portfolioLinks];
+                      newLinks[index] = e.target.value;
+                      setFormData({ ...formData, portfolioLinks: newLinks });
+                    }}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent mb-2"
+                    placeholder={`ลิงก์ผลงาน ${index + 1}`}
+                  />
+                ))}
+              </div>
+
+              <div className="flex gap-4">
+                <button
+                  onClick={() => setCurrentStep(1)}
+                  className="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition font-medium"
+                >
+                  ย้อนกลับ
+                </button>
+                <button
+                  onClick={() => setCurrentStep(3)}
+                  className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
+                >
+                  ถัดไป
+                  <ArrowRight size={20} />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Step 3: Review & Submit */}
+          {currentStep === 3 && (
+            <div className="space-y-6">
+              <h2 className="text-2xl font-bold mb-6">ตรวจสอบข้อมูล</h2>
+
+              <div className="space-y-4">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">ชื่อที่ใช้แสดง</p>
+                  <p className="text-lg font-semibold">{formData.displayName}</p>
+                </div>
+
+                <div>
+                  <p className="text-sm font-medium text-gray-600">เกี่ยวกับคุณ</p>
+                  <p className="text-gray-900">{formData.bio}</p>
+                </div>
+
+                <div>
+                  <p className="text-sm font-medium text-gray-600">เบอร์โทรศัพท์</p>
+                  <p className="text-gray-900">{formData.phone}</p>
+                </div>
+
+                <div>
+                  <p className="text-sm font-medium text-gray-600">พื้นที่ให้บริการ</p>
+                  {selectedLocation ? (
+                    <>
+                      <p className="text-gray-900">
+                        {selectedLocation.tambonName}, {selectedLocation.amphureName}, {selectedLocation.provinceName}
+                      </p>
+                      <p className="text-sm text-gray-600 mt-1">
+                        ระดับ: {formData.coverageLevel === "tambon" ? "ตำบล" : formData.coverageLevel === "amphure" ? "อำเภอ" : "จังหวัด"}
+                      </p>
+                    </>
+                  ) : (
+                    <p className="text-gray-900">-</p>
+                  )}
+                </div>
+
+                <div>
+                  <p className="text-sm font-medium text-gray-600 mb-2">
+                    Social Media
+                  </p>
+                  <div className="space-y-1">
+                    {formData.youtubeUrl && (
+                      <p className="text-sm text-gray-700">
+                        📺 YouTube: {formData.youtubeSubscribers} subscribers
+                      </p>
+                    )}
+                    {formData.facebookUrl && (
+                      <p className="text-sm text-gray-700">
+                        👥 Facebook: {formData.facebookFollowers} followers
+                      </p>
+                    )}
+                    {formData.instagramUrl && (
+                      <p className="text-sm text-gray-700">
+                        📷 Instagram: {formData.instagramFollowers} followers
+                      </p>
+                    )}
+                    {formData.tiktokUrl && (
+                      <p className="text-sm text-gray-700">
+                        🎵 TikTok: {formData.tiktokFollowers} followers
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Terms Agreement */}
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.agreedToTerms}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        agreedToTerms: e.target.checked,
+                      })
+                    }
+                    className="mt-1 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <div className="text-sm text-gray-700">
+                    <p className="font-medium mb-1">
+                      ยอมรับเงื่อนไขการให้บริการ
+                    </p>
+                    <p>
+                      ฉันยอมรับ
+                      <a
+                        href="/terms"
+                        target="_blank"
+                        className="text-blue-600 hover:underline mx-1"
+                      >
+                        เงื่อนไขการให้บริการ
+                      </a>
+                      และ
+                      <a
+                        href="/privacy"
+                        target="_blank"
+                        className="text-blue-600 hover:underline mx-1"
+                      >
+                        นโยบายความเป็นส่วนตัว
+                      </a>
+                    </p>
+                  </div>
+                </label>
+              </div>
+
+              <div className="flex gap-4">
+                <button
+                  onClick={() => setCurrentStep(2)}
+                  className="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition font-medium"
+                >
+                  ย้อนกลับ
+                </button>
+                <button
+                  onClick={handleSubmit}
+                  disabled={!formData.agreedToTerms || isSubmitting}
+                  className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Check size={20} />
+                  {isSubmitting ? "กำลังส่งคำขอ..." : "ส่งคำขอสมัคร"}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
