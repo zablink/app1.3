@@ -21,7 +21,7 @@ import {
   Navigation,
   Loader,
   AlertTriangle,
-  RefreshCw,
+  RefreshCw,ื
   Target,
   CheckCircle,
   Plus,
@@ -396,7 +396,11 @@ export default function UpgradeToReviewerPage() {
     setCoverageAreas(prev => prev.filter((_, i) => i !== index));
   };
 
+  // แก้ไขฟังก์ชัน handleSubmit ในไฟล์ page.tsx
+// วางทับโค้ดเดิมที่บรรทัดประมาณ 417-441
+
   const handleSubmit = async () => {
+    // Validation
     if (!formData.displayName || !formData.bio || !formData.phone) {
       alert("กรุณากรอกข้อมูลพื้นฐานให้ครบถ้วน");
       return;
@@ -416,25 +420,37 @@ export default function UpgradeToReviewerPage() {
 
     try {
       setIsSubmitting(true);
+      
+      // ✅ Debug: ดู session ก่อนส่ง
+      console.log("🚀 [Submit] Current session:", session);
+      console.log("🚀 [Submit] User ID:", session?.user?.id);
+      
       const res = await fetch("/api/creator/register", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+        },
+        credentials: "include", // ✅ สำคัญ! เพิ่มบรรทัดนี้เพื่อส่ง cookies
         body: JSON.stringify({
           ...formData,
           coverageAreas, // ส่ง coverage areas ไปด้วย
         }),
       });
 
+      console.log("✅ [Submit] Response status:", res.status);
+      
+      const data = await res.json();
+      console.log("✅ [Submit] Response data:", data);
+
       if (res.ok) {
-        alert("ส่งคำขอสมัครเรียบร้อยแล้ว!");
+        alert("ส่งคำขอสมัครเรียบร้อยแล้ว! กรุณารอการอนุมัติจากทีมงาน");
         router.push("/dashboard");
       } else {
-        const data = await res.json();
-        alert(data.error || "เกิดข้อผิดพลาด");
+        alert(data.error || "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง");
       }
     } catch (error) {
-      console.error("Error submitting:", error);
-      alert("เกิดข้อผิดพลาด");
+      console.error("❌ [Submit] Error:", error);
+      alert("เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่อีกครั้ง");
     } finally {
       setIsSubmitting(false);
     }

@@ -1,61 +1,52 @@
-// lib/auth.ts - NextAuth Configuration
+// lib/auth.ts
 import { NextAuthOptions } from "next-auth";
-import { PrismaAdapter } from "@next-auth/prisma-adapter";
+import { PrismaAdapter } from "@auth/prisma-adapter";
 import GoogleProvider from "next-auth/providers/google";
 import FacebookProvider from "next-auth/providers/facebook";
-import LineProvider from "next-auth/providers/line";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { prisma } from "./prisma";
+import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 
+// ✅ ต้องมี export เพื่อให้ import ได้
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma),
+  adapter: PrismaAdapter(prisma) as any,
   
   providers: [
-    // Google OAuth
+    // Google Provider
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      clientId: process.env.GOOGLE_CLIENT_ID || "",
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
     }),
     
-    // Facebook OAuth
+    // Facebook Provider
     FacebookProvider({
-      clientId: process.env.FACEBOOK_CLIENT_ID!,
-      clientSecret: process.env.FACEBOOK_CLIENT_SECRET!,
+      clientId: process.env.FACEBOOK_CLIENT_ID || "",
+      clientSecret: process.env.FACEBOOK_CLIENT_SECRET || "",
     }),
     
-    // LINE OAuth
-    LineProvider({
-      clientId: process.env.LINE_CLIENT_ID!,
-      clientSecret: process.env.LINE_CLIENT_SECRET!,
-    }),
-    
-    // Email/Password (Credentials)
+    // Email/Password Provider
     CredentialsProvider({
       name: "credentials",
       credentials: {
         email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" }
+        password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          throw new Error("กรุณากรอกอีเมลและรหัสผ่าน");
+          throw new Error("กรุณากรอก email และ password");
         }
 
         const user = await prisma.user.findUnique({
-          where: { email: credentials.email }
+          where: { email: credentials.email },
         });
 
         if (!user || !user.password) {
-          throw new Error("ไม่พบผู้ใช้งาน");
+          throw new Error("ไม่พบผู้ใช้หรือรหัสผ่านไม่ถูกต้อง");
         }
 
-        const isPasswordValid = await bcrypt.compare(
-          credentials.password,
-          user.password
-        );
+        const isValid = await bcrypt.compare(credentials.password, user.password);
 
-        if (!isPasswordValid) {
+        if (!isValid) {
           throw new Error("รหัสผ่านไม่ถูกต้อง");
         }
 
@@ -64,98 +55,87 @@ export const authOptions: NextAuthOptions = {
           email: user.email,
           name: user.name,
           role: user.role,
-          image: user.image,
         };
-      }
+      },
     }),
   ],
 
-  session: {
-    strategy: "jwt",
-  },
-
-  pages: {
-    signIn: "/auth/signin",
-    error: "/auth/error",
-  },
-
+  // ✅ Callbacks สำคัญมาก - ต้องมีเพื่อส่ง user.id ไปใน session
   callbacks: {
-    async jwt({ token, user, account, trigger, session }) {
-      // Initial sign in
+    async jwt({ token, user, account }) {
+      // เมื่อ user login ครั้งแรก
       if (user) {
         token.id = user.id;
         token.role = user.role;
         token.email = user.email;
       }
-
-      // Update session
-      if (trigger === "update" && session) {
-        token.name = session.name;
-        token.role = session.role;
+      
+      // เก็บ provider info (optional)
+      if (account) {
+        token.provider = account.provider;
       }
-
+      
       return token;
     },
-
+    
     async session({ session, token }) {
+      // ✅ ส่ง user.id และ role เข้า session
       if (session.user) {
         session.user.id = token.id as string;
         session.user.role = token.role as string;
         session.user.email = token.email as string;
       }
+      
       return session;
     },
 
     async signIn({ user, account, profile }) {
-      // Auto-create user on OAuth sign in
-      if (account?.provider !== "credentials") {
-        const existingUser = await prisma.user.findUnique({
-          where: { email: user.email! }
-        });
-
-        if (!existingUser) {
-          // Create new user
-          await prisma.user.create({
-            data: {
-              email: user.email!,
-              name: user.name || user.email!.split("@")[0],
-              image: user.image,
-              role: "USER",
-            }
+      // ถ้า login ด้วย OAuth (Google, Facebook)
+      if (account?.provider === "google" || account?.provider === "facebook") {
+        try {
+          // ตรวจสอบว่ามี user ในฐานข้อมูลหรือยัง
+          const existingUser = await prisma.user.findUnique({
+            where: { email: user.email! },
           });
+
+          if (!existingUser) {
+            // สร้าง user ใหม่
+            await prisma.user.create({
+              data: {
+                email: user.email!,
+                name: user.name || "",
+                image: user.image,
+                role: "USER",
+              },
+            });
+          }
+
+          return true;
+        } catch (error) {
+          console.error("Error during sign in:", error);
+          return false;
         }
       }
+
       return true;
     },
   },
 
+  // ✅ Session settings
+  session: {
+    strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+  },
+
+  // ✅ Secret key สำคัญมาก!
+  secret: process.env.NEXTAUTH_SECRET,
+
+  // Pages
+  pages: {
+    signIn: "/signin",
+    error: "/auth/error",
+  },
+
+  // Debug (เปิดใน development)
   debug: process.env.NODE_ENV === "development",
 };
-
-// Helper functions
-export async function getCurrentUser(token: any) {
-  if (!token?.email) return null;
-
-  const user = await prisma.user.findUnique({
-    where: { email: token.email },
-    include: {
-      shops: {
-        select: {
-          id: true,
-          name: true,
-        }
-      },
-    }
-  });
-
-  return user;
-}
-
-export async function requireAuth(role?: string[]) {
-  // Use in Server Components/API Routes
-  // Example: await requireAuth(['ADMIN', 'SHOP']);
-}
-
-export async function hashPassword(password: string) {
-  return bcrypt.hash(password, 12);
-}
