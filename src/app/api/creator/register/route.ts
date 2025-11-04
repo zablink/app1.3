@@ -15,11 +15,13 @@ export async function POST(request: Request) {
     // ✅ รับ session แบบถูกต้อง
     const session = await getServerSession(authOptions);
     
+    console.log ('DEBUG session in Creator Register');
     console.log('📝 [Creator Register] Session check:', {
       hasSession: !!session,
       email: session?.user?.email,
       userId: session?.user?.id,
     });
+
     
     // ✅ ตรวจสอบ session
     if (!session?.user?.id) {
