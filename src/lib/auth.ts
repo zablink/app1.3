@@ -69,6 +69,26 @@ export const authOptions: NextAuthOptions = {
         token.role = user.role;
         token.email = user.email;
       }
+
+      if (!token.id && token.email) {
+        console.log("⚠️ JWT: No token.id, fetching from database...");
+        try {
+          const dbUser = await prisma.user.findUnique({
+            where: { email: token.email as string },
+            select: { id: true, role: true },
+          });
+          
+          if (dbUser) {
+            console.log("✅ JWT: Found user id:", dbUser.id);
+            token.id = dbUser.id;
+            token.role = dbUser.role;
+          } else {
+            console.error("❌ JWT: User not found in database");
+          }
+        } catch (error) {
+          console.error("❌ JWT: Error fetching user:", error);
+        }
+      }
       
       // เก็บ provider info (optional)
       if (account) {
