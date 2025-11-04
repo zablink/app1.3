@@ -21,7 +21,7 @@ import {
   Navigation,
   Loader,
   AlertTriangle,
-  RefreshCw,ื
+  RefreshCw,
   Target,
   CheckCircle,
   Plus,
