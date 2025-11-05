@@ -1181,70 +1181,249 @@ export default function UpgradeToReviewerPage() {
           {/* Step 3: Review & Submit */}
           {currentStep === 3 && (
             <div className="space-y-6">
-              <h2 className="text-2xl font-bold mb-6">ตรวจสอบข้อมูล</h2>
-
-              <div className="space-y-4">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">ชื่อที่ใช้แสดง</p>
-                  <p className="text-lg font-semibold">{formData.displayName}</p>
+              <div className="text-center mb-8">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
+                  <Check className="text-green-600" size={32} />
                 </div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                  ตรวจสอบข้อมูลก่อนส่ง
+                </h2>
+                <p className="text-gray-600">
+                  กรุณาตรวจสอบความถูกต้องของข้อมูลก่อนส่งคำขอสมัคร
+                </p>
+              </div>
 
-                <div>
-                  <p className="text-sm font-medium text-gray-600">เกี่ยวกับคุณ</p>
-                  <p className="text-gray-900">{formData.bio}</p>
+              {/* ข้อมูลพื้นฐาน */}
+              <div className="bg-white rounded-lg p-6 shadow-sm">
+                <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+                  <User className="text-blue-600" size={20} />
+                  ข้อมูลพื้นฐาน
+                </h3>
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-sm text-gray-500">ชื่อที่แสดง</p>
+                    <p className="font-medium text-gray-900">{formData.displayName}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">คำแนะนำตัว</p>
+                    <p className="text-gray-700">{formData.bio}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">เบอร์โทรศัพท์</p>
+                    <p className="font-medium text-gray-900">{formData.phone}</p>
+                  </div>
                 </div>
+              </div>
 
-                <div>
-                  <p className="text-sm font-medium text-gray-600">เบอร์โทรศัพท์</p>
-                  <p className="text-gray-900">{formData.phone}</p>
-                </div>
-
-                <div>
-                  <p className="text-sm font-medium text-gray-600">พื้นที่ให้บริการ</p>
-                  <p className="text-sm text-gray-700 mb-2">
-                    ระดับ: {formData.coverageLevel === "tambon" ? "ตำบล" : formData.coverageLevel === "amphure" ? "อำเภอ" : "จังหวัด"}
+              {/* พื้นที่รับงาน */}
+              <div className="bg-white rounded-lg p-6 shadow-sm">
+                <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+                  <MapPin className="text-green-600" size={20} />
+                  พื้นที่ที่พร้อมรับงาน
+                </h3>
+                <div className="space-y-2">
+                  <p className="text-sm text-gray-500 mb-3">
+                    ระดับการให้บริการ: 
+                    <span className="ml-2 font-medium text-gray-900">
+                      {formData.coverageLevel === 'province' && 'ทั้งจังหวัด'}
+                      {formData.coverageLevel === 'amphure' && 'ระดับอำเภอ'}
+                      {formData.coverageLevel === 'tambon' && 'ระดับตำบล'}
+                    </span>
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {coverageAreas.map((area, index) => (
                       <div
                         key={index}
-                        className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-100 text-blue-800 rounded-lg text-sm"
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-green-50 text-green-700 rounded-full text-sm font-medium"
                       >
-                        <MapPin size={14} />
+                        <MapPin size={16} />
                         {area.name}
                       </div>
                     ))}
                   </div>
                 </div>
+              </div>
 
-                <div>
-                  <p className="text-sm font-medium text-gray-600 mb-2">
-                    Social Media
-                  </p>
-                  <div className="space-y-1">
-                    {formData.youtubeUrl && (
-                      <p className="text-sm text-gray-700">
-                        📺 YouTube: {formData.youtubeSubscribers} subscribers
-                      </p>
-                    )}
-                    {formData.facebookUrl && (
-                      <p className="text-sm text-gray-700">
-                        👥 Facebook: {formData.facebookFollowers} followers
-                      </p>
-                    )}
-                    {formData.instagramUrl && (
-                      <p className="text-sm text-gray-700">
-                        📷 Instagram: {formData.instagramFollowers} followers
-                      </p>
-                    )}
-                    {formData.tiktokUrl && (
-                      <p className="text-sm text-gray-700">
-                        🎵 TikTok: {formData.tiktokFollowers} followers
-                      </p>
-                    )}
-                  </div>
+              {/* Social Media */}
+              <div className="bg-white rounded-lg p-6 shadow-sm">
+                <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+                  <Users className="text-purple-600" size={20} />
+                  Social Media
+                </h3>
+                <div className="space-y-4">
+                  {formData.youtubeUrl && (
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                        <Youtube className="text-red-600" size={20} />
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">YouTube</p>
+                        <a
+                          href={formData.youtubeUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:underline text-sm break-all"
+                        >
+                          {formData.youtubeUrl}
+                        </a>
+                        {formData.youtubeSubscribers && (
+                          <p className="text-xs text-gray-600 mt-1">
+                            {parseInt(formData.youtubeSubscribers).toLocaleString()} subscribers
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {formData.facebookUrl && (
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                        <Facebook className="text-blue-600" size={20} />
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Facebook</p>
+                        <a
+                          href={formData.facebookUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:underline text-sm break-all"
+                        >
+                          {formData.facebookUrl}
+                        </a>
+                        {formData.facebookFollowers && (
+                          <p className="text-xs text-gray-600 mt-1">
+                            {parseInt(formData.facebookFollowers).toLocaleString()} followers
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {formData.instagramUrl && (
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-pink-100 rounded-full flex items-center justify-center">
+                        <Instagram className="text-pink-600" size={20} />
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Instagram</p>
+                        <a
+                          href={formData.instagramUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:underline text-sm break-all"
+                        >
+                          {formData.instagramUrl}
+                        </a>
+                        {formData.instagramFollowers && (
+                          <p className="text-xs text-gray-600 mt-1">
+                            {parseInt(formData.instagramFollowers).toLocaleString()} followers
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {formData.tiktokUrl && (
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-black rounded-full flex items-center justify-center">
+                        <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-5.2 1.74 2.89 2.89 0 012.31-4.64 2.93 2.93 0 01.88.13V9.4a6.84 6.84 0 00-1-.05A6.33 6.33 0 005 20.1a6.34 6.34 0 0010.86-4.43v-7a8.16 8.16 0 004.77 1.52v-3.4a4.85 4.85 0 01-1-.1z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">TikTok</p>
+                        <a
+                          href={formData.tiktokUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:underline text-sm break-all"
+                        >
+                          {formData.tiktokUrl}
+                        </a>
+                        {formData.tiktokFollowers && (
+                          <p className="text-xs text-gray-600 mt-1">
+                            {parseInt(formData.tiktokFollowers).toLocaleString()} followers
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
+
+              {/* Portfolio Links - ✅ ส่วนที่เพิ่มใหม่! */}
+              {formData.portfolioLinks && formData.portfolioLinks.some(link => link.trim() !== '') && (
+                <div className="bg-white rounded-lg p-6 shadow-sm">
+                  <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+                    <svg 
+                      className="w-5 h-5 text-purple-600" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      viewBox="0 0 24 24"
+                    >
+                      <path 
+                        strokeLinecap="round" 
+                        strokeLinejoin="round" 
+                        strokeWidth={2} 
+                        d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+                      />
+                    </svg>
+                    ลิงก์ผลงาน
+                  </h3>
+                  
+                  <div className="space-y-3">
+                    {formData.portfolioLinks.map((link, index) => {
+                      if (!link || link.trim() === '') return null;
+                      
+                      return (
+                        <div 
+                          key={index} 
+                          className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition"
+                        >
+                          <div className="flex-shrink-0 w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                            <span className="text-purple-600 font-semibold text-sm">
+                              {index + 1}
+                            </span>
+                          </div>
+                          
+                          <div className="flex-1 min-w-0">
+                            <a
+                              href={link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:text-blue-800 hover:underline break-all text-sm"
+                            >
+                              {link}
+                            </a>
+                          </div>
+                          
+                          <a
+                            href={link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex-shrink-0 text-gray-400 hover:text-blue-600 transition"
+                            title="เปิดในแท็บใหม่"
+                          >
+                            <svg 
+                              className="w-5 h-5" 
+                              fill="none" 
+                              stroke="currentColor" 
+                              viewBox="0 0 24 24"
+                            >
+                              <path 
+                                strokeLinecap="round" 
+                                strokeLinejoin="round" 
+                                strokeWidth={2} 
+                                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                              />
+                            </svg>
+                          </a>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
               {/* Terms Agreement */}
               <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
@@ -1281,11 +1460,13 @@ export default function UpgradeToReviewerPage() {
                       >
                         นโยบายความเป็นส่วนตัว
                       </a>
+                      ของ Zablink
                     </p>
                   </div>
                 </label>
               </div>
 
+              {/* Buttons */}
               <div className="flex gap-4">
                 <button
                   onClick={() => setCurrentStep(2)}
@@ -1298,8 +1479,17 @@ export default function UpgradeToReviewerPage() {
                   disabled={!formData.agreedToTerms || isSubmitting}
                   className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <Check size={20} />
-                  {isSubmitting ? "กำลังส่งคำขอ..." : "ส่งคำขอสมัคร"}
+                  {isSubmitting ? (
+                    <>
+                      <Loader className="animate-spin" size={20} />
+                      กำลังส่งคำขอ...
+                    </>
+                  ) : (
+                    <>
+                      <Check size={20} />
+                      ส่งคำขอสมัคร
+                    </>
+                  )}
                 </button>
               </div>
             </div>
