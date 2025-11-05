@@ -1196,7 +1196,7 @@ export default function UpgradeToReviewerPage() {
               {/* ข้อมูลพื้นฐาน */}
               <div className="bg-white rounded-lg p-6 shadow-sm">
                 <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
-                  <User className="text-blue-600" size={20} />
+                  <Check className="text-blue-600" size={20} />
                   ข้อมูลพื้นฐาน
                 </h3>
                 <div className="space-y-3">
