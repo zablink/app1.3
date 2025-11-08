@@ -253,35 +253,33 @@ model Session {
   @@map("sessions")
 }
 
-model VerificationToken {
-  identifier String
-  token      String   @unique
-  expires    DateTime
-
-  @@unique([identifier, token])
-  @@map("verification_tokens")
-}
-
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model Shop {
-  id                   String                   @id
-  ownerId              String
+  id                   String               @id
   name                 String
   description          String?
-  createdAt            DateTime                 @default(now())
-  updatedAt            DateTime
-  adPackageId          String?
   address              String?
+  phone                String?
+  email                String?
+  website              String?
+  logo                 String?
+  ownerId              String
   categoryId           String
-  image                String?
-  location             Unsupported("geometry")?
-  has_physical_store   Boolean                  @default(false)
-  show_location_on_map Boolean                  @default(false)
+  adPackageId          String?
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime
+  status               ShopStatus           @default(PENDING)
+  location             Unsupported("point")?
+  province_id          Int?
+  amphure_id           Int?
+  tambon_id            Int?
+  has_physical_store   Boolean              @default(false)
+  show_location_on_map Boolean              @default(false)
   Analytics            Analytics[]
   Menu                 Menu[]
-  AdPackage            AdPackage?               @relation(fields: [adPackageId], references: [id])
-  ShopCategory         ShopCategory             @relation(fields: [categoryId], references: [id])
-  User                 User                     @relation(fields: [ownerId], references: [id])
+  AdPackage            AdPackage?           @relation(fields: [adPackageId], references: [id])
+  ShopCategory         ShopCategory         @relation(fields: [categoryId], references: [id])
+  User                 User                 @relation(fields: [ownerId], references: [id])
   shop_daily_hours     shop_daily_hours[]
   shop_gallery         shop_gallery[]
   shop_hours           shop_hours?
@@ -290,6 +288,7 @@ model Shop {
   shop_special_hours   shop_special_hours[]
   shop_stats           shop_stats[]
   shop_subscriptions   ShopSubscription[]
+  campaigns            Campaign[]
 
   @@index([location], map: "shops_location_gix", type: Gist)
 }
@@ -305,19 +304,19 @@ model ShopCategory {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model User {
-  id        String    @id @default(cuid())
-  email     String?   @unique
+  id            String    @id @default(cuid())
+  email         String?   @unique
   emailVerified DateTime?
-  name      String?
-  createdAt DateTime  @default(now())
-  image     String?
-  password  String?
-  role      Role      @default(USER)
-  updatedAt DateTime  @updatedAt
-  account   Account[]
-  session   Session[]
-  shop      Shop[]
-  creator  Creator?
+  name          String?
+  createdAt     DateTime  @default(now())
+  image         String?
+  password      String?
+  role          Role      @default(USER)
+  updatedAt     DateTime  @updatedAt
+  account       Account[]
+  session       Session[]
+  shop          Shop[]
+  creator       Creator?
 
   @@map("users")
 }
@@ -390,66 +389,242 @@ model subscription_packages {
   shop_subscriptions         ShopSubscription[]
 }
 
+// ========================================
+// CREATOR & REVIEWER SYSTEM
+// ========================================
+
 model Creator {
-  id          String   @id @default(cuid())
-  userId      String   @unique
-  displayName String
-  bio         String?  @db.Text
-  phone       String?
+  id                String   @id @default(cuid())
+  userId            String   @unique
   
-  // Social Media
-  youtubeUrl         String?
-  youtubeSubscribers Int?
-  facebookUrl        String?
-  facebookFollowers  Int?
-  instagramUrl       String?
-  instagramFollowers Int?
-  tiktokUrl          String?
-  tiktokFollowers    Int?
+  // Basic Info
+  displayName       String
+  bio               String?  @db.Text
+  phone             String
   
-  // Coverage
-  coverageLevel String                @default("tambon") // "tambon" | "amphure" | "province"
-  coverageAreas CreatorCoverageArea[] // 👈 relation
+  // Location Coverage - Simplified to direct IDs
+  coverageLevel     String   @default("tambon") // "tambon" | "amphure" | "province"
+  provinceId        Int?
+  amphureId         Int?
+  tambonId          Int?
+  
+  // Social Media - JSON format for flexibility
+  socialMedia       Json?    // { youtube: {url, subscribers}, facebook: {...}, instagram: {...}, tiktok: {...} }
+  
+  // Portfolio/Experience
+  portfolioLinks    String[] // Array of links to previous work
+  
+  // Pricing & Experience
+  hasExperience     Boolean  @default(true)  // false = ไม่เคยรับงานรีวิว
+  priceRangeMin     Int?     // ราคาต่ำสุดที่เคยรับ (บาท) - from application
+  priceRangeMax     Int?     // ราคาสูงสุดที่เคยรับ (บาท) - from application
+  
+  // Admin-set Current Pricing (after approval)
+  currentPriceMin   Int?     // ราคาปัจจุบันที่ admin กำหนด
+  currentPriceMax   Int?     // ราคาปัจจุบันที่ admin กำหนด
   
   // Stats
-  totalReviews     Int   @default(0)
-  completedReviews Int   @default(0)
-  rating           Float @default(0.0)
+  totalReviews     Int      @default(0)
+  completedReviews Int      @default(0)
+  rating           Float    @default(0.0)
   
   // Financial
-  totalEarnings    Float @default(0.0)
-  availableBalance Float @default(0.0)
-  totalWithdrawn   Float @default(0.0)
+  totalEarnings    Float    @default(0.0)
+  availableBalance Float    @default(0.0)
+  totalWithdrawn   Float    @default(0.0)
   
-  // Status
-  status String @default("pending") // "pending" | "active" | "suspended"
+  // Application Status
+  applicationStatus CreatorStatus @default(PENDING)
+  rejectReason      String?
+  appliedAt         DateTime      @default(now())
+  approvedAt        DateTime?
+  rejectedAt        DateTime?
   
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  // Relations
+  user              User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  priceHistory      CreatorPriceHistory[]  // ประวัติการเปลี่ยนราคา
+  campaignJobs      CampaignJob[]          // งานที่รับ
+  earnings          Earning[]              // รายได้แต่ละรายการ
+  withdrawals       Withdrawal[]           // การถอนเงิน
   
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
+  // Timestamps
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
   @@index([userId])
-  @@index([status])
-  @@map("creators")
-}
-
-model CreatorCoverageArea {
-  id         String   @id @default(cuid())
-  creatorId  String
-  provinceId Int?
-  amphureId  Int?
-  tambonId   Int?
-  createdAt  DateTime @default(now())
-  
-  creator Creator @relation(fields: [creatorId], references: [id], onDelete: Cascade)
-  
-  @@index([creatorId])
+  @@index([applicationStatus])
+  @@index([currentPriceMin, currentPriceMax])
   @@index([provinceId])
   @@index([amphureId])
   @@index([tambonId])
-  @@map("creator_coverage_areas")
+  @@map("creators")
 }
+
+// ประวัติการเปลี่ยนราคา - สำคัญมากสำหรับคำนวนภาษี
+model CreatorPriceHistory {
+  id            String    @id @default(cuid())
+  creatorId     String
+  
+  priceMin      Int       // ราคาต่ำสุดในช่วงนี้
+  priceMax      Int       // ราคาสูงสุดในช่วงนี้
+  
+  effectiveFrom DateTime  @default(now())  // เริ่มใช้เมื่อ
+  effectiveTo   DateTime? // หมดอายุเมื่อ (NULL = ยังใช้อยู่)
+  
+  changedBy     String    // Admin user id
+  reason        String?   // เหตุผลที่เปลี่ยน
+  
+  creator       Creator   @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  
+  createdAt     DateTime  @default(now())
+  
+  @@index([creatorId, effectiveFrom])
+  @@index([creatorId, effectiveTo])
+  @@map("creator_price_history")
+}
+
+// ========================================
+// CAMPAIGN & JOB SYSTEM
+// ========================================
+
+model Campaign {
+  id          String   @id @default(cuid())
+  shopId      String
+  title       String
+  description String?  @db.Text
+  
+  // Budget & Token Management
+  totalBudget       Int      // งบทั้งหมด (tokens)
+  remainingBudget   Int      // งบคงเหลือ (tokens)
+  
+  // Campaign Settings
+  targetReviewers   Int      @default(1)  // จำนวน reviewer ที่ต้องการ
+  startDate         DateTime
+  endDate           DateTime
+  
+  // Status
+  status            String   @default("DRAFT") // DRAFT, ACTIVE, PAUSED, COMPLETED, CANCELLED
+  
+  // Relations
+  shop        Shop          @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  jobs        CampaignJob[] // งานที่สร้างจาก campaign นี้
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([shopId])
+  @@index([status])
+  @@index([startDate, endDate])
+  @@map("campaigns")
+}
+
+// งานที่ Creator รับ - เก็บราคาที่ตกลงกัน ณ เวลานั้น
+model CampaignJob {
+  id         String   @id @default(cuid())
+  campaignId String
+  creatorId  String
+  
+  // CRITICAL: ราคาที่ตกลงกัน ณ เวลารับงาน (LOCKED)
+  agreedPrice      Int  // ราคาที่ใช้จริง - ใช้ตอนคำนวนภาษี/summary
+  
+  // Status
+  status           ReviewStatus @default(PENDING)
+  
+  // Financial Breakdown
+  tokensPaid       Int?     // จำนวน tokens ที่ร้านจ่าย
+  platformCommission Int?   // ค่าคอม platform (บาท)
+  creatorEarning   Int?     // รายได้สุทธิ creator (บาท)
+  
+  // Review/Content
+  reviewLink       String?  // ลิงก์รีวิวที่ post แล้ว
+  reviewNotes      String?  @db.Text // Note จาก creator
+  
+  // Timestamps
+  createdAt    DateTime  @default(now())
+  acceptedAt   DateTime? // เมื่อ creator รับงาน
+  startedAt    DateTime? // เมื่อเริ่มทำงาน
+  submittedAt  DateTime? // เมื่อส่งรีวิวเสร็จ
+  completedAt  DateTime? // เมื่อ shop approve
+  rejectedAt   DateTime? // เมื่อถูก reject
+  cancelledAt  DateTime? // เมื่อถูกยกเลิก
+  paidAt       DateTime? // เมื่อได้รับเงิน
+  
+  // Relations
+  campaign     Campaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  creator      Creator   @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  
+  @@index([campaignId])
+  @@index([creatorId])
+  @@index([status])
+  @@index([creatorId, completedAt]) // สำหรับคำนวนรายได้
+  @@index([creatorId, status])
+  @@map("campaign_jobs")
+}
+
+// ========================================
+// FINANCIAL TRACKING
+// ========================================
+
+model Earning {
+  id            String   @id @default(cuid())
+  creatorId     String
+  campaignJobId String   @unique // One earning per job
+  
+  amount        Float    // จำนวนเงินที่ได้รับ (บาท)
+  status        String   @default("PENDING") // PENDING, AVAILABLE, WITHDRAWN
+  
+  earnedAt      DateTime @default(now())
+  availableAt   DateTime? // เมื่อพร้อมถอน (หลังจาก review period)
+  
+  creator       Creator  @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  
+  createdAt     DateTime @default(now())
+  
+  @@index([creatorId])
+  @@index([status])
+  @@index([earnedAt])
+  @@map("earnings")
+}
+
+model Withdrawal {
+  id          String           @id @default(cuid())
+  creatorId   String
+  
+  amount      Float            // จำนวนที่ถอน
+  fee         Float            @default(0.0) // ค่าธรรมเนียม (ถ้ามี)
+  netAmount   Float            // จำนวนสุทธิที่ได้รับ
+  
+  // Bank Info
+  bankName    String
+  bankAccount String
+  accountName String
+  
+  status      WithdrawalStatus @default(PENDING)
+  
+  // Tracking
+  requestedAt DateTime         @default(now())
+  processedAt DateTime?
+  completedAt DateTime?
+  rejectedAt  DateTime?
+  
+  rejectionReason String?       @db.Text
+  
+  // Payment Proof
+  slipUrl     String?          // รูปสลิปการโอนเงิน
+  
+  creator     Creator          @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  
+  createdAt   DateTime         @default(now())
+  
+  @@index([creatorId])
+  @@index([status])
+  @@index([requestedAt])
+  @@map("withdrawals")
+}
+
+// ========================================
+// ENUMS
+// ========================================
 
 enum Role {
   USER
@@ -469,9 +644,9 @@ enum ShopStatus {
 
 enum CreatorStatus {
   PENDING
-  ACTIVE
-  SUSPENDED
+  APPROVED
   REJECTED
+  SUSPENDED
 }
 
 enum PackageType {

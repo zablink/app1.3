@@ -1,4 +1,6 @@
 // app/api/creator/register/route.ts
+// สมัครเป็น Reviewer พร้อมข้อมูลราคาและพื้นที่รับงานหลายแห่ง
+
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -15,14 +17,13 @@ export async function POST(request: Request) {
     // ✅ รับ session แบบถูกต้อง
     const session = await getServerSession(authOptions);
     
-    console.log ('DEBUG session in Creator Register');
+    console.log('DEBUG session in Creator Register');
     console.log('📝 [Creator Register] Session check:', {
       hasSession: !!session,
       email: session?.user?.email,
       userId: session?.user?.id,
     });
 
-    
     // ✅ ตรวจสอบ session
     if (!session?.user?.id) {
       console.error('❌ [Creator Register] No session or user ID');
@@ -39,6 +40,8 @@ export async function POST(request: Request) {
       displayName: body.displayName,
       coverageLevel: body.coverageLevel,
       coverageAreasCount: body.coverageAreas?.length || 0,
+      hasExperience: body.hasExperience,
+      hasPricing: !!(body.priceRangeMin && body.priceRangeMax),
     });
 
     const {
@@ -47,6 +50,7 @@ export async function POST(request: Request) {
       phone,
       coverageLevel,
       coverageAreas,
+      // Social Media
       youtubeUrl,
       youtubeSubscribers,
       facebookUrl,
@@ -55,11 +59,17 @@ export async function POST(request: Request) {
       instagramFollowers,
       tiktokUrl,
       tiktokFollowers,
+      // Portfolio
       portfolioLinks,
+      // Pricing (NEW)
+      hasExperience,
+      priceRangeMin,
+      priceRangeMax,
+      // Terms
       agreedToTerms,
     } = body;
 
-    // ✅ Validation ที่ครบถ้วน
+    // ✅ Validation - Basic Info
     if (!displayName || !bio || !phone) {
       console.error('❌ Missing basic info');
       return NextResponse.json(
@@ -68,6 +78,7 @@ export async function POST(request: Request) {
       );
     }
 
+    // ✅ Validation - Coverage Level
     if (!coverageLevel || !['tambon', 'amphure', 'province'].includes(coverageLevel)) {
       console.error('❌ Invalid coverage level:', coverageLevel);
       return NextResponse.json(
@@ -76,6 +87,7 @@ export async function POST(request: Request) {
       );
     }
 
+    // ✅ Validation - Coverage Areas (multiple)
     if (!coverageAreas || !Array.isArray(coverageAreas) || coverageAreas.length === 0) {
       console.error('❌ No coverage areas');
       return NextResponse.json(
@@ -92,6 +104,55 @@ export async function POST(request: Request) {
       );
     }
 
+    // ✅ Validation - Pricing (NEW)
+    if (hasExperience === undefined || hasExperience === null) {
+      console.error('❌ hasExperience not specified');
+      return NextResponse.json(
+        { error: "กรุณาระบุประสบการณ์การรับงานรีวิว" },
+        { status: 400 }
+      );
+    }
+
+    if (hasExperience) {
+      // ถ้ามีประสบการณ์ ต้องกรอกราคา
+      if (!priceRangeMin || !priceRangeMax) {
+        console.error('❌ Missing price range');
+        return NextResponse.json(
+          { error: "กรุณากรอกช่วงราคาที่เคยรับงาน" },
+          { status: 400 }
+        );
+      }
+
+      const minPrice = parseInt(priceRangeMin);
+      const maxPrice = parseInt(priceRangeMax);
+
+      if (minPrice < 0 || maxPrice < 0) {
+        console.error('❌ Negative price');
+        return NextResponse.json(
+          { error: "ราคาต้องมากกว่าหรือเท่ากับ 0" },
+          { status: 400 }
+        );
+      }
+
+      if (minPrice > maxPrice) {
+        console.error('❌ Invalid price range');
+        return NextResponse.json(
+          { error: "ราคาต่ำสุดต้องน้อยกว่าหรือเท่ากับราคาสูงสุด" },
+          { status: 400 }
+        );
+      }
+
+      // Optional: ช่วงราคาไม่ควรกว้างเกินไป
+      if (maxPrice - minPrice > 50000) {
+        console.error('❌ Price range too wide');
+        return NextResponse.json(
+          { error: "ช่วงราคากว้างเกินไป กรุณาระบุให้แม่นยำขึ้น" },
+          { status: 400 }
+        );
+      }
+    }
+
+    // ✅ Validation - Social Media
     if (!youtubeUrl && !facebookUrl && !instagramUrl && !tiktokUrl) {
       console.error('❌ No social media');
       return NextResponse.json(
@@ -100,6 +161,7 @@ export async function POST(request: Request) {
       );
     }
 
+    // ✅ Validation - Terms
     if (!agreedToTerms) {
       console.error('❌ Terms not agreed');
       return NextResponse.json(
@@ -132,7 +194,7 @@ export async function POST(request: Request) {
         phone: phone,
         coverageLevel: coverageLevel,
         
-        // Social media
+        // Social media (แบบละเอียด - แยก fields)
         youtubeUrl: youtubeUrl || null,
         youtubeSubscribers: youtubeSubscribers ? parseInt(youtubeSubscribers) : null,
         facebookUrl: facebookUrl || null,
@@ -142,13 +204,20 @@ export async function POST(request: Request) {
         tiktokUrl: tiktokUrl || null,
         tiktokFollowers: tiktokFollowers ? parseInt(tiktokFollowers) : null,
         
+        // Pricing (NEW)
+        hasExperience: hasExperience,
+        priceRangeMin: hasExperience && priceRangeMin ? parseInt(priceRangeMin) : null,
+        priceRangeMax: hasExperience && priceRangeMax ? parseInt(priceRangeMax) : null,
+        
+        // Status
         status: 'pending', // รอการอนุมัติจาก admin
+        appliedAt: new Date(), // บันทึกวันที่สมัคร
       },
     });
 
     console.log('✅ Creator created:', creator.id);
 
-    // ✅ บันทึก Coverage Areas
+    // ✅ บันทึก Coverage Areas (multiple)
     console.log('✅ Creating coverage areas...');
     
     const coverageAreaRecords = coverageAreas.map((area: CoverageArea) => ({
@@ -169,7 +238,24 @@ export async function POST(request: Request) {
       const validLinks = portfolioLinks.filter((link: string) => link && link.trim() !== '');
       if (validLinks.length > 0) {
         console.log('✅ Portfolio links:', validLinks.length);
-        // TODO: บันทึกลง database ถ้าต้องการ
+        
+        // บันทึกลง CreatorPortfolio table (ถ้ามี)
+        try {
+          const portfolioRecords = validLinks.map((link: string) => ({
+            creatorId: creator.id,
+            url: link,
+          }));
+          
+          await prisma.creatorPortfolio.createMany({
+            data: portfolioRecords,
+            skipDuplicates: true,
+          });
+          
+          console.log('✅ Portfolio saved to database');
+        } catch (error) {
+          console.warn('⚠️ Could not save portfolio links:', error);
+          // ไม่ error เพราะ creator ถูกสร้างแล้ว
+        }
       }
     }
 
@@ -187,15 +273,23 @@ export async function POST(request: Request) {
 
     console.log('🎉 Registration complete!');
 
+    // TODO: Send notification to admin
+    // TODO: Send confirmation email to user
+
     return NextResponse.json({
       success: true,
-      message: "ส่งคำขอสมัครเรียบร้อยแล้ว! กรุณารอการอนุมัติจากทีมงาน",
+      message: "ส่งคำขอสมัครเรียบร้อยแล้ว! กรุณารอการอนุมัติจากทีมงาน (1-3 วันทำการ)",
       creator: {
         id: creator.id,
         displayName: creator.displayName,
         status: creator.status,
         coverageLevel: creator.coverageLevel,
         coverageAreasCount: coverageAreaRecords.length,
+        hasExperience: creator.hasExperience,
+        priceRange: creator.hasExperience ? {
+          min: creator.priceRangeMin,
+          max: creator.priceRangeMax,
+        } : null,
       },
     }, { status: 201 });
 
@@ -268,6 +362,12 @@ export async function GET(request: Request) {
         status: creator.status,
         coverageLevel: creator.coverageLevel,
         coverageAreasCount: creator.coverageAreas.length,
+        hasExperience: creator.hasExperience,
+        priceRange: creator.hasExperience ? {
+          min: creator.priceRangeMin,
+          max: creator.priceRangeMax,
+        } : null,
+        appliedAt: creator.appliedAt,
       },
     });
 
