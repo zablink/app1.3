@@ -1,21 +1,19 @@
 // app/upgrade/reviewer/page.tsx
-// หน้าสมัครเป็น Reviewer พร้อม Real-time Validation, ตรวจสอบชื่อซ้ำ และ Checkbox ยอมรับเงื่อนไข
+// หน้าสมัครเป็น Reviewer ฉบับสมบูรณ์
+// Features: GPS Picker, Multiple Coverage Areas (5), Name Check, SweetAlert2, Checkbox
 
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Swal from "sweetalert2";
 import {
   Video,
   DollarSign,
-  TrendingUp,
-  Shield,
   MapPin,
   Phone,
   User,
-  FileText,
   Youtube,
   Facebook,
   Instagram,
@@ -28,9 +26,56 @@ import {
   Check,
   X,
   AlertTriangle,
+  Navigation,
+  Plus,
+  Trash2,
 } from "lucide-react";
 
-// Debounce utility
+// ======== INTERFACES ========
+
+interface Province {
+  id: number;
+  name_th: string;
+  name_en: string;
+}
+
+interface Amphure {
+  id: number;
+  name_th: string;
+  name_en: string;
+  province_id: number;
+}
+
+interface Tambon {
+  id: number;
+  name_th: string;
+  name_en: string;
+  amphure_id: number;
+  zip_code: string | null;
+}
+
+interface GPSLocation {
+  lat: number;
+  lng: number;
+  accuracy: number;
+  province?: Province;
+  amphure?: Amphure;
+  tambon?: Tambon;
+  possibleTambons?: Tambon[];
+}
+
+interface SelectedArea {
+  provinceId?: number;
+  provinceName: string;
+  amphureId?: number;
+  amphureName?: string;
+  tambonId?: number;
+  tambonName?: string;
+  displayText: string;
+}
+
+// ======== DEBOUNCE HOOK ========
+
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
 
@@ -59,10 +104,6 @@ export default function UpgradeReviewerPage() {
   const [displayName, setDisplayName] = useState("");
   const [bio, setBio] = useState("");
   const [phone, setPhone] = useState("");
-  const [coverageLevel, setCoverageLevel] = useState("tambon");
-  const [provinceId, setProvinceId] = useState("");
-  const [amphureId, setAmphureId] = useState("");
-  const [tambonId, setTambonId] = useState("");
 
   // Display Name Check State
   const [isCheckingName, setIsCheckingName] = useState(false);
@@ -74,7 +115,30 @@ export default function UpgradeReviewerPage() {
   } | null>(null);
   const debouncedDisplayName = useDebounce(displayName, 500);
 
-  // Step 1: Pricing Experience
+  // Coverage Areas (Multiple)
+  const [coverageLevel, setCoverageLevel] = useState<"tambon" | "amphure" | "province">("tambon");
+  const [selectedAreas, setSelectedAreas] = useState<SelectedArea[]>([]);
+  const MAX_AREAS = 5;
+
+  // GPS State
+  const [isLoadingGPS, setIsLoadingGPS] = useState(false);
+  const [isSelectingTambon, setIsSelectingTambon] = useState(false);
+  const [gpsLocation, setGpsLocation] = useState<GPSLocation | null>(null);
+  const [showTambonOptions, setShowTambonOptions] = useState(false);
+  const [gpsError, setGpsError] = useState<{
+    type: string;
+    message: string;
+  } | null>(null);
+
+  // Manual Selection State
+  const [provinces, setProvinces] = useState<Province[]>([]);
+  const [amphures, setAmphures] = useState<Amphure[]>([]);
+  const [tambons, setTambons] = useState<Tambon[]>([]);
+  const [selectedProvinceId, setSelectedProvinceId] = useState("");
+  const [selectedAmphureId, setSelectedAmphureId] = useState("");
+  const [selectedTambonId, setSelectedTambonId] = useState("");
+
+  // Pricing Experience
   const [noExperience, setNoExperience] = useState(false);
   const [priceRangeMin, setPriceRangeMin] = useState("");
   const [priceRangeMax, setPriceRangeMax] = useState("");
@@ -85,15 +149,10 @@ export default function UpgradeReviewerPage() {
   const [instagram, setInstagram] = useState("");
   const [tiktok, setTiktok] = useState("");
 
-  // Step 3: Portfolio & Terms
-  const [portfolioLinks, setPortfolioLinks] = useState<string[]>([""]);
-  const [acceptTerms, setAcceptTerms] = useState(false); // NEW: Checkbox state
+  // Step 3: Terms
+  const [acceptTerms, setAcceptTerms] = useState(false);
 
-  // Location data
-  const [provinces, setProvinces] = useState<any[]>([]);
-  const [amphures, setAmphures] = useState<any[]>([]);
-  const [tambons, setTambons] = useState<any[]>([]);
-
+  // ======== LOAD PROVINCES ========
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/api/auth/signin");
@@ -101,27 +160,34 @@ export default function UpgradeReviewerPage() {
   }, [status, router]);
 
   useEffect(() => {
-    // Load provinces
     fetch("/api/locations/provinces")
       .then((res) => res.json())
-      .then((data) => setProvinces(data));
+      .then((data) => setProvinces(data || []))
+      .catch(() => setProvinces([]));
   }, []);
 
+  // ======== LOAD AMPHURES ========
   useEffect(() => {
-    if (provinceId) {
-      fetch(`/api/locations/amphures?provinceId=${provinceId}`)
+    if (selectedProvinceId) {
+      fetch(`/api/locations/amphures?provinceId=${selectedProvinceId}`)
         .then((res) => res.json())
-        .then((data) => setAmphures(data));
+        .then((data) => setAmphures(data || []))
+        .catch(() => setAmphures([]));
+      setSelectedAmphureId("");
+      setSelectedTambonId("");
     }
-  }, [provinceId]);
+  }, [selectedProvinceId]);
 
+  // ======== LOAD TAMBONS ========
   useEffect(() => {
-    if (amphureId) {
-      fetch(`/api/locations/tambons?amphureId=${amphureId}`)
+    if (selectedAmphureId) {
+      fetch(`/api/locations/tambons?amphureId=${selectedAmphureId}`)
         .then((res) => res.json())
-        .then((data) => setTambons(data));
+        .then((data) => setTambons(data || []))
+        .catch(() => setTambons([]));
+      setSelectedTambonId("");
     }
-  }, [amphureId]);
+  }, [selectedAmphureId]);
 
   // ======== CHECK DISPLAY NAME ========
   useEffect(() => {
@@ -156,6 +222,291 @@ export default function UpgradeReviewerPage() {
     checkDisplayName();
   }, [debouncedDisplayName]);
 
+  // ======== GPS FUNCTIONS ========
+
+  const handleUseGPS = async () => {
+    if (!navigator.geolocation) {
+      Swal.fire({
+        icon: "error",
+        title: "GPS ไม่รองรับ",
+        text: "เบราว์เซอร์ของคุณไม่รองรับการหาตำแหน่ง GPS",
+        confirmButtonText: "ตกลง",
+        confirmButtonColor: "#3b82f6",
+      });
+      return;
+    }
+
+    setIsLoadingGPS(true);
+    setGpsError(null);
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude, accuracy } = position.coords;
+
+        try {
+          const res = await fetch("/api/locations/reverse-geocode", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              lat: latitude,
+              lng: longitude,
+              accuracy: accuracy,
+            }),
+          });
+
+          const data = await res.json();
+
+          if (res.ok) {
+            const locationData: GPSLocation = {
+              lat: latitude,
+              lng: longitude,
+              accuracy: accuracy,
+              ...data.location,
+            };
+
+            setGpsLocation(locationData);
+
+            // ถ้ามีหลายตำบล ให้เลือก
+            if (data.location.possibleTambons && data.location.possibleTambons.length > 1) {
+              setShowTambonOptions(true);
+            } else if (data.location.tambon) {
+              // ถ้ามีตำบลเดียว เพิ่มทันที
+              await handleSelectTambonFromGPS(data.location);
+            }
+          } else {
+            throw new Error(data.error || "ไม่สามารถหาตำแหน่งได้");
+          }
+        } catch (error: any) {
+          Swal.fire({
+            icon: "error",
+            title: "ไม่สามารถหาตำแหน่งได้",
+            text: error.message || "กรุณาลองใหม่อีกครั้ง",
+            confirmButtonText: "ตกลง",
+            confirmButtonColor: "#ef4444",
+          });
+        } finally {
+          setIsLoadingGPS(false);
+        }
+      },
+      (error) => {
+        setIsLoadingGPS(false);
+
+        let errorMessage = "ไม่สามารถเข้าถึงตำแหน่งของคุณได้";
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            errorMessage = "คุณไม่อนุญาตให้เข้าถึงตำแหน่ง";
+            break;
+          case error.POSITION_UNAVAILABLE:
+            errorMessage = "ไม่สามารถหาตำแหน่งได้";
+            break;
+          case error.TIMEOUT:
+            errorMessage = "หมดเวลาในการหาตำแหน่ง";
+            break;
+        }
+
+        Swal.fire({
+          icon: "error",
+          title: "GPS Error",
+          text: errorMessage,
+          confirmButtonText: "ตกลง",
+          confirmButtonColor: "#ef4444",
+        });
+      }
+    );
+  };
+
+  const handleSelectTambon = async (tambon: Tambon) => {
+    if (!gpsLocation) return;
+
+    setIsSelectingTambon(true);
+
+    // Simulate delay for better UX
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
+    await handleSelectTambonFromGPS({
+      province: gpsLocation.province,
+      amphure: gpsLocation.amphure,
+      tambon: tambon,
+    });
+
+    setIsSelectingTambon(false);
+  };
+
+  const handleSelectTambonFromGPS = async (location: any) => {
+    const newArea: SelectedArea = {
+      provinceId: location.province.id,
+      provinceName: location.province.name_th,
+      amphureId: location.amphure?.id,
+      amphureName: location.amphure?.name_th,
+      tambonId: location.tambon?.id,
+      tambonName: location.tambon?.name_th,
+      displayText: getDisplayText(
+        coverageLevel,
+        location.tambon?.name_th,
+        location.amphure?.name_th,
+        location.province.name_th
+      ),
+    };
+
+    // Check duplicate
+    const isDuplicate = selectedAreas.some((area) => {
+      if (coverageLevel === "tambon") return area.tambonId === newArea.tambonId;
+      if (coverageLevel === "amphure") return area.amphureId === newArea.amphureId;
+      return area.provinceId === newArea.provinceId;
+    });
+
+    if (isDuplicate) {
+      Swal.fire({
+        icon: "warning",
+        title: "พื้นที่ซ้ำ",
+        text: "คุณเลือกพื้นที่นี้แล้ว",
+        confirmButtonText: "ตกลง",
+        confirmButtonColor: "#3b82f6",
+      });
+      return;
+    }
+
+    if (selectedAreas.length >= MAX_AREAS) {
+      Swal.fire({
+        icon: "warning",
+        title: "เลือกครบแล้ว",
+        text: `คุณสามารถเลือกได้สูงสุด ${MAX_AREAS} พื้นที่`,
+        confirmButtonText: "ตกลง",
+        confirmButtonColor: "#3b82f6",
+      });
+      return;
+    }
+
+    setSelectedAreas([...selectedAreas, newArea]);
+    setShowTambonOptions(false);
+
+    Swal.fire({
+      icon: "success",
+      title: "เพิ่มพื้นที่สำเร็จ!",
+      text: `เพิ่ม ${newArea.displayText} แล้ว`,
+      timer: 1500,
+      showConfirmButton: false,
+    });
+  };
+
+  // ======== MANUAL SELECTION FUNCTIONS ========
+
+  const handleAddManualArea = () => {
+    const province = provinces.find((p) => p.id === parseInt(selectedProvinceId));
+    const amphure = amphures.find((a) => a.id === parseInt(selectedAmphureId));
+    const tambon = tambons.find((t) => t.id === parseInt(selectedTambonId));
+
+    // Validate based on coverage level
+    if (coverageLevel === "province" && !province) {
+      Swal.fire({
+        icon: "warning",
+        title: "กรุณาเลือกจังหวัด",
+        confirmButtonText: "ตกลง",
+        confirmButtonColor: "#3b82f6",
+      });
+      return;
+    }
+
+    if (coverageLevel === "amphure" && (!province || !amphure)) {
+      Swal.fire({
+        icon: "warning",
+        title: "กรุณาเลือกอำเภอ",
+        confirmButtonText: "ตกลง",
+        confirmButtonColor: "#3b82f6",
+      });
+      return;
+    }
+
+    if (coverageLevel === "tambon" && (!province || !amphure || !tambon)) {
+      Swal.fire({
+        icon: "warning",
+        title: "กรุณาเลือกตำบล",
+        confirmButtonText: "ตกลง",
+        confirmButtonColor: "#3b82f6",
+      });
+      return;
+    }
+
+    const newArea: SelectedArea = {
+      provinceId: province?.id,
+      provinceName: province?.name_th || "",
+      amphureId: amphure?.id,
+      amphureName: amphure?.name_th,
+      tambonId: tambon?.id,
+      tambonName: tambon?.name_th,
+      displayText: getDisplayText(
+        coverageLevel,
+        tambon?.name_th,
+        amphure?.name_th,
+        province?.name_th
+      ),
+    };
+
+    // Check duplicate
+    const isDuplicate = selectedAreas.some((area) => {
+      if (coverageLevel === "tambon") return area.tambonId === newArea.tambonId;
+      if (coverageLevel === "amphure") return area.amphureId === newArea.amphureId;
+      return area.provinceId === newArea.provinceId;
+    });
+
+    if (isDuplicate) {
+      Swal.fire({
+        icon: "warning",
+        title: "พื้นที่ซ้ำ",
+        text: "คุณเลือกพื้นที่นี้แล้ว",
+        confirmButtonText: "ตกลง",
+        confirmButtonColor: "#3b82f6",
+      });
+      return;
+    }
+
+    if (selectedAreas.length >= MAX_AREAS) {
+      Swal.fire({
+        icon: "warning",
+        title: "เลือกครบแล้ว",
+        text: `คุณสามารถเลือกได้สูงสุด ${MAX_AREAS} พื้นที่`,
+        confirmButtonText: "ตกลง",
+        confirmButtonColor: "#3b82f6",
+      });
+      return;
+    }
+
+    setSelectedAreas([...selectedAreas, newArea]);
+
+    // Reset selection
+    setSelectedProvinceId("");
+    setSelectedAmphureId("");
+    setSelectedTambonId("");
+
+    Swal.fire({
+      icon: "success",
+      title: "เพิ่มพื้นที่สำเร็จ!",
+      text: `เพิ่ม ${newArea.displayText} แล้ว`,
+      timer: 1500,
+      showConfirmButton: false,
+    });
+  };
+
+  const handleRemoveArea = (index: number) => {
+    const newAreas = selectedAreas.filter((_, i) => i !== index);
+    setSelectedAreas(newAreas);
+  };
+
+  const getDisplayText = (
+    level: string,
+    tambonName?: string,
+    amphureName?: string,
+    provinceName?: string
+  ): string => {
+    if (level === "tambon" && tambonName) {
+      return `${tambonName}, ${amphureName}, ${provinceName}`;
+    }
+    if (level === "amphure" && amphureName) {
+      return `${amphureName}, ${provinceName}`;
+    }
+    return provinceName || "";
+  };
+
   // ======== VALIDATION FUNCTIONS ========
 
   const validateStep1 = (): boolean => {
@@ -171,7 +522,6 @@ export default function UpgradeReviewerPage() {
       return false;
     }
 
-    // Check display name length
     if (displayName.trim().length < 2) {
       Swal.fire({
         icon: "error",
@@ -206,11 +556,6 @@ export default function UpgradeReviewerPage() {
       return false;
     }
 
-    // Show warning if name is similar
-    if (nameCheckResult?.warning && nameCheckResult.similarNames) {
-      // แสดงเตือนแต่ยังให้ผ่านได้
-    }
-
     // Check phone
     if (!phone.trim()) {
       Swal.fire({
@@ -223,7 +568,6 @@ export default function UpgradeReviewerPage() {
       return false;
     }
 
-    // Validate Thai phone number format
     const phoneRegex = /^0[0-9]{9}$/;
     if (!phoneRegex.test(phone)) {
       Swal.fire({
@@ -236,49 +580,12 @@ export default function UpgradeReviewerPage() {
       return false;
     }
 
-    // Check coverage location
-    if (!coverageLevel) {
+    // Check coverage areas
+    if (selectedAreas.length === 0) {
       Swal.fire({
         icon: "warning",
         title: "กรุณาเลือกพื้นที่",
-        text: "กรุณาเลือกระดับพื้นที่ที่รับงาน",
-        confirmButtonText: "ตกลง",
-        confirmButtonColor: "#3b82f6",
-      });
-      return false;
-    }
-
-    // Validate location based on coverage level
-    if (coverageLevel === "province" && !provinceId) {
-      Swal.fire({
-        icon: "warning",
-        title: "กรุณาเลือกจังหวัด",
-        text: "กรุณาเลือกจังหวัดที่รับงาน",
-        confirmButtonText: "ตกลง",
-        confirmButtonColor: "#3b82f6",
-      });
-      return false;
-    }
-
-    if (coverageLevel === "amphure" && (!provinceId || !amphureId)) {
-      Swal.fire({
-        icon: "warning",
-        title: "กรุณาเลือกอำเภอ",
-        text: "กรุณาเลือกจังหวัดและอำเภอที่รับงาน",
-        confirmButtonText: "ตกลง",
-        confirmButtonColor: "#3b82f6",
-      });
-      return false;
-    }
-
-    if (
-      coverageLevel === "tambon" &&
-      (!provinceId || !amphureId || !tambonId)
-    ) {
-      Swal.fire({
-        icon: "warning",
-        title: "กรุณาเลือกตำบล",
-        text: "กรุณาเลือกจังหวัด อำเภอ และตำบลที่รับงาน",
+        text: "กรุณาเลือกพื้นที่ที่รับงานอย่างน้อย 1 พื้นที่",
         confirmButtonText: "ตกลง",
         confirmButtonColor: "#3b82f6",
       });
@@ -339,7 +646,6 @@ export default function UpgradeReviewerPage() {
   };
 
   const validateStep2 = (): boolean => {
-    // Check if at least one social media is provided
     if (!youtube && !facebook && !instagram && !tiktok) {
       Swal.fire({
         icon: "warning",
@@ -351,7 +657,6 @@ export default function UpgradeReviewerPage() {
       return false;
     }
 
-    // Validate URL format for filled fields
     const urlRegex = /^https?:\/\/.+/;
 
     if (youtube && !urlRegex.test(youtube)) {
@@ -453,7 +758,6 @@ export default function UpgradeReviewerPage() {
   // ======== SUBMIT ========
 
   const handleSubmit = async () => {
-    // Check terms acceptance
     if (!acceptTerms) {
       Swal.fire({
         icon: "warning",
@@ -465,7 +769,6 @@ export default function UpgradeReviewerPage() {
       return;
     }
 
-    // Revalidate all steps
     if (!validateStep1() || !validateStep2()) {
       Swal.fire({
         icon: "error",
@@ -488,9 +791,11 @@ export default function UpgradeReviewerPage() {
           bio,
           phone,
           coverageLevel,
-          provinceId: provinceId || null,
-          amphureId: amphureId || null,
-          tambonId: tambonId || null,
+          coverageAreas: selectedAreas.map((area) => ({
+            provinceId: area.provinceId,
+            amphureId: area.amphureId,
+            tambonId: area.tambonId,
+          })),
           noExperience,
           priceRangeMin: noExperience ? null : parseInt(priceRangeMin),
           priceRangeMax: noExperience ? null : parseInt(priceRangeMax),
@@ -498,7 +803,6 @@ export default function UpgradeReviewerPage() {
           facebook,
           instagram,
           tiktok,
-          portfolioLinks: portfolioLinks.filter((link) => link.trim() !== ""),
         }),
       });
 
@@ -635,7 +939,6 @@ export default function UpgradeReviewerPage() {
                     placeholder="ชื่อที่จะแสดงในโปรไฟล์"
                     required
                   />
-                  {/* Status Icon */}
                   <div className="absolute right-3 top-1/2 -translate-y-1/2">
                     {isCheckingName && (
                       <Loader2 className="w-5 h-5 text-gray-400 animate-spin" />
@@ -656,7 +959,6 @@ export default function UpgradeReviewerPage() {
                   </div>
                 </div>
 
-                {/* Name Check Result */}
                 {nameCheckResult && (
                   <div
                     className={`mt-2 p-3 rounded-lg text-sm ${
@@ -698,9 +1000,6 @@ export default function UpgradeReviewerPage() {
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="แนะนำตัวคุณสั้นๆ และประสบการณ์ในการรีวิว..."
                 />
-                <p className="mt-1 text-sm text-gray-500">
-                  บอกร้านค้าเกี่ยวกับสไตล์การรีวิวและความเชี่ยวชาญของคุณ
-                </p>
               </div>
 
               {/* Phone */}
@@ -716,116 +1015,233 @@ export default function UpgradeReviewerPage() {
                   placeholder="0812345678"
                   required
                 />
-                <p className="mt-1 text-sm text-gray-500">
-                  ใช้สำหรับติดต่อกรณีมีงานที่เหมาะสม
-                </p>
               </div>
 
               {/* Coverage Level */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+              <div className="border-t pt-6">
+                <h3 className="text-xl font-semibold text-gray-900 mb-4">
                   พื้นที่รับงาน <span className="text-red-500">*</span>
-                </label>
-                <select
-                  value={coverageLevel}
-                  onChange={(e) => {
-                    setCoverageLevel(e.target.value);
-                    setProvinceId("");
-                    setAmphureId("");
-                    setTambonId("");
-                  }}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  required
-                >
-                  <option value="">เลือกระดับพื้นที่</option>
-                  <option value="nationwide">ทั่วประเทศ</option>
-                  <option value="province">จังหวัด</option>
-                  <option value="amphure">อำเภอ</option>
-                  <option value="tambon">ตำบล</option>
-                </select>
-              </div>
+                </h3>
 
-              {/* Location Selectors */}
-              {coverageLevel !== "" && coverageLevel !== "nationwide" && (
-                <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
-                  {/* Province */}
-                  {(coverageLevel === "province" ||
-                    coverageLevel === "amphure" ||
-                    coverageLevel === "tambon") && (
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    ระดับพื้นที่
+                  </label>
+                  <select
+                    value={coverageLevel}
+                    onChange={(e) => {
+                      setCoverageLevel(e.target.value as any);
+                      setSelectedAreas([]); // Reset when changing level
+                    }}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="tambon">ระดับตำบล</option>
+                    <option value="amphure">ระดับอำเภอ</option>
+                    <option value="province">ระดับจังหวัด</option>
+                  </select>
+                  <p className="mt-1 text-sm text-gray-500">
+                    เลือกได้สูงสุด {MAX_AREAS} พื้นที่
+                  </p>
+                </div>
+
+                {/* GPS Button */}
+                <div className="mb-4">
+                  <button
+                    type="button"
+                    onClick={handleUseGPS}
+                    disabled={isLoadingGPS || selectedAreas.length >= MAX_AREAS}
+                    className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                  >
+                    {isLoadingGPS ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        <span>กำลังหาตำแหน่ง...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Navigation className="w-5 h-5" />
+                        <span>ใช้ GPS เพิ่มพื้นที่</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {/* GPS Options */}
+                {showTambonOptions && gpsLocation?.possibleTambons && (
+                  <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-start space-x-2 mb-3">
+                      <AlertCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-medium text-blue-900">
+                          พบ {gpsLocation.possibleTambons.length} ตำบลในบริเวณนี้
+                        </p>
+                        <p className="text-sm text-blue-800">
+                          กรุณาเลือกตำบลที่ถูกต้อง:
+                        </p>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      {gpsLocation.possibleTambons.map((tambon) => (
+                        <button
+                          key={tambon.id}
+                          type="button"
+                          onClick={() => handleSelectTambon(tambon)}
+                          disabled={isSelectingTambon}
+                          className={`w-full text-left px-4 py-3 bg-white border border-blue-300 rounded-lg transition ${
+                            isSelectingTambon
+                              ? "cursor-wait opacity-70"
+                              : "hover:bg-blue-50 cursor-pointer"
+                          }`}
+                        >
+                          {isSelectingTambon ? (
+                            <div className="flex items-center gap-2">
+                              <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                              <span className="text-sm text-gray-600">
+                                กำลังเพิ่มพื้นที่...
+                              </span>
+                            </div>
+                          ) : (
+                            <>
+                              <p className="font-medium text-gray-900">
+                                {tambon.name_th}
+                              </p>
+                              <p className="text-sm text-gray-600">
+                                {gpsLocation.amphure?.name_th},{" "}
+                                {gpsLocation.province?.name_th}
+                              </p>
+                            </>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Manual Selection */}
+                <div className="space-y-4 p-4 bg-gray-50 rounded-lg mb-4">
+                  <p className="text-sm font-medium text-gray-700 mb-2">
+                    หรือเลือกเอง:
+                  </p>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* Province */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        จังหวัด <span className="text-red-500">*</span>
+                        จังหวัด
                       </label>
                       <select
-                        value={provinceId}
+                        value={selectedProvinceId}
                         onChange={(e) => {
-                          setProvinceId(e.target.value);
-                          setAmphureId("");
-                          setTambonId("");
+                          setSelectedProvinceId(e.target.value);
+                          setSelectedAmphureId("");
+                          setSelectedTambonId("");
                         }}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        required
                       >
                         <option value="">เลือกจังหวัด</option>
-                        {provinces.map((p) => (
-                          <option key={p.id} value={p.id}>
-                            {p.nameTh}
+                        {provinces.map((province) => (
+                          <option key={province.id} value={province.id}>
+                            {province.name_th}
                           </option>
                         ))}
                       </select>
                     </div>
-                  )}
 
-                  {/* Amphure */}
-                  {(coverageLevel === "amphure" ||
-                    coverageLevel === "tambon") &&
-                    provinceId && (
+                    {/* Amphure */}
+                    {coverageLevel !== "province" && (
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          อำเภอ <span className="text-red-500">*</span>
+                          อำเภอ
                         </label>
                         <select
-                          value={amphureId}
+                          value={selectedAmphureId}
                           onChange={(e) => {
-                            setAmphureId(e.target.value);
-                            setTambonId("");
+                            setSelectedAmphureId(e.target.value);
+                            setSelectedTambonId("");
                           }}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          required
+                          disabled={!selectedProvinceId}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
                         >
                           <option value="">เลือกอำเภอ</option>
-                          {amphures.map((a) => (
-                            <option key={a.id} value={a.id}>
-                              {a.nameTh}
+                          {amphures.map((amphure) => (
+                            <option key={amphure.id} value={amphure.id}>
+                              {amphure.name_th}
                             </option>
                           ))}
                         </select>
                       </div>
                     )}
 
-                  {/* Tambon */}
-                  {coverageLevel === "tambon" && amphureId && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        ตำบล <span className="text-red-500">*</span>
-                      </label>
-                      <select
-                        value={tambonId}
-                        onChange={(e) => setTambonId(e.target.value)}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        required
-                      >
-                        <option value="">เลือกตำบล</option>
-                        {tambons.map((t) => (
-                          <option key={t.id} value={t.id}>
-                            {t.nameTh}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
+                    {/* Tambon */}
+                    {coverageLevel === "tambon" && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          ตำบล
+                        </label>
+                        <select
+                          value={selectedTambonId}
+                          onChange={(e) => setSelectedTambonId(e.target.value)}
+                          disabled={!selectedAmphureId}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
+                        >
+                          <option value="">เลือกตำบล</option>
+                          {tambons.map((tambon) => (
+                            <option key={tambon.id} value={tambon.id}>
+                              {tambon.name_th}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleAddManualArea}
+                    disabled={selectedAreas.length >= MAX_AREAS}
+                    className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                  >
+                    <Plus className="w-5 h-5" />
+                    <span>เพิ่มพื้นที่</span>
+                  </button>
                 </div>
-              )}
+
+                {/* Selected Areas */}
+                {selectedAreas.length > 0 && (
+                  <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center space-x-2">
+                        <CheckCircle className="w-5 h-5 text-green-600" />
+                        <p className="font-medium text-green-900">
+                          พื้นที่ที่เลือก ({selectedAreas.length}/{MAX_AREAS})
+                        </p>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      {selectedAreas.map((area, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center justify-between p-3 bg-white border border-green-300 rounded-lg"
+                        >
+                          <div className="flex items-center space-x-2">
+                            <MapPin className="w-4 h-4 text-green-600" />
+                            <span className="text-sm font-medium text-gray-900">
+                              {area.displayText}
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveArea(index)}
+                            className="p-1 hover:bg-red-50 rounded transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4 text-red-600" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
 
               {/* Pricing Experience */}
               <div className="border-t pt-6">
@@ -834,7 +1250,6 @@ export default function UpgradeReviewerPage() {
                 </h3>
 
                 <div className="space-y-4">
-                  {/* No Experience Checkbox */}
                   <div className="flex items-start space-x-3 p-4 bg-blue-50 rounded-lg border border-blue-200">
                     <input
                       type="checkbox"
@@ -863,7 +1278,6 @@ export default function UpgradeReviewerPage() {
                     </label>
                   </div>
 
-                  {/* Price Range */}
                   {!noExperience && (
                     <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
                       <label className="block text-sm font-medium text-gray-700">
@@ -895,11 +1309,8 @@ export default function UpgradeReviewerPage() {
                         />
                       </div>
 
-                      {/* Quick Price Presets */}
                       <div>
-                        <p className="text-sm text-gray-600 mb-2">
-                          เลือกด่วน:
-                        </p>
+                        <p className="text-sm text-gray-600 mb-2">เลือกด่วน:</p>
                         <div className="flex flex-wrap gap-2">
                           {pricePresets.map((preset) => (
                             <button
@@ -961,7 +1372,6 @@ export default function UpgradeReviewerPage() {
                 </div>
               </div>
 
-              {/* YouTube */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   <div className="flex items-center space-x-2">
@@ -978,7 +1388,6 @@ export default function UpgradeReviewerPage() {
                 />
               </div>
 
-              {/* Facebook */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   <div className="flex items-center space-x-2">
@@ -995,7 +1404,6 @@ export default function UpgradeReviewerPage() {
                 />
               </div>
 
-              {/* Instagram */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   <div className="flex items-center space-x-2">
@@ -1012,7 +1420,6 @@ export default function UpgradeReviewerPage() {
                 />
               </div>
 
-              {/* TikTok */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   <div className="flex items-center space-x-2">
@@ -1053,21 +1460,30 @@ export default function UpgradeReviewerPage() {
                       <span className="text-gray-600">เบอร์โทรศัพท์:</span>
                       <span className="font-medium">{phone}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">พื้นที่รับงาน:</span>
-                      <span className="font-medium">
-                        {coverageLevel === "nationwide" && "ทั่วประเทศ"}
-                        {coverageLevel === "province" && "จังหวัด"}
-                        {coverageLevel === "amphure" && "อำเภอ"}
-                        {coverageLevel === "tambon" && "ตำบล"}
-                      </span>
-                    </div>
                     {bio && (
                       <div>
                         <span className="text-gray-600">คำแนะนำตัว:</span>
                         <p className="mt-1 text-gray-900">{bio}</p>
                       </div>
                     )}
+                  </div>
+                </div>
+
+                {/* Coverage Areas Summary */}
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h3 className="font-semibold text-gray-900 mb-3">
+                    พื้นที่รับงาน ({selectedAreas.length} พื้นที่)
+                  </h3>
+                  <div className="space-y-2">
+                    {selectedAreas.map((area, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center space-x-2 text-sm"
+                      >
+                        <MapPin className="w-4 h-4 text-blue-600" />
+                        <span>{area.displayText}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
 
