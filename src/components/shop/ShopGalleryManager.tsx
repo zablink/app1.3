@@ -199,3 +199,6 @@ export default function ShopGalleryManager({
     </div>
   );
 }
+
+// Named export for compatibility
+export { ShopGalleryManager };

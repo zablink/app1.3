@@ -1,19 +1,51 @@
 // lib/auth.ts
 import { getServerSession } from 'next-auth';
 import { NextResponse } from 'next/server';
+import { NextAuthOptions } from 'next-auth';
+import bcrypt from 'bcryptjs';
+
+/**
+ * NextAuth configuration options
+ * Note: This should match your actual NextAuth configuration
+ */
+export const authOptions: NextAuthOptions = {
+  providers: [],
+  // Add your actual auth configuration here
+  session: {
+    strategy: 'jwt',
+  },
+  pages: {
+    signIn: '/signin',
+  },
+};
+
+/**
+ * Hash password using bcrypt
+ */
+export async function hashPassword(password: string): Promise<string> {
+  const salt = await bcrypt.genSalt(10);
+  return bcrypt.hash(password, salt);
+}
+
+/**
+ * Compare password with hash
+ */
+export async function comparePassword(password: string, hash: string): Promise<boolean> {
+  return bcrypt.compare(password, hash);
+}
 
 /**
  * Get server session with proper typing
  */
 export async function getSession() {
-  return await getServerSession();
+  return await getServerSession(authOptions);
 }
 
 /**
  * Require authentication - return 401 if not authenticated
  */
 export async function requireAuth() {
-  const session = await getServerSession();
+  const session = await getServerSession(authOptions);
   
   if (!session?.user) {
     return {
@@ -32,7 +64,7 @@ export async function requireAuth() {
  * Require specific role - return 403 if user doesn't have required role
  */
 export async function requireRole(allowedRoles: string[]) {
-  const session = await getServerSession();
+  const session = await getServerSession(authOptions);
   
   if (!session?.user) {
     return {
@@ -81,7 +113,7 @@ export async function requireCreator() {
  * Check if user is authenticated (returns boolean)
  */
 export async function isAuthenticated() {
-  const session = await getServerSession();
+  const session = await getServerSession(authOptions);
   return !!session?.user;
 }
 
@@ -89,7 +121,7 @@ export async function isAuthenticated() {
  * Check if user has specific role
  */
 export async function hasRole(role: string) {
-  const session = await getServerSession();
+  const session = await getServerSession(authOptions);
   if (!session?.user) return false;
   
   const userRole = (session.user as any).role || 'USER';
@@ -107,7 +139,7 @@ export async function isAdmin() {
  * Get current user from session
  */
 export async function getCurrentUser() {
-  const session = await getServerSession();
+  const session = await getServerSession(authOptions);
   return session?.user || null;
 }
 
@@ -115,7 +147,7 @@ export async function getCurrentUser() {
  * Get user ID from session
  */
 export async function getUserId() {
-  const session = await getServerSession();
+  const session = await getServerSession(authOptions);
   return session?.user?.id || null;
 }
 
@@ -123,7 +155,7 @@ export async function getUserId() {
  * Get user role from session
  */
 export async function getUserRole() {
-  const session = await getServerSession();
+  const session = await getServerSession(authOptions);
   if (!session?.user) return null;
   
   return (session.user as any).role || 'USER';

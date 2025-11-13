@@ -188,3 +188,6 @@ export default function ShopLinksManager({ shopId, initialLinks = [] }: ShopLink
     </div>
   );
 }
+
+// Named export for compatibility
+export { ShopLinksManager };
