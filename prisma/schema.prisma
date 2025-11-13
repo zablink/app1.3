@@ -493,6 +493,9 @@ model Campaign {
   title       String
   description String?  @db.Text
   
+  // Price Locking - เก็บราคาของ creator ณ เวลาสร้าง campaign (สำหรับ reference)
+  creatorPriceAtCreation Int?  // ราคา ณ เวลาสร้าง campaign (optional, for auditing)
+  
   // Budget & Token Management
   totalBudget       Int      // งบทั้งหมด (tokens)
   remainingBudget   Int      // งบคงเหลือ (tokens)

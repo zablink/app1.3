@@ -1,98 +1,89 @@
-// src/app/api/shops/route.ts
+// app/api/shops/route.ts
+import { NextRequest, NextResponse } from 'next/server';
+import { getShopsForHomePage, getLocationFromCoordinates } from '@/lib/location-service';
+import type { LocationInfo } from '@/lib/location-service';
 
-import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-
-export const dynamic = 'force-dynamic';
-
-/**
- * GET /api/shops
- * ดึงรายการร้านค้าทั้งหมด (simple_shops ไม่มี subscription system)
- */
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const shops = await prisma.simple_shops.findMany({
-      orderBy: {
-        created_at: 'desc',
-      },
-    });
-
-    // simple_shops ไม่มี subscription ให้ return ข้อมูลตรงๆ
-    const formattedShops = shops.map(shop => ({
-      id: shop.id,
-      name: shop.name,
-      category: shop.category,
-      image: shop.image,
-      lat: shop.lat,
-      lng: shop.lng,
-      subdistrict: shop.subdistrict,
-      district: shop.district,
-      province: shop.province,
-      created_at: shop.created_at,
-      updated_at: shop.updated_at,
-      // Default values สำหรับ compatibility
-      package_tier: 'FREE',
-      display_weight: 1,
-      subscription_end_date: null,
-      subscription_status: null,
-      next_tier: null,
-      badge_emoji: null,
-      badge_text: null,
-    }));
-
-    return NextResponse.json(formattedShops);
+    const searchParams = request.nextUrl.searchParams;
     
-  } catch (error) {
-    console.error('Error fetching shops:', error);
-    return NextResponse.json(
-      { 
-        error: 'Failed to fetch shops',
-        detail: error instanceof Error ? error.message : 'Unknown error'
-      },
-      { status: 500 }
-    );
-  }
-}
+    // ดึงพารามิเตอร์
+    const lat = searchParams.get('lat');
+    const lng = searchParams.get('lng');
+    const provinceId = searchParams.get('provinceId');
+    const amphureId = searchParams.get('amphureId');
+    const tambonId = searchParams.get('tambonId');
+    const radiusKm = searchParams.get('radiusKm');
+    const filterLevel = searchParams.get('filterLevel');
+    const categoryId = searchParams.get('categoryId');
+    const limit = searchParams.get('limit');
 
-/**
- * POST /api/shops
- * สร้างร้านค้าใหม่
- */
-export async function POST(request: Request) {
-  try {
-    const body = await request.json();
-    
-    const { name, category, image, lat, lng, subdistrict, district, province } = body;
+    let userLocation: LocationInfo;
 
-    if (!name) {
+    // กรณีมี GPS coordinates
+    if (lat && lng) {
+      const locationInfo = await getLocationFromCoordinates(
+        parseFloat(lat),
+        parseFloat(lng)
+      );
+
+      if (!locationInfo) {
+        return NextResponse.json(
+          { error: 'Could not determine location from coordinates' },
+          { status: 400 }
+        );
+      }
+
+      userLocation = locationInfo;
+    }
+    // กรณีมีเฉพาะ location IDs (manual selection)
+    else if (provinceId && amphureId && tambonId) {
+      userLocation = {
+        coordinates: { lat: 0, lng: 0 }, // ไม่มี GPS จริง
+        provinceId: parseInt(provinceId),
+        amphureId: parseInt(amphureId),
+        tambonId: parseInt(tambonId)
+      };
+    }
+    // ไม่มี location parameter
+    else {
       return NextResponse.json(
-        { error: 'Shop name is required' },
+        { error: 'Either GPS coordinates (lat, lng) or location IDs (provinceId, amphureId, tambonId) required' },
         { status: 400 }
       );
     }
 
-    const shop = await prisma.simple_shops.create({
-      data: {
-        name,
-        category: category || null,
-        image: image || null,
-        lat: lat ? parseFloat(lat) : null,
-        lng: lng ? parseFloat(lng) : null,
-        subdistrict: subdistrict || null,
-        district: district || null,
-        province: province || null,
-      },
+    // ดึงร้านค้า
+    const shops = await getShopsForHomePage(userLocation, {
+      radiusKm: radiusKm ? parseFloat(radiusKm) : undefined,
+      filterLevel: filterLevel as any || 'all',
+      categoryId: categoryId || undefined,
+      limit: limit ? parseInt(limit) : undefined
     });
 
-    return NextResponse.json(shop, { status: 201 });
-    
-  } catch (error) {
-    console.error('Error creating shop:', error);
-    return NextResponse.json(
-      { 
-        error: 'Failed to create shop',
-        detail: error instanceof Error ? error.message : 'Unknown error'
+    // แยกตาม tier
+    const shopsByTier = {
+      PREMIUM: shops.filter(s => s.activeSubscription?.subscription_packages.tier === 'PREMIUM'),
+      PRO: shops.filter(s => s.activeSubscription?.subscription_packages.tier === 'PRO'),
+      BASIC: shops.filter(s => s.activeSubscription?.subscription_packages.tier === 'BASIC'),
+      FREE: shops.filter(s => !s.activeSubscription || s.activeSubscription?.subscription_packages.tier === 'FREE')
+    };
+
+    return NextResponse.json({
+      shops,
+      shopsByTier,
+      userLocation: {
+        provinceName: userLocation.provinceName,
+        amphureName: userLocation.amphureName,
+        tambonName: userLocation.tambonName
       },
+      total: shops.length
+    });
+
+  } catch (error) {
+    console.error('Error fetching shops:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch shops' },
       { status: 500 }
     );
   }
