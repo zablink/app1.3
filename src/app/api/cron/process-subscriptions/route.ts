@@ -3,8 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 
-//const prisma = new PrismaClient();
-import { prisma } from '@/lib/prisma';
+import prisma from '@/lib/prisma';
 
 /**
  * GET /api/cron/process-subscriptions

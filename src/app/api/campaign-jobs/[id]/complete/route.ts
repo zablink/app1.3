@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { PrismaClient } from '@prisma/client';
 
-const prisma = new PrismaClient();
+import prisma from '@/lib/prisma';
 
 // Platform commission rate (10%)
 const PLATFORM_COMMISSION_RATE = 0.10;

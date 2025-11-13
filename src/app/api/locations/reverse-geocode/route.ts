@@ -2,8 +2,7 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 
-// สร้าง Prisma instance
-const prisma = new PrismaClient();
+import prisma from '@/lib/prisma';
 
 // ฟังก์ชันคำนวณระยะทางระหว่าง 2 จุด (Haversine formula)
 function calculateDistance(
