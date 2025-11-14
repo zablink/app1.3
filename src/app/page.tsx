@@ -1,14 +1,11 @@
-// app/main/page.tsx
-"use client";
+// src/app/page.tsx
+
+'use client';
 
 import { useState, useEffect } from 'react';
-import { useLocation } from '@/contexts/LocationContext';
-import { MapPin, Loader, AlertCircle, SlidersHorizontal } from 'lucide-react';
-import LocationModal from '@/components/location/LocationModal';
-import ShopCard from '@/components/home/ShopCard';
-import PlaceholderShopCard from '@/components/home/PlaceholderShopCard';
+import { useRouter } from 'next/navigation';
 
-interface ShopData {
+interface Shop {
   id: string;
   name: string;
   description?: string;
@@ -16,268 +13,337 @@ interface ShopData {
   address?: string;
   phone?: string;
   website?: string;
-  distance_km?: number;
+  distance?: number;
   activeSubscription?: any;
 }
 
-interface ShopsByTier {
-  PREMIUM: ShopData[];
-  PRO: ShopData[];
-  BASIC: ShopData[];
-  FREE: ShopData[];
+interface LocationState {
+  status: 'idle' | 'loading' | 'success' | 'error';
+  lat?: number;
+  lng?: number;
+  error?: string;
 }
 
 export default function HomePage() {
-  const { location, isLoading: locationLoading } = useLocation();
-  const [showLocationModal, setShowLocationModal] = useState(false);
-  const [shopsByTier, setShopsByTier] = useState<ShopsByTier | null>(null);
-  const [isLoadingShops, setIsLoadingShops] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [filterLevel, setFilterLevel] = useState<'all' | 'province' | 'amphure' | 'tambon'>('all');
-  const [radiusKm, setRadiusKm] = useState(20);
+  const router = useRouter();
+  
+  // State สำหรับร้านค้า
+  const [shops, setShops] = useState<Shop[]>([]);
+  const [isLoadingShops, setIsLoadingShops] = useState(true);
+  
+  // State สำหรับ location
+  const [locationState, setLocationState] = useState<LocationState>({
+    status: 'idle'
+  });
+  
+  // สำหรับ dismiss floating notification
+  const [showLocationNotif, setShowLocationNotif] = useState(true);
 
-  // Tier configuration
-  const TIER_SLOTS = {
-    PREMIUM: 3,
-    PRO: 6,
-    BASIC: 6,
-    FREE: 3 // Show only first 3 FREE shops
-  };
-
-  const tierConfig = [
-    {
-      tier: 'PREMIUM' as const,
-      name: 'Premium',
-      emoji: '👑',
-      color: 'from-amber-400 to-orange-500'
-    },
-    {
-      tier: 'PRO' as const,
-      name: 'Pro',
-      emoji: '💎',
-      color: 'from-purple-500 to-pink-500'
-    },
-    {
-      tier: 'BASIC' as const,
-      name: 'Basic',
-      emoji: '⭐',
-      color: 'from-blue-500 to-cyan-500'
-    },
-    {
-      tier: 'FREE' as const,
-      name: 'Free',
-      emoji: '🆓',
-      color: 'from-gray-400 to-gray-500'
-    }
-  ];
-
-  // Fetch shops based on location
+  // ============================================
+  // 1. โหลดร้านค้าทั้งหมดก่อน (ไม่รอ location)
+  // ============================================
   useEffect(() => {
-    if (!location) return;
+    loadShops();
+  }, []);
 
-    const fetchShops = async () => {
+  const loadShops = async () => {
+    try {
       setIsLoadingShops(true);
-      setError(null);
+      
+      // โหลดร้านทั้งหมด หรือตาม default filter
+      const response = await fetch('/api/shops?limit=50');
+      const data = await response.json();
+      
+      setShops(data.shops || []);
+    } catch (error) {
+      console.error('Error loading shops:', error);
+    } finally {
+      setIsLoadingShops(false);
+    }
+  };
 
-      try {
-        const params = new URLSearchParams();
+  // ============================================
+  // 2. ขอ Location แบบ Async (Non-blocking)
+  // ============================================
+  useEffect(() => {
+    // เริ่มขอ location หลังจากโหลดร้านเสร็จ หรือขอพร้อมกันเลยก็ได้
+    requestLocation();
+  }, []);
 
-        // ถ้ามี GPS coordinates ให้ใช้
-        if (location.coordinates.lat && location.coordinates.lng) {
-          params.set('lat', location.coordinates.lat.toString());
-          params.set('lng', location.coordinates.lng.toString());
-          params.set('radiusKm', radiusKm.toString());
+  const requestLocation = async () => {
+    if (!navigator.geolocation) {
+      setLocationState({
+        status: 'error',
+        error: 'เบราว์เซอร์ไม่รองรับ Geolocation'
+      });
+      return;
+    }
+
+    setLocationState({ status: 'loading' });
+
+    navigator.geolocation.getCurrentPosition(
+      // Success
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        
+        setLocationState({
+          status: 'success',
+          lat: latitude,
+          lng: longitude
+        });
+
+        // เมื่อได้ location แล้ว -> re-fetch shops พร้อม distance
+        await updateShopsWithDistance(latitude, longitude);
+      },
+      // Error
+      (error) => {
+        let errorMsg = 'ไม่สามารถเข้าถึงตำแหน่งได้';
+        
+        switch(error.code) {
+          case error.PERMISSION_DENIED:
+            errorMsg = 'คุณปฏิเสธการเข้าถึงตำแหน่ง';
+            break;
+          case error.POSITION_UNAVAILABLE:
+            errorMsg = 'ไม่สามารถระบุตำแหน่งได้';
+            break;
+          case error.TIMEOUT:
+            errorMsg = 'หมดเวลาในการระบุตำแหน่ง';
+            break;
         }
-        // ไม่งั้นใช้ location IDs
-        else if (location.provinceId && location.amphureId && location.tambonId) {
-          params.set('provinceId', location.provinceId.toString());
-          params.set('amphureId', location.amphureId.toString());
-          params.set('tambonId', location.tambonId.toString());
-        }
-
-        params.set('filterLevel', filterLevel);
-        params.set('limit', '100');
-
-        const response = await fetch(`/api/shops?${params.toString()}`);
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch shops');
-        }
-
-        const data = await response.json();
-        setShopsByTier(data.shopsByTier);
-
-      } catch (err) {
-        console.error('Error fetching shops:', err);
-        setError('ไม่สามารถโหลดร้านค้าได้ กรุณาลองใหม่อีกครั้ง');
-      } finally {
-        setIsLoadingShops(false);
+        
+        setLocationState({
+          status: 'error',
+          error: errorMsg
+        });
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 300000 // 5 minutes
       }
-    };
-
-    fetchShops();
-  }, [location, filterLevel, radiusKm]);
-
-  // Render tier section
-  const renderTierSection = (config: typeof tierConfig[0]) => {
-    const shops = shopsByTier?.[config.tier] || [];
-    const maxSlots = TIER_SLOTS[config.tier];
-    const displayShops = shops.slice(0, maxSlots);
-    const emptySlots = Math.max(0, maxSlots - displayShops.length);
-
-    return (
-      <section key={config.tier} className="mb-12">
-        {/* Tier Header */}
-        <div className={`bg-gradient-to-r ${config.color} text-white px-6 py-4 rounded-xl mb-6 shadow-lg`}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <span className="text-3xl">{config.emoji}</span>
-              <div>
-                <h2 className="text-2xl font-bold">{config.name}</h2>
-                <p className="text-sm opacity-90">
-                  {displayShops.length} ร้านใกล้คุณ
-                </p>
-              </div>
-            </div>
-            <div className="text-right">
-              <p className="text-sm opacity-75">สูงสุด {maxSlots} ร้าน</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Shop Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {displayShops.map((shop) => (
-            <ShopCard key={shop.id} shop={shop} tier={config.tier} />
-          ))}
-          {Array.from({ length: emptySlots }).map((_, i) => (
-            <PlaceholderShopCard key={`placeholder-${i}`} tier={config.tier} />
-          ))}
-        </div>
-      </section>
     );
   };
 
-  // Loading state
-  if (locationLoading && !location) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <Loader className="w-12 h-12 animate-spin text-blue-600 mx-auto mb-4" />
-          <p className="text-gray-600">กำลังค้นหาตำแหน่งของคุณ...</p>
-        </div>
-      </div>
-    );
-  }
+  // ============================================
+  // 3. Update Shops with Distance
+  // ============================================
+  const updateShopsWithDistance = async (lat: number, lng: number) => {
+    try {
+      // เรียก API ใหม่พร้อมตำแหน่ง -> Backend จะคำนวณ distance
+      const response = await fetch(
+        `/api/shops?lat=${lat}&lng=${lng}&limit=50&sortBy=distance`
+      );
+      const data = await response.json();
+      
+      // Update shops ด้วยข้อมูลที่มี distance
+      setShops(data.shops || []);
+    } catch (error) {
+      console.error('Error updating shops with distance:', error);
+    }
+  };
 
+  // ============================================
+  // Render
+  // ============================================
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header with Location */}
-      <div className="bg-white border-b sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            {/* Location Display */}
-            <button
-              onClick={() => setShowLocationModal(true)}
-              className="flex items-center gap-2 text-left hover:bg-gray-50 px-4 py-2 rounded-lg transition-colors"
-            >
-              <MapPin className="w-5 h-5 text-blue-600 flex-shrink-0" />
-              <div>
-                <p className="text-xs text-gray-500">พื้นที่ของคุณ</p>
-                <p className="font-medium text-gray-900">
-                  {location ? (
-                    <>
-                      {location.tambonName && `ต.${location.tambonName} `}
-                      {location.amphureName && `อ.${location.amphureName} `}
-                      {location.provinceName && `จ.${location.provinceName}`}
-                    </>
-                  ) : (
-                    'เลือกพื้นที่'
-                  )}
-                </p>
-              </div>
-            </button>
-
-            {/* Filter Controls */}
-            <div className="flex items-center gap-2">
-              <select
-                value={filterLevel}
-                onChange={(e) => setFilterLevel(e.target.value as any)}
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="all">ทั้งหมด</option>
-                <option value="tambon">ในตำบล</option>
-                <option value="amphure">ในอำเภอ</option>
-                <option value="province">ในจังหวัด</option>
-              </select>
-
-              {location?.coordinates.lat && location?.coordinates.lng && (
-                <select
-                  value={radiusKm}
-                  onChange={(e) => setRadiusKm(parseInt(e.target.value))}
-                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="5">5 กม.</option>
-                  <option value="10">10 กม.</option>
-                  <option value="20">20 กม.</option>
-                  <option value="50">50 กม.</option>
-                  <option value="100">100 กม.</option>
-                </select>
-              )}
-            </div>
-          </div>
+      {/* Header */}
+      <header className="bg-white shadow-sm sticky top-0 z-40">
+        <div className="container mx-auto px-4 py-4">
+          <h1 className="text-2xl font-bold text-orange-600">Zablink</h1>
         </div>
-      </div>
+      </header>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Error State */}
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg mb-6 flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="font-medium">{error}</p>
-              <button
-                onClick={() => window.location.reload()}
-                className="text-sm underline hover:no-underline mt-1"
-              >
-                โหลดใหม่
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Loading State */}
+      <main className="container mx-auto px-4 py-6">
+        {/* Loading State - Shops */}
         {isLoadingShops && (
-          <div className="text-center py-12">
-            <Loader className="w-8 h-8 animate-spin text-blue-600 mx-auto mb-3" />
-            <p className="text-gray-600">กำลังค้นหาร้านค้าใกล้คุณ...</p>
+          <div className="flex justify-center items-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
           </div>
         )}
 
-        {/* Shops by Tier */}
-        {!isLoadingShops && shopsByTier && (
-          <>
-            {tierConfig.map((config) => renderTierSection(config))}
-          </>
+        {/* Shops Grid */}
+        {!isLoadingShops && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {shops.map((shop) => (
+              <div
+                key={shop.id}
+                className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow cursor-pointer"
+                onClick={() => router.push(`/shop/${shop.id}`)}
+              >
+                {/* Shop Logo */}
+                {shop.logo && (
+                  <img
+                    src={shop.logo}
+                    alt={shop.name}
+                    className="w-full h-48 object-cover rounded-t-lg"
+                  />
+                )}
+                
+                {/* Shop Info */}
+                <div className="p-4">
+                  <h3 className="font-semibold text-lg mb-2">{shop.name}</h3>
+                  
+                  {shop.description && (
+                    <p className="text-gray-600 text-sm line-clamp-2 mb-3">
+                      {shop.description}
+                    </p>
+                  )}
+                  
+                  {/* Distance - แสดงเมื่อมีค่า */}
+                  {shop.distance !== undefined && (
+                    <div className="flex items-center text-sm text-gray-500">
+                      <svg
+                        className="w-4 h-4 mr-1"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                        />
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                        />
+                      </svg>
+                      <span>
+                        {shop.distance < 1
+                          ? `${(shop.distance * 1000).toFixed(0)} ม.`
+                          : `${shop.distance.toFixed(1)} กม.`}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
         )}
 
         {/* No Shops */}
-        {!isLoadingShops && shopsByTier && 
-          Object.values(shopsByTier).every(shops => shops.length === 0) && (
+        {!isLoadingShops && shops.length === 0 && (
           <div className="text-center py-12">
-            <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600 mb-2">ไม่พบร้านค้าในพื้นที่นี้</p>
-            <p className="text-sm text-gray-500">ลองขยายรัศมีการค้นหาหรือเปลี่ยนพื้นที่</p>
+            <p className="text-gray-600">ไม่พบร้านค้า</p>
           </div>
         )}
-      </div>
+      </main>
 
-      {/* Location Modal */}
-      <LocationModal
-        isOpen={showLocationModal}
-        onClose={() => setShowLocationModal(false)}
-      />
+      {/* ============================================
+          FLOATING LOCATION NOTIFICATION
+          ============================================ */}
+      {showLocationNotif && locationState.status !== 'idle' && (
+        <div className="fixed top-20 right-4 z-50 animate-slide-in-from-right">
+          <div
+            className={`
+              bg-white rounded-lg shadow-lg border-l-4 p-4 max-w-sm
+              ${locationState.status === 'loading' ? 'border-blue-500' : ''}
+              ${locationState.status === 'success' ? 'border-green-500' : ''}
+              ${locationState.status === 'error' ? 'border-red-500' : ''}
+            `}
+          >
+            <div className="flex items-start">
+              {/* Icon */}
+              <div className="flex-shrink-0">
+                {locationState.status === 'loading' && (
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+                )}
+                {locationState.status === 'success' && (
+                  <svg
+                    className="h-5 w-5 text-green-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                )}
+                {locationState.status === 'error' && (
+                  <svg
+                    className="h-5 w-5 text-red-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                )}
+              </div>
+
+              {/* Content */}
+              <div className="ml-3 flex-1">
+                <p className="text-sm font-medium text-gray-900">
+                  {locationState.status === 'loading' && 'กำลังโหลดตำแหน่ง...'}
+                  {locationState.status === 'success' && 'อัปเดตตำแหน่งเรียบร้อย'}
+                  {locationState.status === 'error' && 'ไม่สามารถโหลดตำแหน่งได้'}
+                </p>
+                
+                {locationState.status === 'success' && (
+                  <p className="mt-1 text-xs text-gray-600">
+                    ร้านค้าถูกเรียงตามระยะทางแล้ว
+                  </p>
+                )}
+                
+                {locationState.status === 'error' && (
+                  <div>
+                    <p className="mt-1 text-xs text-gray-600">
+                      {locationState.error}
+                    </p>
+                    <button
+                      onClick={requestLocation}
+                      className="mt-2 text-xs text-blue-600 hover:text-blue-800 font-medium"
+                    >
+                      ลองอีกครั้ง
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Close Button */}
+              <button
+                onClick={() => setShowLocationNotif(false)}
+                className="ml-3 flex-shrink-0 text-gray-400 hover:text-gray-600"
+              >
+                <svg
+                  className="h-4 w-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Auto-dismiss notification after success */}
+      {locationState.status === 'success' && showLocationNotif && (
+        <>
+          {setTimeout(() => setShowLocationNotif(false), 3000)}
+        </>
+      )}
     </div>
   );
 }

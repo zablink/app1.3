@@ -1,90 +1,185 @@
-// app/api/shops/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { getShopsForHomePage, getLocationFromCoordinates } from '@/lib/location-service';
-import type { LocationInfo } from '@/lib/location-service';
+import { prisma } from '@/lib/prisma';
 
+/**
+ * GET /api/shops
+ * 
+ * Query Parameters:
+ * - lat: latitude (optional)
+ * - lng: longitude (optional)
+ * - limit: number of shops to return (default: 50)
+ * - sortBy: 'distance' | 'name' | 'createdAt' (default: 'createdAt')
+ * - category: filter by category id
+ * - province: filter by province id
+ */
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
     
-    // ดึงพารามิเตอร์
     const lat = searchParams.get('lat');
     const lng = searchParams.get('lng');
-    const provinceId = searchParams.get('provinceId');
-    const amphureId = searchParams.get('amphureId');
-    const tambonId = searchParams.get('tambonId');
-    const radiusKm = searchParams.get('radiusKm');
-    const filterLevel = searchParams.get('filterLevel');
-    const categoryId = searchParams.get('categoryId');
-    const limit = searchParams.get('limit');
+    const limit = parseInt(searchParams.get('limit') || '50');
+    const sortBy = searchParams.get('sortBy') || 'createdAt';
+    const categoryId = searchParams.get('category');
+    const provinceId = searchParams.get('province');
 
-    let userLocation: LocationInfo;
+    // ============================================
+    // กรณีที่ 1: ไม่มี Location (โหลดทั้งหมด)
+    // ============================================
+    if (!lat || !lng) {
+      const shops = await prisma.shop.findMany({
+        where: {
+          status: 'APPROVED',
+          ...(categoryId && { categoryId }),
+          ...(provinceId && { province_id: parseInt(provinceId) }),
+        },
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          logo: true,
+          address: true,
+          categoryId: true,
+          province_id: true,
+          amphure_id: true,
+          tambon_id: true,
+          has_physical_store: true,
+          createdAt: true,
+          ShopCategory: {
+            select: {
+              name: true,
+            },
+          },
+        },
+        orderBy:
+          sortBy === 'name'
+            ? { name: 'asc' }
+            : { createdAt: 'desc' },
+        take: limit,
+      });
 
-    // กรณีมี GPS coordinates
-    if (lat && lng) {
-      const locationInfo = await getLocationFromCoordinates(
-        parseFloat(lat),
-        parseFloat(lng)
-      );
-
-      if (!locationInfo) {
-        return NextResponse.json(
-          { error: 'Could not determine location from coordinates' },
-          { status: 400 }
-        );
-      }
-
-      userLocation = locationInfo;
+      return NextResponse.json({
+        success: true,
+        shops: shops,
+        hasLocation: false,
+      });
     }
-    // กรณีมีเฉพาะ location IDs (manual selection)
-    else if (provinceId && amphureId && tambonId) {
-      userLocation = {
-        coordinates: { lat: 0, lng: 0 }, // ไม่มี GPS จริง
-        provinceId: parseInt(provinceId),
-        amphureId: parseInt(amphureId),
-        tambonId: parseInt(tambonId)
-      };
-    }
-    // ไม่มี location parameter
-    else {
-      return NextResponse.json(
-        { error: 'Either GPS coordinates (lat, lng) or location IDs (provinceId, amphureId, tambonId) required' },
-        { status: 400 }
-      );
-    }
 
-    // ดึงร้านค้า
-    const shops = await getShopsForHomePage(userLocation, {
-      radiusKm: radiusKm ? parseFloat(radiusKm) : undefined,
-      filterLevel: filterLevel as any || 'all',
-      categoryId: categoryId || undefined,
-      limit: limit ? parseInt(limit) : undefined
-    });
-
-    // แยกตาม tier
-    const shopsByTier = {
-      PREMIUM: shops.filter(s => s.activeSubscription?.subscription_packages.tier === 'PREMIUM'),
-      PRO: shops.filter(s => s.activeSubscription?.subscription_packages.tier === 'PRO'),
-      BASIC: shops.filter(s => s.activeSubscription?.subscription_packages.tier === 'BASIC'),
-      FREE: shops.filter(s => !s.activeSubscription || s.activeSubscription?.subscription_packages.tier === 'FREE')
-    };
+    // ============================================
+    // กรณีที่ 2: มี Location (คำนวณ Distance)
+    // ============================================
+    
+    // ใช้ PostGIS ST_Distance สำหรับคำนวณระยะทาง (meters)
+    // แปลงเป็น kilometers แล้ว sort ตามระยะทาง
+    
+    const latitude = parseFloat(lat);
+    const longitude = parseFloat(lng);
+    
+    // Raw query เพื่อใช้ PostGIS functions
+    const shopsWithDistance = await prisma.$queryRaw<
+      Array<{
+        id: string;
+        name: string;
+        description: string | null;
+        logo: string | null;
+        address: string | null;
+        categoryId: string;
+        category_name: string;
+        province_id: number | null;
+        amphure_id: number | null;
+        tambon_id: number | null;
+        has_physical_store: boolean;
+        createdAt: Date;
+        distance: number; // in kilometers
+      }>
+    >`
+      SELECT 
+        s.id,
+        s.name,
+        s.description,
+        s.logo,
+        s.address,
+        s."categoryId",
+        sc.name as category_name,
+        s.province_id,
+        s.amphure_id,
+        s.tambon_id,
+        s.has_physical_store,
+        s."createdAt",
+        CASE 
+          WHEN s.location IS NOT NULL THEN
+            ST_Distance(
+              s.location::geography,
+              ST_SetSRID(ST_MakePoint(${longitude}, ${latitude}), 4326)::geography
+            ) / 1000.0
+          ELSE 
+            NULL
+        END as distance
+      FROM "Shop" s
+      INNER JOIN "ShopCategory" sc ON s."categoryId" = sc.id
+      WHERE 
+        s.status = 'APPROVED'
+        ${categoryId ? `AND s."categoryId" = '${categoryId}'` : ''}
+        ${provinceId ? `AND s.province_id = ${provinceId}` : ''}
+      ORDER BY 
+        CASE 
+          WHEN s.location IS NOT NULL THEN
+            ST_Distance(
+              s.location::geography,
+              ST_SetSRID(ST_MakePoint(${longitude}, ${latitude}), 4326)::geography
+            )
+          ELSE 
+            999999999
+        END ASC
+      LIMIT ${limit}
+    `;
 
     return NextResponse.json({
-      shops,
-      shopsByTier,
+      success: true,
+      shops: shopsWithDistance.map((shop) => ({
+        ...shop,
+        distance: shop.distance ? parseFloat(shop.distance.toFixed(2)) : null,
+        ShopCategory: {
+          name: shop.category_name,
+        },
+      })),
+      hasLocation: true,
       userLocation: {
-        provinceName: userLocation.provinceName,
-        amphureName: userLocation.amphureName,
-        tambonName: userLocation.tambonName
+        lat: latitude,
+        lng: longitude,
       },
-      total: shops.length
     });
-
   } catch (error) {
     console.error('Error fetching shops:', error);
+    
     return NextResponse.json(
-      { error: 'Failed to fetch shops' },
+      {
+        success: false,
+        error: 'Failed to fetch shops',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      },
       { status: 500 }
     );
   }
 }
+
+/**
+ * Distance Calculation Explanation:
+ * 
+ * ST_Distance(geography1, geography2)
+ * - Returns distance in meters between two points
+ * - Uses WGS84 spheroid (accurate for Earth surface)
+ * 
+ * ST_MakePoint(longitude, latitude)
+ * - Creates a point geometry
+ * - Note: longitude first, then latitude!
+ * 
+ * ST_SetSRID(geometry, 4326)
+ * - Sets coordinate reference system to WGS84 (lat/lng)
+ * 
+ * ::geography
+ * - Casts to geography type for accurate distance on spheroid
+ * 
+ * / 1000.0
+ * - Converts meters to kilometers
+ */
