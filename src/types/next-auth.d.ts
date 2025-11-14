@@ -1,32 +1,23 @@
 // types/next-auth.d.ts
-import NextAuth, { DefaultSession } from "next-auth";
+import { DefaultSession, DefaultUser } from "next-auth";
+import { JWT, DefaultJWT } from "next-auth/jwt";
 
-// ✅ Extend NextAuth types เพื่อเพิ่ม id และ role
 declare module "next-auth" {
   interface Session {
     user: {
       id: string;
       role: string;
-      email: string;
-      name?: string | null;
-      image?: string | null;
     } & DefaultSession["user"];
   }
 
-  interface User {
-    id: string;
-    role: string;
-    email: string;
-    name?: string | null;
-    image?: string | null;
+  interface User extends DefaultUser {
+    role?: string;
   }
 }
 
 declare module "next-auth/jwt" {
-  interface JWT {
-    id: string;
-    role: string;
-    email: string;
-    provider?: string;
+  interface JWT extends DefaultJWT {
+    id?: string;
+    role?: string;
   }
 }

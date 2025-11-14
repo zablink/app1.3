@@ -1,11 +1,11 @@
 // lib/auth.ts
 import { getServerSession } from 'next-auth';
 import { NextResponse } from 'next/server';
-import { NextAuthOptions } from 'next-auth';
-import { PrismaAdapter } from '@next-auth/prisma-adapter';
+import type { NextAuthOptions } from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
 import FacebookProvider from 'next-auth/providers/facebook';
 import CredentialsProvider from 'next-auth/providers/credentials';
+import { PrismaAdapter } from '@next-auth/prisma-adapter';
 import prisma from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 
@@ -18,8 +18,8 @@ export const authOptions: NextAuthOptions = {
   providers: [
     // Google OAuth
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID || '',
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
+      clientId: process.env.GOOGLE_CLIENT_ID || "",
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
       authorization: {
         params: {
           prompt: "consent",
@@ -31,8 +31,8 @@ export const authOptions: NextAuthOptions = {
 
     // Facebook OAuth
     FacebookProvider({
-      clientId: process.env.FACEBOOK_CLIENT_ID || '',
-      clientSecret: process.env.FACEBOOK_CLIENT_SECRET || '',
+      clientId: process.env.FACEBOOK_CLIENT_ID || "",
+      clientSecret: process.env.FACEBOOK_CLIENT_SECRET || "",
     }),
 
     // LINE OAuth
@@ -49,9 +49,9 @@ export const authOptions: NextAuthOptions = {
       },
       token: 'https://api.line.me/oauth2/v2.1/token',
       userinfo: 'https://api.line.me/v2/profile',
-      clientId: process.env.LINE_CLIENT_ID || '',
-      clientSecret: process.env.LINE_CLIENT_SECRET || '',
-      profile(profile) {
+      clientId: process.env.LINE_CLIENT_ID || "",
+      clientSecret: process.env.LINE_CLIENT_SECRET || "",
+      profile(profile: any) {
         return {
           id: profile.userId,
           name: profile.displayName,
@@ -74,43 +74,49 @@ export const authOptions: NextAuthOptions = {
           response_type: 'code',
         },
       },
-      token: {
-        url: 'https://open.tiktokapis.com/v2/oauth/token/',
-        async request(context) {
-          const tokens = await context.client.grant({
-            grant_type: 'authorization_code',
-            code: context.params.code,
-            redirect_uri: context.provider.callbackUrl,
-          });
-          return { tokens };
-        },
-      },
-      userinfo: {
-        url: 'https://open.tiktokapis.com/v2/user/info/',
-        async request(context) {
-          return await fetch(context.provider.userinfo?.url as string, {
-            headers: {
-              Authorization: `Bearer ${context.tokens.access_token}`,
-            },
-          }).then(res => res.json());
-        },
-      },
-      clientId: process.env.TIKTOK_CLIENT_KEY || '',
-      clientSecret: process.env.TIKTOK_CLIENT_SECRET || '',
-      profile(profile) {
+      token: 'https://open.tiktokapis.com/v2/oauth/token/',
+      userinfo: 'https://open.tiktokapis.com/v2/user/info/',
+      clientId: process.env.TIKTOK_CLIENT_KEY || "",
+      clientSecret: process.env.TIKTOK_CLIENT_SECRET || "",
+      profile(profile: any) {
         return {
-          id: profile.data.user.open_id,
-          name: profile.data.user.display_name,
-          email: `${profile.data.user.open_id}@tiktok.local`,
-          image: profile.data.user.avatar_url,
+          id: profile.data?.user?.open_id || profile.open_id,
+          name: profile.data?.user?.display_name || profile.display_name,
+          email: `${profile.data?.user?.open_id || profile.open_id}@tiktok.local`,
+          image: profile.data?.user?.avatar_url || profile.avatar_url,
         };
       },
     },
 
-    // Twitter/X OAuth
+    // Instagram OAuth (via Facebook)
+    {
+      id: 'instagram',
+      name: 'Instagram',
+      type: 'oauth',
+      authorization: {
+        url: 'https://api.instagram.com/oauth/authorize',
+        params: {
+          scope: 'user_profile,user_media',
+        },
+      },
+      token: 'https://api.instagram.com/oauth/access_token',
+      userinfo: 'https://graph.instagram.com/me?fields=id,username,account_type',
+      clientId: process.env.INSTAGRAM_CLIENT_ID || "",
+      clientSecret: process.env.INSTAGRAM_CLIENT_SECRET || "",
+      profile(profile: any) {
+        return {
+          id: profile.id,
+          name: profile.username,
+          email: `${profile.username}@instagram.local`,
+          image: `https://www.instagram.com/${profile.username}/`,
+        };
+      },
+    },
+
+    // X (Twitter) OAuth 2.0
     {
       id: 'twitter',
-      name: 'Twitter',
+      name: 'X (Twitter)',
       type: 'oauth',
       version: '2.0',
       authorization: {
@@ -120,24 +126,25 @@ export const authOptions: NextAuthOptions = {
         },
       },
       token: 'https://api.twitter.com/2/oauth2/token',
-      userinfo: 'https://api.twitter.com/2/users/me',
-      clientId: process.env.TWITTER_CLIENT_ID || '',
-      clientSecret: process.env.TWITTER_CLIENT_SECRET || '',
-      profile(profile) {
+      userinfo: 'https://api.twitter.com/2/users/me?user.fields=profile_image_url',
+      clientId: process.env.TWITTER_CLIENT_ID || "",
+      clientSecret: process.env.TWITTER_CLIENT_SECRET || "",
+      profile(profile: any) {
         return {
-          id: profile.data.id,
-          name: profile.data.name,
-          email: `${profile.data.username}@twitter.local`,
-          image: profile.data.profile_image_url,
+          id: profile.data?.id || profile.id,
+          name: profile.data?.name || profile.name,
+          email: `${profile.data?.username || profile.username}@twitter.local`,
+          image: profile.data?.profile_image_url || profile.profile_image_url,
         };
       },
     },
 
-    // Email/Password (Credentials)
+    // Email & Password
     CredentialsProvider({
-      name: 'Credentials',
+      id: 'credentials',
+      name: 'Email & Password',
       credentials: {
-        email: { label: "Email", type: "email" },
+        email: { label: "Email", type: "email", placeholder: "your@email.com" },
         password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
@@ -168,70 +175,338 @@ export const authOptions: NextAuthOptions = {
           name: user.name,
           image: user.image,
           role: user.role,
-        };
+        } as any;
+      }
+    }),
+
+    // Phone Number (OTP)
+    CredentialsProvider({
+      id: 'phone',
+      name: 'Phone Number',
+      credentials: {
+        phone: { label: "Phone", type: "tel", placeholder: "0812345678" },
+        otp: { label: "OTP Code", type: "text", placeholder: "123456" }
+      },
+      async authorize(credentials) {
+        if (!credentials?.phone) {
+          throw new Error('กรุณากรอกเบอร์โทรศัพท์');
+        }
+
+        // Normalize phone number (remove spaces, dashes)
+        const normalizedPhone = credentials.phone.replace(/[\s\-]/g, '');
+
+        // If OTP is provided, verify it
+        if (credentials.otp) {
+          // TODO: Verify OTP from your SMS provider (Twilio, AWS SNS, etc.)
+          // For now, we'll check against a stored OTP in database
+          
+          const otpRecord = await prisma.$queryRaw`
+            SELECT * FROM otp_codes 
+            WHERE phone = ${normalizedPhone} 
+            AND code = ${credentials.otp}
+            AND expires_at > NOW()
+            AND used = false
+            ORDER BY created_at DESC
+            LIMIT 1
+          ` as any[];
+
+          if (!otpRecord || otpRecord.length === 0) {
+            throw new Error('รหัส OTP ไม่ถูกต้องหรือหมดอายุ');
+          }
+
+          // Mark OTP as used
+          await prisma.$executeRaw`
+            UPDATE otp_codes 
+            SET used = true 
+            WHERE id = ${otpRecord[0].id}
+          `;
+
+          // Find or create user with this phone
+          let user = await prisma.user.findFirst({
+            where: { 
+              OR: [
+                { phone: normalizedPhone },
+                { email: `${normalizedPhone}@phone.local` }
+              ]
+            }
+          });
+
+          if (!user) {
+            // Create new user with phone
+            user = await prisma.user.create({
+              data: {
+                phone: normalizedPhone,
+                email: `${normalizedPhone}@phone.local`,
+                name: normalizedPhone,
+                role: 'USER',
+              }
+            });
+          }
+
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name || normalizedPhone,
+            image: user.image,
+            role: user.role,
+            phone: normalizedPhone,
+          } as any;
+        }
+
+        // If no OTP, send OTP (this will throw error to show OTP input)
+        throw new Error('OTP_REQUIRED');
       }
     }),
   ],
 
+  // หน้าที่ใช้สำหรับ sign in และ error
+  pages: {
+    signIn: "/signin",
+    error: "/signin",
+    verifyRequest: "/signin",
+  },
+
   callbacks: {
-    async signIn({ user, account, profile }) {
-      // Allow all sign-ins
-      return true;
-    },
-
-    async jwt({ token, user, account, trigger, session }) {
-      // Initial sign in
-      if (user) {
-        token.id = user.id;
-        token.role = (user as any).role || 'USER';
-        token.email = user.email;
-        token.name = user.name;
-        token.picture = user.image;
-      }
-
-      // Update session
-      if (trigger === 'update' && session) {
-        token.name = session.name;
-        token.role = session.role;
-      }
-
-      return token;
-    },
-
+    // เพิ่ม user id และ role เข้าไปใน session
     async session({ session, token }) {
-      if (session.user) {
-        (session.user as any).id = token.id;
-        (session.user as any).role = token.role || 'USER';
-        session.user.email = token.email as string;
-        session.user.name = token.name as string;
-        session.user.image = token.picture as string;
+      if (session?.user) {
+        session.user.id = token.sub!;
+        
+        // ดึง role จาก database (real-time)
+        if (token.email) {
+          try {
+            const dbUser = await prisma.user.findUnique({
+              where: { email: token.email },
+              select: { role: true },
+            });
+            session.user.role = dbUser?.role || "USER";
+          } catch (error) {
+            console.error("Error fetching user role:", error);
+            session.user.role = "USER";
+          }
+        }
       }
       return session;
     },
+    
+    async jwt({ token, user }) {
+      if (user) {
+        token.role = (user as any).role || "USER";
+      }
+      return token;
+    },
 
+    async signIn({ user, account }) {
+      try {
+        // ตรวจสอบว่ามี user email
+        if (!user.email) {
+          console.error("No email provided");
+          return false;
+        }
+
+        // สำหรับ user ใหม่ ให้ set role เป็น USER
+        if (account && user.email) {
+          const existingUser = await prisma.user.findUnique({
+            where: { email: user.email },
+          });
+
+          // Log สำหรับ debug
+          if (!existingUser) {
+            console.log("New user signing in:", user.email);
+          }
+        }
+        
+        return true;
+      } catch (error) {
+        console.error("Sign in error:", error);
+        return false;
+      }
+    },
+
+    // Custom redirect behavior
     async redirect({ url, baseUrl }) {
-      // Allows relative callback URLs
-      if (url.startsWith("/")) return `${baseUrl}${url}`;
-      // Allows callback URLs on the same origin
-      else if (new URL(url).origin === baseUrl) return url;
+      // ถ้า URL เริ่มต้นด้วย "/" ให้ใช้ baseUrl + url
+      if (url.startsWith("/")) {
+        return `${baseUrl}${url}`;
+      }
+      // ถ้า URL เป็น baseUrl ให้ redirect ได้
+      else if (new URL(url).origin === baseUrl) {
+        return url;
+      }
+      // ถ้าไม่ใช่ ให้กลับไปหน้าแรก
       return baseUrl;
-    }
+    },
   },
 
   session: {
-    strategy: 'jwt',
+    strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
 
-  pages: {
-    signIn: '/signin',
-    error: '/signin',
-  },
-
   secret: process.env.NEXTAUTH_SECRET,
-  
-  debug: process.env.NODE_ENV === 'development',
+
+  // เปิด debug mode สำหรับ development
+  debug: process.env.NODE_ENV === "development",
+
+  // Event handlers สำหรับ logging
+  events: {
+    async signIn({ user, account, isNewUser }) {
+      console.log("User signed in:", {
+        email: user.email,
+        provider: account?.provider,
+        isNewUser
+      });
+    },
+    async signOut({ token }) {
+      console.log("User signed out:", token.email);
+    },
+    async createUser({ user }) {
+      console.log("New user created:", user.email);
+    },
+  },
 };
+
+/**
+ * Hash password using bcrypt
+ */
+export async function hashPassword(password: string): Promise<string> {
+  const salt = await bcrypt.genSalt(10);
+  return bcrypt.hash(password, salt);
+}
+
+/**
+ * Compare password with hash
+ */
+export async function comparePassword(password: string, hash: string): Promise<boolean> {
+  return bcrypt.compare(password, hash);
+}
+
+/**
+ * Get server session with proper typing
+ */
+export async function getSession() {
+  return await getServerSession(authOptions);
+}
+
+/**
+ * Require authentication - return 401 if not authenticated
+ */
+export async function requireAuth() {
+  const session = await getServerSession(authOptions);
+  
+  if (!session?.user) {
+    return {
+      error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }),
+      session: null
+    };
+  }
+  
+  return {
+    error: null,
+    session
+  };
+}
+
+/**
+ * Require specific role - return 403 if user doesn't have required role
+ */
+export async function requireRole(allowedRoles: string[]) {
+  const session = await getServerSession(authOptions);
+  
+  if (!session?.user) {
+    return {
+      error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }),
+      session: null
+    };
+  }
+  
+  const userRole = (session.user as any).role || 'USER';
+  
+  if (!allowedRoles.includes(userRole)) {
+    return {
+      error: NextResponse.json({ error: 'Forbidden' }, { status: 403 }),
+      session: null
+    };
+  }
+  
+  return {
+    error: null,
+    session
+  };
+}
+
+/**
+ * Require admin role
+ */
+export async function requireAdmin() {
+  return requireRole(['ADMIN']);
+}
+
+/**
+ * Require shop owner role
+ */
+export async function requireShopOwner() {
+  return requireRole(['SHOP', 'ADMIN']);
+}
+
+/**
+ * Require creator role
+ */
+export async function requireCreator() {
+  return requireRole(['CREATOR', 'ADMIN']);
+}
+
+/**
+ * Check if user is authenticated (returns boolean)
+ */
+export async function isAuthenticated() {
+  const session = await getServerSession(authOptions);
+  return !!session?.user;
+}
+
+/**
+ * Check if user has specific role
+ */
+export async function hasRole(role: string) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user) return false;
+  
+  const userRole = (session.user as any).role || 'USER';
+  return userRole === role;
+}
+
+/**
+ * Check if user is admin
+ */
+export async function isAdmin() {
+  return hasRole('ADMIN');
+}
+
+/**
+ * Get current user from session
+ */
+export async function getCurrentUser() {
+  const session = await getServerSession(authOptions);
+  return session?.user || null;
+}
+
+/**
+ * Get user ID from session
+ */
+export async function getUserId() {
+  const session = await getServerSession(authOptions);
+  return (session?.user as any)?.id || null;
+}
+
+/**
+ * Get user role from session
+ */
+export async function getUserRole() {
+  const session = await getServerSession(authOptions);
+  if (!session?.user) return null;
+  
+  return (session.user as any).role || 'USER';
+}
 
 /**
  * Hash password using bcrypt
