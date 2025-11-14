@@ -1,61 +1,38 @@
-// src/app/api/locations/route.ts
-import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
-
+import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const type = searchParams.get("type");
-    const provinceId = searchParams.get("provinceId");
-    const amphureId = searchParams.get("amphureId");
+    const type = searchParams.get('type');
 
-    // 1. Get Provinces
-    if (type === "provinces") {
+    if (type === 'provinces') {
       const provinces = await prisma.loc_provinces.findMany({
-        orderBy: {
-          name_th: "asc",
-        },
+        orderBy: { name_th: 'asc' },
       });
-      return NextResponse.json({ data: provinces });
+      return NextResponse.json(provinces);
     }
 
-    // 2. Get Amphures by Province
-    if (type === "amphures" && provinceId) {
+    if (type === 'amphures') {
+      const provinceId = searchParams.get('province_id');
       const amphures = await prisma.loc_amphures.findMany({
-        where: {
-          province_id: parseInt(provinceId),
-        },
-        orderBy: {
-          name_th: "asc",
-        },
+        where: provinceId ? { province_id: parseInt(provinceId) } : undefined,
+        orderBy: { name_th: 'asc' },
       });
-      return NextResponse.json({ data: amphures });
+      return NextResponse.json(amphures);
     }
 
-    // 3. Get Tambons by Amphure
-    if (type === "tambons" && amphureId) {
+    if (type === 'tambons') {
+      const amphureId = searchParams.get('amphure_id');
       const tambons = await prisma.loc_tambons.findMany({
-        where: {
-          amphure_id: parseInt(amphureId),
-        },
-        orderBy: {
-          name_th: "asc",
-        },
+        where: amphureId ? { amphure_id: parseInt(amphureId) } : undefined,
+        orderBy: { name_th: 'asc' },
       });
-      return NextResponse.json({ data: tambons });
+      return NextResponse.json(tambons);
     }
 
-    return NextResponse.json(
-      { error: "Invalid parameters. Use type=provinces|amphures|tambons" },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: 'Invalid type' }, { status: 400 });
   } catch (error) {
-    console.error("Error fetching locations:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch locations" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to fetch locations' }, { status: 500 });
   }
 }

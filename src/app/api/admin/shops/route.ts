@@ -1,42 +1,43 @@
-// src/app/api/admin/shops/route.ts
-
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
 import prisma from '@/lib/prisma';
+import { requireAdmin } from '@/lib/auth';
 
-export const dynamic = 'force-dynamic';
-
-/**
- * GET /api/admin/shops?status=PENDING_APPROVAL
- * ดึงรายการร้านสำหรับ admin
- */
 export async function GET(request: NextRequest) {
+  const { error } = await requireAdmin();
+  if (error) return error;
+
   try {
-    // TODO: ตรวจสอบ admin authentication
-    // const session = await getServerSession();
-    // if (!session || !session.user.isAdmin) {
-    //   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    // }
+    const { searchParams } = new URL(request.url);
+    const status = searchParams.get('status');
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '10');
 
-    const searchParams = request.nextUrl.searchParams;
-    const status = searchParams.get('status') || 'PENDING_APPROVAL';
+    const where = status ? { status: status as any } : {};
 
-    // ใช้ function ที่สร้างไว้
-    const shops = await prisma.$queryRaw<any[]>`
-      SELECT * FROM get_pending_shops_for_admin()
-    `;
+    const [shops, total] = await Promise.all([
+      prisma.shop.findMany({
+        where,
+        skip: (page - 1) * limit,
+        take: limit,
+        include: {
+          User: true,
+          ShopCategory: true,
+        },
+        orderBy: { createdAt: 'desc' },
+      }),
+      prisma.shop.count({ where }),
+    ]);
 
-    return NextResponse.json(shops);
-
-  } catch (error) {
-    console.error('Error fetching shops for admin:', error);
-    return NextResponse.json(
-      { 
-        error: 'Failed to fetch shops',
-        detail: error instanceof Error ? error.message : 'Unknown error'
+    return NextResponse.json({
+      shops,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
       },
-      { status: 500 }
-    );
+    });
+  } catch (err) {
+    return NextResponse.json({ error: 'Failed to fetch shops' }, { status: 500 });
   }
 }

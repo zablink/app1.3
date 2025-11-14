@@ -1,115 +1,22 @@
-// src/app/api/admin/shops/[id]/approve/route.ts
-
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
 import prisma from '@/lib/prisma';
+import { requireAdmin } from '@/lib/auth';
 
-/**
- * POST /api/admin/shops/[id]/approve
- * Admin อนุมัติร้าน
- */
 export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const { error } = await requireAdmin();
+  if (error) return error;
+
   try {
-    // TODO: ตรวจสอบ admin authentication
-    const adminId = 'admin_temp'; // จะได้จาก session
-
-    const shopId = parseInt(params.id);
-    if (isNaN(shopId)) {
-      return NextResponse.json(
-        { error: 'Invalid shop ID' },
-        { status: 400 }
-      );
-    }
-
-    // ตรวจสอบว่าร้านอยู่ในสถานะ PENDING_APPROVAL
-    const shop = await prisma.simple_shops.findUnique({
-      where: { id: shopId },
+    const shop = await prisma.shop.update({
+      where: { id: params.id },
+      data: { status: 'APPROVED' },
     });
 
-    if (!shop) {
-      return NextResponse.json(
-        { error: 'Shop not found' },
-        { status: 404 }
-      );
-    }
-
-    if (shop.status !== 'PENDING_APPROVAL') {
-      return NextResponse.json(
-        { error: `Shop is already ${shop.status}` },
-        { status: 400 }
-      );
-    }
-
-    // อนุมัติร้าน
-    await prisma.simple_shops.update({
-      where: { id: shopId },
-      data: {
-        status: 'APPROVED',
-        approved_at: new Date(),
-        approved_by: adminId,
-        rejection_reason: null,
-        updated_at: new Date(),
-      },
-    });
-
-    // สร้าง FREE subscription ให้ร้าน
-    await prisma.$executeRaw`
-      INSERT INTO shop_subscriptions (
-        shop_id,
-        current_package_tier,
-        start_date,
-        end_date,
-        status,
-        original_price,
-        final_price,
-        payment_status,
-        paid_at
-      ) VALUES (
-        ${shopId},
-        'FREE',
-        NOW(),
-        NOW() + INTERVAL '100 years',
-        'ACTIVE',
-        0,
-        0,
-        'PAID',
-        NOW()
-      )
-      ON CONFLICT (shop_id) DO NOTHING
-    `;
-
-    // Log admin action
-    await prisma.$executeRaw`
-      INSERT INTO admin_action_logs (admin_id, shop_id, action)
-      VALUES (${adminId}, ${shopId}, 'APPROVED')
-    `;
-
-    // TODO: ส่ง email แจ้ง owner
-    // await sendEmail({
-    //   to: shop.email,
-    //   subject: 'ร้านของคุณได้รับการอนุมัติแล้ว!',
-    //   template: 'shop-approved',
-    //   data: { shopName: shop.name }
-    // });
-
-    return NextResponse.json({
-      success: true,
-      message: 'Shop approved successfully',
-      shopId: shopId,
-    });
-
-  } catch (error) {
-    console.error('Error approving shop:', error);
-    return NextResponse.json(
-      { 
-        error: 'Failed to approve shop',
-        detail: error instanceof Error ? error.message : 'Unknown error'
-      },
-      { status: 500 }
-    );
+    return NextResponse.json(shop);
+  } catch (err) {
+    return NextResponse.json({ error: 'Failed to approve shop' }, { status: 500 });
   }
 }
