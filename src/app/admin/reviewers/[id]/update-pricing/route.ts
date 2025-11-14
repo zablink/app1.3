@@ -1,4 +1,4 @@
-// app/api/admin/reviewers/[id]/update-pricing/route.ts
+// app/admin/reviewers/[id]/update-pricing/route.ts
 // Admin เปลี่ยนราคา Reviewer พร้อมบันทึก History
 
 import { NextRequest, NextResponse } from "next/server";
@@ -208,3 +208,4 @@ export async function GET(
     );
   }
 }
+
