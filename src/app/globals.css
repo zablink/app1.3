@@ -2,82 +2,132 @@
 @tailwind components;
 @tailwind utilities;
 
-/* CSS Variables สำหรับ Dark Mode (Optional) */
-@layer base {
-  :root {
-    --color-primary: #f97316;
-    --color-secondary: #fb923c;
-    --color-accent: #fdba74;
-    --color-text-primary: #111827;
-    --color-text-secondary: #6b7280;
-    --color-bg-primary: #ffffff;
-    --color-bg-secondary: #f9fafb;
-  }
+/* ============================================
+   Custom Utilities - ไม่ใช้ @layer เพื่อหลีกเลี่ยง error
+   ============================================ */
+
+/* Buttons */
+.btn-primary {
+  padding: 0.75rem 1.5rem;
+  background-color: #f97316;
+  color: white;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  transition: background-color 0.2s;
 }
 
-/* Custom Scrollbar */
-@layer utilities {
-  /* Webkit browsers (Chrome, Safari, Edge) */
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 10px;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: #888;
-    border-radius: 10px;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #555;
-  }
+.btn-primary:hover {
+  background-color: #ea580c;
 }
 
-/* Loading Animation */
-@layer utilities {
-  .animate-pulse {
-    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  }
-
-  @keyframes pulse {
-    0%, 100% {
-      opacity: 1;
-    }
-    50% {
-      opacity: 0.5;
-    }
-  }
+.btn-primary:disabled {
+  background-color: #d1d5db;
+  cursor: not-allowed;
 }
 
-/* Text Gradient */
-@layer utilities {
-  .text-gradient {
-    background: linear-gradient(135deg, #f97316 0%, #fb923c 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
+.btn-secondary {
+  padding: 0.75rem 1.5rem;
+  border: 2px solid #f97316;
+  color: #f97316;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  transition: background-color 0.2s;
+  background-color: transparent;
+}
+
+.btn-secondary:hover {
+  background-color: #fff7ed;
 }
 
 /* Card Hover Effect */
-@layer components {
-  .card-hover {
-    @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
+.card-hover {
+  transition: all 0.3s ease;
+}
+
+.card-hover:hover {
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  transform: translateY(-0.25rem);
+}
+
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Text Gradient */
+.text-gradient {
+  background: linear-gradient(135deg, #f97316 0%, #fb923c 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Loading Animation */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
   }
-  
-  .btn-primary {
-    @apply px-6 py-3 bg-orange-600 text-white rounded-lg font-medium 
-           hover:bg-orange-700 transition-colors duration-200
-           disabled:bg-gray-300 disabled:cursor-not-allowed;
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Fade In Animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
   }
-  
-  .btn-secondary {
-    @apply px-6 py-3 border-2 border-orange-600 text-orange-600 rounded-lg font-medium
-           hover:bg-orange-50 transition-colors duration-200;
+  to {
+    opacity: 1;
   }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Slide In From Right Animation */
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-in-from-right {
+  animation: slideInRight 0.3s ease-out;
+}
+
+/* Reset some default styles */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }

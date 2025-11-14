@@ -625,6 +625,48 @@ model Withdrawal {
   @@map("withdrawals")
 }
 
+
+// ========================================
+// SITE SETTINGS & CUSTOMIZATION
+// ========================================
+
+model SiteSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique  // e.g., "site_name", "primary_color", "logo_url"
+  value     String   @db.Text // JSON string สำหรับข้อมูลที่ซับซ้อน
+  category  String   // "branding", "homepage", "navigation", "footer", "seo", "colors"
+  dataType  String   @default("string") // "string", "json", "color", "image", "number", "boolean"
+  
+  label     String   // ชื่อที่แสดงใน Admin (ภาษาไทย)
+  
+  description String? @db.Text // คำอธิบายสำหรับ Admin
+  
+  isPublic  Boolean  @default(true) // แสดงใน Frontend หรือไม่
+  
+  updatedBy String?  // Admin user id ที่แก้ไขล่าสุด
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+  
+  @@index([category])
+  @@index([key])
+  @@map("site_settings")
+}
+
+// สำหรับ History/Audit Log
+model SiteSettingHistory {
+  id          String   @id @default(cuid())
+  settingKey  String   // reference to SiteSetting.key
+  oldValue    String?  @db.Text
+  newValue    String   @db.Text
+  changedBy   String   // Admin user id
+  changedAt   DateTime @default(now())
+  reason      String?  @db.Text // เหตุผลที่เปลี่ยน (optional)
+  
+  @@index([settingKey, changedAt])
+  @@map("site_setting_history")
+}
+
+
 // ========================================
 // ENUMS
 // ========================================
