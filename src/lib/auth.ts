@@ -179,84 +179,22 @@ export const authOptions: NextAuthOptions = {
       }
     }),
 
-    // Phone Number (OTP)
-    CredentialsProvider({
-      id: 'phone',
-      name: 'Phone Number',
-      credentials: {
-        phone: { label: "Phone", type: "tel", placeholder: "0812345678" },
-        otp: { label: "OTP Code", type: "text", placeholder: "123456" }
-      },
-      async authorize(credentials) {
-        if (!credentials?.phone) {
-          throw new Error('กรุณากรอกเบอร์โทรศัพท์');
-        }
-
-        // Normalize phone number (remove spaces, dashes)
-        const normalizedPhone = credentials.phone.replace(/[\s\-]/g, '');
-
-        // If OTP is provided, verify it
-        if (credentials.otp) {
-          // TODO: Verify OTP from your SMS provider (Twilio, AWS SNS, etc.)
-          // For now, we'll check against a stored OTP in database
-          
-          const otpRecord = await prisma.$queryRaw`
-            SELECT * FROM otp_codes 
-            WHERE phone = ${normalizedPhone} 
-            AND code = ${credentials.otp}
-            AND expires_at > NOW()
-            AND used = false
-            ORDER BY created_at DESC
-            LIMIT 1
-          ` as any[];
-
-          if (!otpRecord || otpRecord.length === 0) {
-            throw new Error('รหัส OTP ไม่ถูกต้องหรือหมดอายุ');
-          }
-
-          // Mark OTP as used
-          await prisma.$executeRaw`
-            UPDATE otp_codes 
-            SET used = true 
-            WHERE id = ${otpRecord[0].id}
-          `;
-
-          // Find or create user with this phone
-          let user = await prisma.user.findFirst({
-            where: { 
-              OR: [
-                { phone: normalizedPhone },
-                { email: `${normalizedPhone}@phone.local` }
-              ]
-            }
-          });
-
-          if (!user) {
-            // Create new user with phone
-            user = await prisma.user.create({
-              data: {
-                phone: normalizedPhone,
-                email: `${normalizedPhone}@phone.local`,
-                name: normalizedPhone,
-                role: 'USER',
-              }
-            });
-          }
-
-          return {
-            id: user.id,
-            email: user.email,
-            name: user.name || normalizedPhone,
-            image: user.image,
-            role: user.role,
-            phone: normalizedPhone,
-          } as any;
-        }
-
-        // If no OTP, send OTP (this will throw error to show OTP input)
-        throw new Error('OTP_REQUIRED');
-      }
-    }),
+    // Phone Number (OTP) - TODO: Enable after adding otp_codes table and SMS service
+    // CredentialsProvider({
+    //   id: 'phone',
+    //   name: 'Phone Number',
+    //   credentials: {
+    //     phone: { label: "Phone", type: "tel", placeholder: "0812345678" },
+    //     otp: { label: "OTP Code", type: "text", placeholder: "123456" }
+    //   },
+    //   async authorize(credentials) {
+    //     if (!credentials?.phone) {
+    //       throw new Error('กรุณากรอกเบอร์โทรศัพท์');
+    //     }
+    //     // ... OTP verification logic
+    //     throw new Error('OTP_REQUIRED');
+    //   }
+    // }),
   ],
 
   // หน้าที่ใช้สำหรับ sign in และ error
@@ -508,144 +446,3 @@ export async function getUserRole() {
   return (session.user as any).role || 'USER';
 }
 
-/**
- * Hash password using bcrypt
- */
-export async function hashPassword(password: string): Promise<string> {
-  const salt = await bcrypt.genSalt(10);
-  return bcrypt.hash(password, salt);
-}
-
-/**
- * Compare password with hash
- */
-export async function comparePassword(password: string, hash: string): Promise<boolean> {
-  return bcrypt.compare(password, hash);
-}
-
-/**
- * Get server session with proper typing
- */
-export async function getSession() {
-  return await getServerSession(authOptions);
-}
-
-/**
- * Require authentication - return 401 if not authenticated
- */
-export async function requireAuth() {
-  const session = await getServerSession(authOptions);
-  
-  if (!session?.user) {
-    return {
-      error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }),
-      session: null
-    };
-  }
-  
-  return {
-    error: null,
-    session
-  };
-}
-
-/**
- * Require specific role - return 403 if user doesn't have required role
- */
-export async function requireRole(allowedRoles: string[]) {
-  const session = await getServerSession(authOptions);
-  
-  if (!session?.user) {
-    return {
-      error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }),
-      session: null
-    };
-  }
-  
-  const userRole = (session.user as any).role || 'USER';
-  
-  if (!allowedRoles.includes(userRole)) {
-    return {
-      error: NextResponse.json({ error: 'Forbidden' }, { status: 403 }),
-      session: null
-    };
-  }
-  
-  return {
-    error: null,
-    session
-  };
-}
-
-/**
- * Require admin role
- */
-export async function requireAdmin() {
-  return requireRole(['ADMIN']);
-}
-
-/**
- * Require shop owner role
- */
-export async function requireShopOwner() {
-  return requireRole(['SHOP', 'ADMIN']);
-}
-
-/**
- * Require creator role
- */
-export async function requireCreator() {
-  return requireRole(['CREATOR', 'ADMIN']);
-}
-
-/**
- * Check if user is authenticated (returns boolean)
- */
-export async function isAuthenticated() {
-  const session = await getServerSession(authOptions);
-  return !!session?.user;
-}
-
-/**
- * Check if user has specific role
- */
-export async function hasRole(role: string) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user) return false;
-  
-  const userRole = (session.user as any).role || 'USER';
-  return userRole === role;
-}
-
-/**
- * Check if user is admin
- */
-export async function isAdmin() {
-  return hasRole('ADMIN');
-}
-
-/**
- * Get current user from session
- */
-export async function getCurrentUser() {
-  const session = await getServerSession(authOptions);
-  return session?.user || null;
-}
-
-/**
- * Get user ID from session
- */
-export async function getUserId() {
-  const session = await getServerSession(authOptions);
-  return session?.user?.id || null;
-}
-
-/**
- * Get user role from session
- */
-export async function getUserRole() {
-  const session = await getServerSession(authOptions);
-  if (!session?.user) return null;
-  
-  return (session.user as any).role || 'USER';
-}
