@@ -1,3 +1,5 @@
+// src/app/api/shops/route.ts
+
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
@@ -38,7 +40,6 @@ export async function GET(request: NextRequest) {
           id: true,
           name: true,
           description: true,
-          logo: true,
           address: true,
           categoryId: true,
           province_id: true,
@@ -98,7 +99,6 @@ export async function GET(request: NextRequest) {
         id: string;
         name: string;
         description: string | null;
-        logo: string | null;
         address: string | null;
         categoryId: string;
         category_name: string;
@@ -114,7 +114,6 @@ export async function GET(request: NextRequest) {
         s.id,
         s.name,
         s.description,
-        s.logo,
         s.address,
         s."categoryId",
         sc.name as category_name,
