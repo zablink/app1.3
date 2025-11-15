@@ -1,5 +1,7 @@
 // src/app/api/shops/route.ts
 
+// src/app/api/shops/route.ts
+
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
@@ -104,11 +106,15 @@ export async function GET(request: NextRequest) {
     const pointExpr = Prisma.sql`ST_SetSRID(ST_MakePoint(${longitude}, ${latitude}), 4326)::geography`;
 
     if (areaId && chosenLevel) {
-      // Decide which shop field to compare based on level
-      const shopField =
-        chosenLevel === 'tambon' ? Prisma.raw(`s.tambon_id`) :
-        chosenLevel === 'amphure' ? Prisma.raw(`s.amphure_id`) :
-        Prisma.raw(`s.province_id`);
+      // Build area condition as a proper Prisma.sql fragment (avoid embedding Prisma.raw objects dynamically)
+      let areaCondition: Prisma.Sql;
+      if (chosenLevel === 'tambon') {
+        areaCondition = Prisma.sql`s.tambon_id = ${areaId}`;
+      } else if (chosenLevel === 'amphure') {
+        areaCondition = Prisma.sql`s.amphure_id = ${areaId}`;
+      } else {
+        areaCondition = Prisma.sql`s.province_id = ${areaId}`;
+      }
 
       // Prefer shops in same area first (exact match), but also include nearby shops within small radius
       const smallRadius = 5 * KM; // e.g., 5km fallback
@@ -120,7 +126,7 @@ export async function GET(request: NextRequest) {
         FROM "Shop" s
         INNER JOIN "ShopCategory" sc ON s."categoryId" = sc.id
         WHERE s.status = 'APPROVED' AND (${Prisma.join([
-          Prisma.sql`${shopField} = ${areaId}`,
+          areaCondition,
           Prisma.sql`ST_DWithin(s.location::geography, ${pointExpr}, ${smallRadius})`
         ], Prisma.sql` OR `)})
         ${categoryId ? Prisma.sql`AND s."categoryId" = ${categoryId}` : Prisma.sql``}
