@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { Prisma } from '@prisma/client';
 
 /**
  * GET /api/shops
@@ -19,7 +20,7 @@ export async function GET(request: NextRequest) {
     const lat = searchParams.get('lat');
     const lng = searchParams.get('lng');
     const limit = parseInt(searchParams.get('limit') || '50');
-    const sortBy = searchParams.get('sortBy') || 'createdAt';
+    const sortBy = (searchParams.get('sortBy') || 'createdAt') as 'distance' | 'name' | 'createdAt';
     const categoryId = searchParams.get('category');
     const provinceId = searchParams.get('province');
 
@@ -31,7 +32,7 @@ export async function GET(request: NextRequest) {
         where: {
           status: 'APPROVED',
           ...(categoryId && { categoryId }),
-          ...(provinceId && { province_id: parseInt(provinceId) }),
+          ...(provinceId && { province_id: provinceId ? parseInt(provinceId) : undefined }),
         },
         select: {
           id: true,
@@ -68,14 +69,30 @@ export async function GET(request: NextRequest) {
     // ============================================
     // กรณีที่ 2: มี Location (คำนวณ Distance)
     // ============================================
-    
-    // ใช้ PostGIS ST_Distance สำหรับคำนวณระยะทาง (meters)
-    // แปลงเป็น kilometers แล้ว sort ตามระยะทาง
-    
     const latitude = parseFloat(lat);
     const longitude = parseFloat(lng);
-    
-    // Raw query เพื่อใช้ PostGIS functions
+
+    // Build parameterized WHERE conditions using Prisma.sql
+    const conditions: Prisma.Sql[] = [Prisma.sql`s.status = 'APPROVED'`];
+
+    if (categoryId) {
+      conditions.push(Prisma.sql`s."categoryId" = ${categoryId}`);
+    }
+    if (provinceId) {
+      const provNum = parseInt(provinceId);
+      conditions.push(Prisma.sql`s.province_id = ${provNum}`);
+    }
+
+    // Distance expression (meters) - used in SELECT and ORDER BY when needed
+    const distanceMetersExpr = Prisma.sql`
+      ST_Distance(
+        s.location::geography,
+        ST_SetSRID(ST_MakePoint(${longitude}, ${latitude}), 4326)::geography
+      )
+    `;
+
+    // SELECT with distance (divide by 1000 -> km)
+    // Use parameterized query via Prisma.sql to avoid placeholder mismatches.
     const shopsWithDistance = await prisma.$queryRaw<
       Array<{
         id: string;
@@ -90,9 +107,9 @@ export async function GET(request: NextRequest) {
         tambon_id: number | null;
         has_physical_store: boolean;
         createdAt: Date;
-        distance: number; // in kilometers
+        distance: number | null; // in kilometers
       }>
-    >`
+    >(Prisma.sql`
       SELECT 
         s.id,
         s.name,
@@ -107,38 +124,28 @@ export async function GET(request: NextRequest) {
         s.has_physical_store,
         s."createdAt",
         CASE 
-          WHEN s.location IS NOT NULL THEN
-            ST_Distance(
-              s.location::geography,
-              ST_SetSRID(ST_MakePoint(${longitude}, ${latitude}), 4326)::geography
-            ) / 1000.0
-          ELSE 
-            NULL
+          WHEN s.location IS NOT NULL THEN (${distanceMetersExpr}) / 1000.0
+          ELSE NULL
         END as distance
       FROM "Shop" s
       INNER JOIN "ShopCategory" sc ON s."categoryId" = sc.id
-      WHERE 
-        s.status = 'APPROVED'
-        ${categoryId ? `AND s."categoryId" = '${categoryId}'` : ''}
-        ${provinceId ? `AND s.province_id = ${provinceId}` : ''}
-      ORDER BY 
-        CASE 
-          WHEN s.location IS NOT NULL THEN
-            ST_Distance(
-              s.location::geography,
-              ST_SetSRID(ST_MakePoint(${longitude}, ${latitude}), 4326)::geography
-            )
-          ELSE 
-            999999999
-        END ASC
+      WHERE ${Prisma.join(conditions, Prisma.sql` AND `)}
+      ORDER BY
+        ${
+          sortBy === 'distance'
+            ? Prisma.sql`${Prisma.sql`CASE WHEN s.location IS NOT NULL THEN (${distanceMetersExpr}) ELSE 999999999 END`} ASC`
+            : sortBy === 'name'
+            ? Prisma.sql`s.name ASC`
+            : Prisma.sql`s."createdAt" DESC`
+        }
       LIMIT ${limit}
-    `;
+    `);
 
     return NextResponse.json({
       success: true,
       shops: shopsWithDistance.map((shop) => ({
         ...shop,
-        distance: shop.distance ? parseFloat(shop.distance.toFixed(2)) : null,
+        distance: shop.distance !== null && shop.distance !== undefined ? parseFloat((shop.distance as number).toFixed(2)) : null,
         ShopCategory: {
           name: shop.category_name,
         },
