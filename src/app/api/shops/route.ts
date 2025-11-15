@@ -6,186 +6,184 @@ import { Prisma } from '@prisma/client';
 
 /**
  * GET /api/shops
- * 
- * Query Parameters:
- * - lat: latitude (optional)
- * - lng: longitude (optional)
- * - limit: number of shops to return (default: 50)
- * - sortBy: 'distance' | 'name' | 'createdAt' (default: 'createdAt')
- * - category: filter by category id
- * - province: filter by province id
+ * Behavior:
+ * 1) If no lat/lng -> return random shops (good UX)
+ * 2) If lat/lng -> try to find tambon containing point, else nearest tambon within radii,
+ *    else amphure, else province. When area found, query shops by that area or by distance within radius.
  */
+
+const KM = 1000;
+
+async function findAreaId(
+  areaTable: 'loc_tambons' | 'loc_amphures' | 'loc_provinces',
+  pointLng: number,
+  pointLat: number,
+  radiiMeters: number[]
+) {
+  // 1) try ST_Contains
+  const containsQuery = Prisma.sql`
+    SELECT id
+    FROM ${Prisma.raw(`"${areaTable}"`)}
+    WHERE ST_Contains(geom, ST_SetSRID(ST_MakePoint(${pointLng}, ${pointLat}), 4326))
+    LIMIT 1
+  `;
+  const containsRes: Array<{ id: number }> = await prisma.$queryRaw(containsQuery);
+  if (containsRes && containsRes.length > 0) return containsRes[0].id;
+
+  // 2) try progressive radii (nearest within radius)
+  for (const r of radiiMeters) {
+    const nearQuery = Prisma.sql`
+      SELECT id, ST_Distance(geom::geography, ST_SetSRID(ST_MakePoint(${pointLng}, ${pointLat}), 4326)::geography) AS dist
+      FROM ${Prisma.raw(`"${areaTable}"`)}
+      WHERE ST_DWithin(geom::geography, ST_SetSRID(ST_MakePoint(${pointLng}, ${pointLat}), 4326)::geography, ${r})
+      ORDER BY dist ASC
+      LIMIT 1
+    `;
+    const nearRes: Array<{ id: number; dist: number }> = await prisma.$queryRaw(nearQuery);
+    if (nearRes && nearRes.length > 0) return nearRes[0].id;
+  }
+
+  return null;
+}
+
 export async function GET(request: NextRequest) {
   try {
-    const searchParams = request.nextUrl.searchParams;
-    
-    const lat = searchParams.get('lat');
-    const lng = searchParams.get('lng');
-    const limit = parseInt(searchParams.get('limit') || '50');
-    const sortBy = (searchParams.get('sortBy') || 'createdAt') as 'distance' | 'name' | 'createdAt';
-    const categoryId = searchParams.get('category');
-    const provinceId = searchParams.get('province');
+    const sp = request.nextUrl.searchParams;
+    const lat = sp.get('lat');
+    const lng = sp.get('lng');
+    const limit = Number(sp.get('limit') || 50);
+    const categoryId = sp.get('category') || null;
+    const sortBy = (sp.get('sortBy') || 'createdAt') as 'distance' | 'name' | 'createdAt';
 
-    // ============================================
-    // กรณีที่ 1: ไม่มี Location (โหลดทั้งหมด)
-    // ============================================
+    // default radii (meters) to expand search area
+    const radiiMeters = [2 * KM, 5 * KM, 20 * KM, 50 * KM];
+
+    // ------------- No location: return random shops -------------
     if (!lat || !lng) {
-      const shops = await prisma.shop.findMany({
-        where: {
-          status: 'APPROVED',
-          ...(categoryId && { categoryId }),
-          ...(provinceId && { province_id: provinceId ? parseInt(provinceId) : undefined }),
-        },
-        select: {
-          id: true,
-          name: true,
-          description: true,
-          address: true,
-          categoryId: true,
-          province_id: true,
-          amphure_id: true,
-          tambon_id: true,
-          has_physical_store: true,
-          createdAt: true,
-          ShopCategory: {
-            select: {
-              name: true,
-            },
-          },
-        },
-        orderBy:
-          sortBy === 'name'
-            ? { name: 'asc' }
-            : { createdAt: 'desc' },
-        take: limit,
-      });
-
-      return NextResponse.json({
-        success: true,
-        shops: shops,
-        hasLocation: false,
-      });
+      // Use parameterized raw query for ORDER BY RANDOM()
+      const randomQuery = Prisma.sql`
+        SELECT s.id, s.name, s.description, s.address, s."categoryId", sc.name as category_name, s.amphure_id, s.tambon_id, s.has_physical_store, s."createdAt"
+        FROM "Shop" s
+        INNER JOIN "ShopCategory" sc ON s."categoryId" = sc.id
+        WHERE s.status = 'APPROVED'
+        ${categoryId ? Prisma.sql`AND s."categoryId" = ${categoryId}` : Prisma.sql``}
+        ORDER BY RANDOM()
+        LIMIT ${limit}
+      `;
+      const rows = await prisma.$queryRaw(randomQuery);
+      return NextResponse.json({ success: true, shops: rows, hasLocation: false });
     }
 
-    // ============================================
-    // กรณีที่ 2: มี Location (คำนวณ Distance)
-    // ============================================
     const latitude = parseFloat(lat);
     const longitude = parseFloat(lng);
 
-    // Build parameterized WHERE conditions using Prisma.sql
-    const conditions: Prisma.Sql[] = [Prisma.sql`s.status = 'APPROVED'`];
+    // ------------- Find area (tambon -> amphure -> province) -------------
+    // try tambon
+    const tambonId = await findAreaId('loc_tambons', longitude, latitude, radiiMeters);
+    let chosenLevel: 'tambon' | 'amphure' | 'province' | null = null;
+    let areaId: number | null = null;
 
-    if (categoryId) {
-      conditions.push(Prisma.sql`s."categoryId" = ${categoryId}`);
+    if (tambonId) {
+      chosenLevel = 'tambon';
+      areaId = tambonId;
+    } else {
+      const amphureId = await findAreaId('loc_amphures', longitude, latitude, radiiMeters);
+      if (amphureId) {
+        chosenLevel = 'amphure';
+        areaId = amphureId;
+      } else {
+        const provinceId = await findAreaId('loc_provinces', longitude, latitude, radiiMeters);
+        if (provinceId) {
+          chosenLevel = 'province';
+          areaId = provinceId;
+        }
+      }
     }
-    if (provinceId) {
-      const provNum = parseInt(provinceId);
-      conditions.push(Prisma.sql`s.province_id = ${provNum}`);
+
+    // ------------- If area found -> query shops by area or distance -------------
+    const pointExpr = Prisma.sql`ST_SetSRID(ST_MakePoint(${longitude}, ${latitude}), 4326)::geography`;
+
+    if (areaId && chosenLevel) {
+      // Decide which shop field to compare based on level
+      const shopField =
+        chosenLevel === 'tambon' ? Prisma.raw(`s.tambon_id`) :
+        chosenLevel === 'amphure' ? Prisma.raw(`s.amphure_id`) :
+        Prisma.raw(`s.province_id`);
+
+      // Prefer shops in same area first (exact match), but also include nearby shops within small radius
+      const smallRadius = 5 * KM; // e.g., 5km fallback
+      const shopsQuery = Prisma.sql`
+        SELECT
+          s.id, s.name, s.description, s.address, s."categoryId", sc.name as category_name,
+          s.amphure_id, s.tambon_id, s.has_physical_store, s."createdAt",
+          CASE WHEN s.location IS NOT NULL THEN ST_Distance(s.location::geography, ${pointExpr})/1000.0 ELSE NULL END as distance
+        FROM "Shop" s
+        INNER JOIN "ShopCategory" sc ON s."categoryId" = sc.id
+        WHERE s.status = 'APPROVED' AND (${Prisma.join([
+          Prisma.sql`${shopField} = ${areaId}`,
+          Prisma.sql`ST_DWithin(s.location::geography, ${pointExpr}, ${smallRadius})`
+        ], Prisma.sql` OR `)})
+        ${categoryId ? Prisma.sql`AND s."categoryId" = ${categoryId}` : Prisma.sql``}
+        ORDER BY
+          ${sortBy === 'distance' ? Prisma.sql`distance ASC NULLS LAST` : sortBy === 'name' ? Prisma.sql`s.name ASC` : Prisma.sql`s."createdAt" DESC`}
+        LIMIT ${limit}
+      `;
+      const shopsRes = await prisma.$queryRaw(shopsQuery);
+      if (shopsRes && shopsRes.length > 0) {
+        return NextResponse.json({
+          success: true,
+          shops: shopsRes.map((r: any) => ({ ...r, distance: r.distance !== null ? parseFloat(Number(r.distance).toFixed(2)) : null })),
+          hasLocation: true,
+          area: { level: chosenLevel, id: areaId },
+          userLocation: { lat: latitude, lng: longitude },
+        });
+      }
+      // else fallthrough to distance-only query
     }
 
-    // Distance expression (meters) - used in SELECT and ORDER BY when needed
-    const distanceMetersExpr = Prisma.sql`
-      ST_Distance(
-        s.location::geography,
-        ST_SetSRID(ST_MakePoint(${longitude}, ${latitude}), 4326)::geography
-      )
-    `;
+    // ------------- Distance-only fallback search -------------
+    // Expand radii until we find shops
+    for (const r of radiiMeters) {
+      const q = Prisma.sql`
+        SELECT
+          s.id, s.name, s.description, s.address, s."categoryId", sc.name as category_name,
+          s.amphure_id, s.tambon_id, s.has_physical_store, s."createdAt",
+          CASE WHEN s.location IS NOT NULL THEN ST_Distance(s.location::geography, ${pointExpr})/1000.0 ELSE NULL END as distance
+        FROM "Shop" s
+        INNER JOIN "ShopCategory" sc ON s."categoryId" = sc.id
+        WHERE s.status = 'APPROVED' AND ST_DWithin(s.location::geography, ${pointExpr}, ${r})
+        ${categoryId ? Prisma.sql`AND s."categoryId" = ${categoryId}` : Prisma.sql``}
+        ORDER BY ${Prisma.sql`distance ASC`}
+        LIMIT ${limit}
+      `;
+      const rows = await prisma.$queryRaw(q);
+      if (rows && rows.length > 0) {
+        return NextResponse.json({
+          success: true,
+          shops: rows.map((r: any) => ({ ...r, distance: r.distance !== null ? parseFloat(Number(r.distance).toFixed(2)) : null })),
+          hasLocation: true,
+          userLocation: { lat: latitude, lng: longitude },
+        });
+      }
+    }
 
-    // SELECT with distance (divide by 1000 -> km)
-    // Use parameterized query via Prisma.sql to avoid placeholder mismatches.
-    const shopsWithDistance = await prisma.$queryRaw<
-      Array<{
-        id: string;
-        name: string;
-        description: string | null;
-        address: string | null;
-        categoryId: string;
-        category_name: string;
-        province_id: number | null;
-        amphure_id: number | null;
-        tambon_id: number | null;
-        has_physical_store: boolean;
-        createdAt: Date;
-        distance: number | null; // in kilometers
-      }>
-    >(Prisma.sql`
-      SELECT 
-        s.id,
-        s.name,
-        s.description,
-        s.address,
-        s."categoryId",
-        sc.name as category_name,
-        s.province_id,
-        s.amphure_id,
-        s.tambon_id,
-        s.has_physical_store,
-        s."createdAt",
-        CASE 
-          WHEN s.location IS NOT NULL THEN (${distanceMetersExpr}) / 1000.0
-          ELSE NULL
-        END as distance
+    // ------------- Final fallback: return random shops (the initial set) -------------
+    const fallbackQuery = Prisma.sql`
+      SELECT s.id, s.name, s.description, s.address, s."categoryId", sc.name as category_name, s.amphure_id, s.tambon_id, s.has_physical_store, s."createdAt"
       FROM "Shop" s
       INNER JOIN "ShopCategory" sc ON s."categoryId" = sc.id
-      WHERE ${Prisma.join(conditions, Prisma.sql` AND `)}
-      ORDER BY
-        ${
-          sortBy === 'distance'
-            ? Prisma.sql`${Prisma.sql`CASE WHEN s.location IS NOT NULL THEN (${distanceMetersExpr}) ELSE 999999999 END`} ASC`
-            : sortBy === 'name'
-            ? Prisma.sql`s.name ASC`
-            : Prisma.sql`s."createdAt" DESC`
-        }
+      WHERE s.status = 'APPROVED'
+      ${categoryId ? Prisma.sql`AND s."categoryId" = ${categoryId}` : Prisma.sql``}
+      ORDER BY RANDOM()
       LIMIT ${limit}
-    `);
-
-    return NextResponse.json({
-      success: true,
-      shops: shopsWithDistance.map((shop) => ({
-        ...shop,
-        distance: shop.distance !== null && shop.distance !== undefined ? parseFloat((shop.distance as number).toFixed(2)) : null,
-        ShopCategory: {
-          name: shop.category_name,
-        },
-      })),
-      hasLocation: true,
-      userLocation: {
-        lat: latitude,
-        lng: longitude,
-      },
-    });
+    `;
+    const fallbackRows = await prisma.$queryRaw(fallbackQuery);
+    return NextResponse.json({ success: true, shops: fallbackRows, hasLocation: false });
   } catch (error) {
     console.error('Error fetching shops:', error);
-    
     return NextResponse.json(
-      {
-        success: false,
-        error: 'Failed to fetch shops',
-        message: error instanceof Error ? error.message : 'Unknown error',
-      },
+      { success: false, error: 'Failed to fetch shops', message: error instanceof Error ? error.message : 'Unknown' },
       { status: 500 }
     );
   }
 }
-
-/**
- * Distance Calculation Explanation:
- * 
- * ST_Distance(geography1, geography2)
- * - Returns distance in meters between two points
- * - Uses WGS84 spheroid (accurate for Earth surface)
- * 
- * ST_MakePoint(longitude, latitude)
- * - Creates a point geometry
- * - Note: longitude first, then latitude!
- * 
- * ST_SetSRID(geometry, 4326)
- * - Sets coordinate reference system to WGS84 (lat/lng)
- * 
- * ::geography
- * - Casts to geography type for accurate distance on spheroid
- * 
- * / 1000.0
- * - Converts meters to kilometers
- */
