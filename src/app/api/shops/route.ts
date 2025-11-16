@@ -69,8 +69,10 @@ export async function GET(request: NextRequest) {
     const hasTambonCol = await tableHasColumn('shop', 'tambon_id');
     const hasAmphureCol = await tableHasColumn('shop', 'amphure_id');
     const hasProvinceCol = await tableHasColumn('shop', 'province_id');
+    const hasImageCol = await tableHasColumn('shop', 'image');
 
     // Helper: build SELECT list based on available columns
+    // Includes image field for frontend rendering
     const buildSelectList = (includeDistance = true) => {
       const cols = [
         's.id',
@@ -82,6 +84,7 @@ export async function GET(request: NextRequest) {
         's.has_physical_store',
         's."createdAt"'
       ];
+      if (hasImageCol) cols.push('s.image');
       if (hasAmphureCol) cols.push('s.amphure_id');
       if (hasTambonCol) cols.push('s.tambon_id');
       if (hasProvinceCol) cols.push('s.province_id');
@@ -97,6 +100,7 @@ export async function GET(request: NextRequest) {
     };
 
     // No location: return random shops quickly
+    // Includes image for frontend rendering
     if (!lat || !lng) {
       const whereParts: string[] = [];
       const params: any[] = [];
@@ -106,8 +110,11 @@ export async function GET(request: NextRequest) {
         whereParts.push(`s."categoryId" = $${params.length}`);
       }
       const whereClause = whereParts.length > 0 ? `WHERE ${whereParts.join(' AND ')}` : '';
+      // Build select list including image if available
+      const selectCols = ['s.id', 's.name', 's.description', 's.address', 's."categoryId"', 'sc.name as category_name', 's."createdAt"'];
+      if (hasImageCol) selectCols.push('s.image');
       const sql = `
-        SELECT s.id, s.name, s.description, s.address, s."categoryId", sc.name as category_name, s."createdAt"
+        SELECT ${selectCols.join(', ')}
         FROM "Shop" s
         INNER JOIN "ShopCategory" sc ON s."categoryId" = sc.id
         ${whereClause}
@@ -265,6 +272,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Final fallback: random shops (no distance)
+    // Includes image for frontend rendering via buildSelectList
     const paramsFinal: any[] = [];
     const whereFinal: string[] = [];
     if (hasStatusCol) whereFinal.push(`s.status = 'APPROVED'`);
@@ -279,7 +287,6 @@ export async function GET(request: NextRequest) {
     const selectNoDistanceFinal = selectNoDistance.replace(/\$POINT_LNG_IDX/g, '1').replace(/\$POINT_LAT_IDX/g, '2');
     const sqlFinal = `
       SELECT ${selectNoDistanceFinal}
-      ${hasAmphureCol ? ', s.amphure_id' : ''}${hasTambonCol ? ', s.tambon_id' : ''}${hasProvinceCol ? ', s.province_id' : ''}
       FROM "Shop" s
       INNER JOIN "ShopCategory" sc ON s."categoryId" = sc.id
       ${whereClauseFinal}
