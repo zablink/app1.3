@@ -65,7 +65,8 @@ export default function HomePage() {
 
   // Helper to choose image: prefer image field, then logo, then placeholder
   const shopImage = (shop: Shop) => {
-    return shop.image || shop.logo || '/placeholder.png';
+    return shop.image || shop.logo || '/placeholder.png'; 
+    //
   };
 
   return (
