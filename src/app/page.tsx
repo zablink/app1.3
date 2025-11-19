@@ -4,6 +4,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Hero from '@/components/Hero';
 
 interface Shop {
   id: string;
@@ -76,6 +77,14 @@ export default function HomePage() {
           <h1 className="text-2xl font-bold text-orange-600">Zablink</h1>
         </div>
       </header>
+
+      {/* Hero Banner */}
+      <Hero 
+        title="ยินดีต้อนรับสู่ Zablink"
+        subtitle="ค้นหาร้านค้าและบริการที่คุณชื่นชอบได้ง่ายๆ ในพื้นที่ใกล้คุณ"
+        ctaLabel="เริ่มค้นหา"
+        onCtaClick={() => router.push('/search')}
+      />
 
       <main className="container mx-auto px-4 py-6">
         {/* Packages showcase (presentational) */}
