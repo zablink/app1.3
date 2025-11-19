@@ -19,16 +19,53 @@ interface Shop {
   activeSubscription?: any;
 }
 
+interface HeroBanner {
+  id: string;
+  title: string;
+  subtitle?: string;
+  ctaLabel?: string;
+  ctaLink?: string;
+  imageUrl: string;
+  priority: number;
+  isActive: boolean;
+}
+
 export default function HomePage() {
   const router = useRouter();
 
   const [shops, setShops] = useState<Shop[]>([]);
+  const [banners, setBanners] = useState<HeroBanner[]>([]);
+  const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
   const [isLoadingShops, setIsLoadingShops] = useState(true);
   const [locationState, setLocationState] = useState({ status: 'idle' } as any);
   const [showLocationNotif, setShowLocationNotif] = useState(true);
 
   useEffect(() => { loadShops(); }, []);
+  useEffect(() => { loadBanners(); }, []);
   useEffect(() => { requestLocation(); }, []);
+
+  // Auto-rotate banners every 5 seconds
+  useEffect(() => {
+    if (banners.length <= 1) return;
+    
+    const timer = setInterval(() => {
+      setCurrentBannerIndex((prev) => (prev + 1) % banners.length);
+    }, 5000);
+
+    return () => clearInterval(timer);
+  }, [banners.length]);
+
+  const loadBanners = async () => {
+    try {
+      const res = await fetch('/api/banners');
+      const data = await res.json();
+      if (data.success && data.banners) {
+        setBanners(data.banners);
+      }
+    } catch (err) {
+      console.error('Error loading banners:', err);
+    }
+  };
 
   const loadShops = async () => {
     try {
@@ -79,12 +116,36 @@ export default function HomePage() {
       </header>
 
       {/* Hero Banner */}
-      <Hero 
-        title="ยินดีต้อนรับสู่ Zablink"
-        subtitle="ค้นหาร้านค้าและบริการที่คุณชื่นชอบได้ง่ายๆ ในพื้นที่ใกล้คุณ"
-        ctaLabel="เริ่มค้นหา"
-        onCtaClick={() => router.push('/search')}
-      />
+      {banners.length > 0 && (
+        <Hero 
+          title={banners[currentBannerIndex].title}
+          subtitle={banners[currentBannerIndex].subtitle || "ค้นหาร้านค้าและบริการที่คุณชื่นชอบได้ง่ายๆ ในพื้นที่ใกล้คุณ"}
+          ctaLabel={banners[currentBannerIndex].ctaLabel || "เริ่มค้นหา"}
+          onCtaClick={() => {
+            const link = banners[currentBannerIndex].ctaLink || '/search';
+            router.push(link);
+          }}
+          backgroundImage={banners[currentBannerIndex].imageUrl}
+        />
+      )}
+
+      {/* Banner Indicators */}
+      {banners.length > 1 && (
+        <div className="flex justify-center gap-2 py-4 bg-gray-100">
+          {banners.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => setCurrentBannerIndex(index)}
+              className={`w-2 h-2 rounded-full transition-all ${
+                index === currentBannerIndex 
+                  ? 'bg-orange-600 w-8' 
+                  : 'bg-gray-400 hover:bg-gray-600'
+              }`}
+              aria-label={`Go to banner ${index + 1}`}
+            />
+          ))}
+        </div>
+      )}
 
       <main className="container mx-auto px-4 py-6">
         {/* Packages showcase (presentational) */}

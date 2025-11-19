@@ -348,6 +348,57 @@ model ReviewerPayout {
 }
 
 /* ---------------------------
+   SITE SETTINGS & BANNERS
+   --------------------------- */
+
+model SiteSetting {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       String   @db.Text
+  category    String   // branding, seo, features, etc.
+  dataType    String   @default("string") // string, number, boolean, json, image, color
+  label       String
+  description String?
+  updatedBy   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  history     SiteSettingHistory[]
+
+  @@map("site_settings")
+}
+
+model SiteSettingHistory {
+  id          String   @id @default(cuid())
+  setting     SiteSetting @relation(fields: [settingKey], references: [key])
+  settingKey  String
+  oldValue    String   @db.Text
+  newValue    String   @db.Text
+  changedBy   String
+  reason      String?
+  createdAt   DateTime @default(now())
+
+  @@map("site_setting_history")
+}
+
+model HeroBanner {
+  id          String   @id @default(cuid())
+  title       String
+  subtitle    String?
+  ctaLabel    String?
+  ctaLink     String?
+  imageUrl    String
+  priority    Int      @default(0) // สำหรับเรียงลำดับ
+  isActive    Boolean  @default(true)
+  startDate   DateTime?
+  endDate     DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("hero_banners")
+}
+
+/* ---------------------------
    NOTE ABOUT backup_* tables
    ---------------------------
    Any existing tables whose names start with `backup_` were intentionally NOT included as models.
