@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
 
     // อัปโหลดไป Supabase Storage
     const { data, error } = await supabase.storage
-      .from('public') // หรือ bucket name ที่คุณสร้างไว้
+      .from('Public') // Bucket name ที่สร้างไว้
       .upload(filePath, buffer, {
         contentType: file.type,
         upsert: false
@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
 
     // Get Public URL
     const { data: { publicUrl } } = supabase.storage
-      .from('public')
+      .from('Public')
       .getPublicUrl(filePath);
 
     return NextResponse.json({
@@ -141,7 +141,7 @@ export async function DELETE(request: NextRequest) {
     );
 
     const { error } = await supabase.storage
-      .from('public')
+      .from('Public')
       .remove([filePath]);
 
     if (error) {
