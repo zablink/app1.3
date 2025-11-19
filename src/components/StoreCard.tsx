@@ -3,7 +3,6 @@ import React from 'react'
 import styles from './StoreCard.module.css'
 
 type StoreCardProps = {
-  id?: string | number
   name: string
   description?: string
   image?: string
@@ -11,11 +10,18 @@ type StoreCardProps = {
 }
 
 export default function StoreCard({ name, description, image, onClick }: StoreCardProps) {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if ((e.key === 'Enter' || e.key === ' ') && onClick) {
+      e.preventDefault()
+      onClick()
+    }
+  }
+
   return (
-    <div className={styles.card} onClick={onClick} role="button" tabIndex={0}>
+    <div className={styles.card} onClick={onClick} onKeyDown={handleKeyDown} role="button" tabIndex={0}>
       {image ? (
         <div className={styles.media}>
-          <img src={image} alt={name} className={styles.image} />
+          <img src={image} alt={name} className={styles.image} loading="lazy" />
         </div>
       ) : (
         <div className={styles.media} />
