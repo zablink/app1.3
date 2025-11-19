@@ -57,12 +57,14 @@ export async function POST(request: NextRequest) {
     }
 
     // สร้าง Supabase Client
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    // HARDCODE URL เพื่อทดสอบ
+    const supabaseUrl = 'https://vygryagvxjewxdzgipea.supabase.co';
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
     console.log('📍 Creating Supabase client...');
     console.log('URL:', supabaseUrl);
     console.log('Key exists:', !!supabaseKey);
+    console.log('Key starts with:', supabaseKey?.substring(0, 20));
 
     if (!supabaseUrl || !supabaseKey) {
       console.error('❌ Missing Supabase credentials');
