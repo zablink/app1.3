@@ -5,6 +5,7 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import ImageUploadZone from '@/components/admin/ImageUploadZone';
 
 interface Setting {
   id: string;
@@ -486,37 +487,6 @@ function BannerForm({ banner, onSave, onCancel }: BannerFormProps) {
     endDate: banner?.endDate || ''
   });
 
-  const [uploading, setUploading] = useState(false);
-
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    try {
-      setUploading(true);
-      
-      const formDataUpload = new FormData();
-      formDataUpload.append('file', file);
-      formDataUpload.append('folder', 'banners');
-
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        body: formDataUpload
-      });
-
-      const data = await response.json();
-      
-      if (data.success) {
-        setFormData(prev => ({ ...prev, imageUrl: data.url }));
-      }
-    } catch (error) {
-      console.error('Upload error:', error);
-      alert('เกิดข้อผิดพลาดในการอัปโหลด');
-    } finally {
-      setUploading(false);
-    }
-  };
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -647,46 +617,15 @@ function BannerForm({ banner, onSave, onCancel }: BannerFormProps) {
             />
           </div>
 
-          {/* Image URL */}
+          {/* Image Upload with Drag & Drop */}
           <div className="col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Image URL *
-            </label>
-            
-            {formData.imageUrl && (
-              <div className="mb-3">
-                <img
-                  src={formData.imageUrl}
-                  alt="Preview"
-                  className="max-w-md max-h-48 rounded-lg border border-gray-300 object-cover"
-                />
-              </div>
-            )}
-
-            <div className="flex gap-3">
-              <input
-                type="text"
-                value={formData.imageUrl}
-                onChange={(e) => setFormData(prev => ({ ...prev, imageUrl: e.target.value }))}
-                placeholder="https://... หรืออัปโหลดรูป"
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                required
-              />
-              
-              <label className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg cursor-pointer hover:bg-gray-200 flex items-center gap-2">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                </svg>
-                {uploading ? 'กำลังอัปโหลด...' : 'อัปโหลด'}
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  disabled={uploading}
-                  className="hidden"
-                />
-              </label>
-            </div>
+            <ImageUploadZone
+              value={formData.imageUrl || ''}
+              onChange={(url) => setFormData(prev => ({ ...prev, imageUrl: url }))}
+              folder="banners"
+              maxSize={10}
+              label="รูปภาพ Banner"
+            />
           </div>
         </div>
 
