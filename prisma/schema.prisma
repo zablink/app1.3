@@ -35,6 +35,8 @@ model User {
   reviewers     Reviewer[]
   // NOTE: payouts field removed here to avoid missing opposite relation on ReviewerPayout.
   // If you want User.payouts, add a user relation to ReviewerPayout (I can add this if desired).
+
+  @@map("User")
 }
 
 model Shop {
@@ -129,6 +131,7 @@ model Account {
   user User @relation(fields: [userId], references: [id])
 
   @@unique([provider, providerAccountId])
+  @@map("Account")
 }
 
 model Session {
@@ -137,6 +140,8 @@ model Session {
   userId       String
   expires      DateTime
   user         User     @relation(fields: [userId], references: [id])
+
+  @@map("Session")
 }
 
 /* Geography models (kept from original) */
