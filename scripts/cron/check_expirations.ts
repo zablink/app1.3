@@ -40,7 +40,7 @@ async function main() {
 }
 
 main()
-  .catch((e) => {
+  .catch((e) => {+
     console.error("Cron error:", e);
     process.exit(1);
   })

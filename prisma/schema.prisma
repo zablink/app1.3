@@ -1,16 +1,7 @@
-// prisma/schema.prisma (merged, final)
-// - This file merges the existing repo schema with subscription/token/ad/reviewer models.
-// - Models whose table names start with `backup_` are intentionally excluded.
-// - Enum names and model fields were adjusted to use the enums you provided.
-// - Many models are mapped to snake_case DB table names via @@map(...) to avoid renaming existing DB tables.
-// IMPORTANT: Do a `prisma db pull` and review differences against your live DB before running any migrations.
-//
-// Steps recommended:
-// 1. git checkout -b feature/merge-schema
-// 2. npx prisma db pull
-// 3. Compare this schema with pulled schema; adjust @map for fields/columns if your DB uses snake_case column names.
-// 4. Run migration on dev DB (npx prisma migrate dev --name merge-schema) or use prisma db push for non-destructive apply.
-// 5. Test carefully.
+// prisma/schema.prisma (merged, final - relations fixed)
+// - Updated to add missing opposite relation fields to fix Prisma validation errors.
+// - Removed User.payouts to avoid duplicate/ambiguous relation with ReviewerPayout.
+// IMPORTANT: Review and run `prisma db pull` before applying migrations to production.
 
 generator client {
   provider = "prisma-client-js"
@@ -42,7 +33,8 @@ model User {
 
   // reviewer relations
   reviewers     Reviewer[]
-  payouts       ReviewerPayout[]
+  // NOTE: payouts field removed here to avoid missing opposite relation on ReviewerPayout.
+  // If you want User.payouts, add a user relation to ReviewerPayout (I can add this if desired).
 }
 
 model Shop {
@@ -72,6 +64,9 @@ model Shop {
   subscriptions ShopSubscription[]
   tokenWallet   TokenWallet?
   adPurchases   AdPurchase[]
+
+  // Reviewer hires for this shop (opposite of ReviewerHire.shop)
+  reviewerHires ReviewerHire[]
 }
 
 model ShopCategory {
@@ -103,7 +98,8 @@ model AdPackage {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  shops     Shop[]
+  shops       Shop[]
+  adPurchases AdPurchase[]  // <-- added opposite relation for AdPurchase.adPackage
 }
 
 model Analytics {
@@ -188,7 +184,7 @@ model SubscriptionPackage {
   periodDays  Int
   tokenAmount Int?     // tokens granted when purchasing this subscription
   features    String?
-  tier        subscription_tier?  // use user's enum name
+  tier        subscription_tier?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @default(now())
 
@@ -203,7 +199,7 @@ model ShopSubscription {
   shopId           String
   plan             SubscriptionPackage @relation(fields: [planId], references: [id])
   planId           String
-  status           subscription_status   @default(ACTIVE) // use user's enum
+  status           subscription_status   @default(ACTIVE)
   startedAt        DateTime @default(now())
   expiresAt        DateTime
   autoRenew        Boolean  @default(false)
@@ -332,7 +328,7 @@ model ReviewerHire {
   shop        Shop     @relation(fields: [shopId], references: [id])
   shopId      String
   tokenCost   Int
-  status      ReviewStatus   // use user's enum
+  status      ReviewStatus
   createdAt   DateTime @default(now())
   updatedAt   DateTime @default(now())
 
@@ -355,7 +351,7 @@ model ReviewerPayout {
    NOTE ABOUT backup_* tables
    ---------------------------
    Any existing tables whose names start with `backup_` were intentionally NOT included as models.
-   If you need to keep them accessible via Prisma, we can add models mapped to those tables on request.
+   If you need to access them via Prisma, I can add mapped models on request.
 */
 
 /* ---------------------------
@@ -405,7 +401,7 @@ enum PackageType {
 }
 
 /*
-  Ad scope (as you asked: no REGION here)
+  Ad scope (as you asked)
 */
 enum AdScope {
   SUBDISTRICT
@@ -448,7 +444,7 @@ enum WithdrawalStatus {
 }
 
 /*
-  Subscription enums requested in original list (using the exact names you gave)
+  Subscription enums (kept as requested)
 */
 enum subscription_status {
   ACTIVE
