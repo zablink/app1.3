@@ -325,15 +325,23 @@ export default function UserMenu() {
                   onClick={() => setIsOpen(false)}
                 >
                   <Shield className="w-4 h-4" />
-                  <span className="font-medium">Admin Panel</span>
+                  <span className="font-medium">Admin Dashboard</span>
                 </Link>
                 <Link
-                  href="/admin/creators"
+                  href="/admin/settings"
+                  className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <Settings className="w-4 h-4 text-gray-500" />
+                  <span>การตั้งค่าเว็บไซต์</span>
+                </Link>
+                <Link
+                  href="/admin/users"
                   className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                   onClick={() => setIsOpen(false)}
                 >
                   <User className="w-4 h-4 text-gray-500" />
-                  <span>จัดการ Creators</span>
+                  <span>จัดการผู้ใช้งาน</span>
                 </Link>
                 <Link
                   href="/admin/shops"
@@ -342,6 +350,22 @@ export default function UserMenu() {
                 >
                   <Store className="w-4 h-4 text-gray-500" />
                   <span>จัดการร้านค้า</span>
+                </Link>
+                <Link
+                  href="/admin/creators"
+                  className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <Star className="w-4 h-4 text-gray-500" />
+                  <span>จัดการ Creators</span>
+                </Link>
+                <Link
+                  href="/admin/dashboard"
+                  className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <BarChart3 className="w-4 h-4 text-gray-500" />
+                  <span>สถิติและรายงาน</span>
                 </Link>
               </>
             )}

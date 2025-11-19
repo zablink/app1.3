@@ -87,12 +87,20 @@ export default function Navbar() {
                       )}
 
                       {userRole === 'ADMIN' && (
-                        <Link
-                          href="/admin"
-                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                        >
-                          Admin Panel
-                        </Link>
+                        <>
+                          <Link
+                            href="/admin"
+                            className="block px-4 py-2 text-sm text-purple-600 hover:bg-purple-50 font-medium"
+                          >
+                            Admin Dashboard
+                          </Link>
+                          <Link
+                            href="/admin/settings"
+                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                          >
+                            การตั้งค่าเว็บไซต์
+                          </Link>
+                        </>
                       )}
 
                       <button
@@ -175,6 +183,27 @@ export default function Navbar() {
                       โปรไฟล์
                     </Link>
 
+                    {userRole === 'ADMIN' && (
+                      <>
+                        <div className="border-t border-gray-200 my-2"></div>
+                        <Link
+                          href="/admin"
+                          className="block px-4 py-2 text-purple-600 hover:bg-purple-50 font-medium"
+                          onClick={() => setShowMobileMenu(false)}
+                        >
+                          Admin Dashboard
+                        </Link>
+                        <Link
+                          href="/admin/settings"
+                          className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
+                          onClick={() => setShowMobileMenu(false)}
+                        >
+                          การตั้งค่าเว็บไซต์
+                        </Link>
+                      </>
+                    )}
+
+                    <div className="border-t border-gray-200 my-2"></div>
                     <button
                       onClick={() => {
                         signOut({ callbackUrl: '/' });
