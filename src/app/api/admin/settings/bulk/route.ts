@@ -1,4 +1,4 @@
-// app/api/admin/settings/bulk/route.ts
+// app/api/admin/settings/bulk/route.ts 
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';

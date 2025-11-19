@@ -1,4 +1,4 @@
-// components/UserMenu.tsx
+// components/UserMenu.tsx 
 // User Menu with Avatar and Dropdown
 // รองรับ role: USER, SHOP, CREATOR, MCN_MANAGER, AD_MANAGER, ADMIN
 
@@ -312,7 +312,7 @@ export default function UserMenu() {
               </>
             )}
 
-            {/* Admin Menu Items */}
+            {/* Admin Menu Items  */}
             {userRole === "ADMIN" && (
               <>
                 <div className="border-t border-gray-100 my-2"></div>
