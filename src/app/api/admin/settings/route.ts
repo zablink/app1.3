@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { clearSettingsCache } from '@/lib/settings';
 
 /**
  * GET /api/admin/settings
@@ -117,6 +118,9 @@ export async function PUT(request: NextRequest) {
         updatedBy: session.user.id
       }
     });
+
+    // Clear cache after updating
+    clearSettingsCache();
 
     return NextResponse.json({
       success: true,

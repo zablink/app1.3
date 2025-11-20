@@ -6,14 +6,13 @@ import { prisma } from '@/lib/prisma';
 /**
  * GET /api/settings
  * Public API - ไม่ต้อง Authentication
- * ดึง Settings ที่ isPublic = true เท่านั้น
+ * ดึง Settings ทั้งหมด
  */
+export const revalidate = 300; // Cache 5 minutes
+
 export async function GET() {
   try {
     const settings = await prisma.siteSetting.findMany({
-      where: {
-        isPublic: true
-      },
       select: {
         key: true,
         value: true,
@@ -48,16 +47,17 @@ export async function GET() {
 
 /**
  * ใช้ใน Server Components หรือ API Routes
- * เพื่อดึง Settings โดยตรง
+ * เพื่อดึง Settings โดยตรง (with caching)
  */
 export async function getPublicSettings() {
   const settings = await prisma.siteSetting.findMany({
-    where: { isPublic: true },
     select: {
       key: true,
       value: true,
       dataType: true
-    }
+    },
+    // Cache for 5 minutes
+    cacheStrategy: { ttl: 300 }
   });
 
   // แปลงเป็น Object

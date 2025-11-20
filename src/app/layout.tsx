@@ -3,14 +3,16 @@ import { Inter } from "next/font/google";
 import { LocationProvider } from '@/contexts/LocationContext';
 import SessionProvider from "@/components/SessionProvider";
 import Navbar from "@/components/layout/Navbar";
+import { getSiteMetadata } from '@/lib/settings';
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
 
-export const metadata = {
-  title: "Zablink - แหล่งรวมร้านอาหารที่แซบๆ ใกล้คุณ",
-  description: "แพลตฟอร์มเชื่อมต่อร้านอาหารและนักรีวิวทั่วประเทศไทย",
-};
+// Dynamic metadata from database settings
+export async function generateMetadata() {
+  const metadata = await getSiteMetadata();
+  return metadata;
+}
 
 export default function RootLayout({
   children,
