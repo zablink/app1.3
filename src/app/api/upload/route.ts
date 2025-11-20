@@ -26,7 +26,7 @@ const UPLOAD_CONFIG = {
   },
   logos: {
     maxSize: 2 * 1024 * 1024, // 2MB
-    allowedTypes: ['image/png', 'image/svg+xml', 'image/webp'],
+    allowedTypes: ['image/png', 'image/svg+xml', 'image/webp', 'image/x-icon', 'image/vnd.microsoft.icon'],
     description: 'Logo and icon files'
   },
   avatars: {
@@ -36,7 +36,7 @@ const UPLOAD_CONFIG = {
   },
   uploads: {
     maxSize: 5 * 1024 * 1024, // 5MB (default)
-    allowedTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml'],
+    allowedTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml', 'image/x-icon', 'image/vnd.microsoft.icon'],
     description: 'General uploads'
   }
 };

@@ -675,9 +675,14 @@ function SettingField({ setting, value, onChange, hasChanged }: SettingFieldProp
     try {
       setUploading(true);
       
+      // ใช้ folder 'logos' สำหรับ favicon, logo, icon (รองรับ .ico)
+      const folder = setting.key.includes('logo') || setting.key.includes('favicon') || setting.key.includes('icon') 
+        ? 'logos' 
+        : 'uploads';
+      
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('folder', 'settings');
+      formData.append('folder', folder);
 
       const response = await fetch('/api/upload', {
         method: 'POST',
@@ -784,7 +789,9 @@ function SettingField({ setting, value, onChange, hasChanged }: SettingFieldProp
                 {uploading ? 'กำลังอัปโหลด...' : 'อัปโหลด'}
                 <input
                   type="file"
-                  accept="image/*"
+                  accept={setting.key.includes('logo') || setting.key.includes('favicon') || setting.key.includes('icon') 
+                    ? 'image/png,image/svg+xml,image/webp,image/x-icon,image/vnd.microsoft.icon,.ico' 
+                    : 'image/*'}
                   onChange={handleImageUpload}
                   disabled={uploading}
                   className="hidden"

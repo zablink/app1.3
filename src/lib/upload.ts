@@ -127,7 +127,7 @@ export function validateImageFile(
   file: File,
   options: { maxSize?: number; allowedTypes?: string[] } = {}
 ): { valid: boolean; error?: string } {
-  const { maxSize = 5, allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml'] } = options;
+  const { maxSize = 5, allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml', 'image/x-icon', 'image/vnd.microsoft.icon'] } = options;
 
   if (!allowedTypes.includes(file.type)) {
     return {
@@ -175,7 +175,7 @@ export function getUploadConfig(folder: string) {
     },
     logos: {
       maxSize: 2,
-      allowedTypes: ['image/png', 'image/svg+xml', 'image/webp'],
+      allowedTypes: ['image/png', 'image/svg+xml', 'image/webp', 'image/x-icon', 'image/vnd.microsoft.icon'],
       compress: false,
       preserveFormat: true
     },
