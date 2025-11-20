@@ -100,12 +100,19 @@ export default function AdminShopsPage() {
         params.append('status', statusFilter);
       }
 
+      console.log('Fetching shops with params:', params.toString());
       const res = await fetch(`/api/admin/shops?${params}`);
+      console.log('Response status:', res.status);
+      
       const data = await res.json();
+      console.log('Response data:', data);
       
       if (data.shops) {
+        console.log('Shops loaded:', data.shops.length);
         setShops(data.shops);
         setTotalPages(data.pagination?.totalPages || 1);
+      } else {
+        console.log('No shops in response');
       }
     } catch (error) {
       console.error('Error loading shops:', error);

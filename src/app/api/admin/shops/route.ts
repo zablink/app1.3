@@ -4,13 +4,18 @@ import { requireAdmin } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
   const { error } = await requireAdmin();
-  if (error) return error;
+  if (error) {
+    console.log('Admin check failed');
+    return error;
+  }
 
   try {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '20');
+
+    console.log('Fetching shops - page:', page, 'limit:', limit, 'status:', status);
 
     const where: any = {};
     if (status && ['PENDING', 'APPROVED', 'REJECTED', 'SUSPENDED'].includes(status)) {
@@ -47,6 +52,8 @@ export async function GET(request: NextRequest) {
       prisma.shop.count({ where }),
     ]);
 
+    console.log('Shops found:', shops.length, 'Total:', total);
+
     return NextResponse.json({
       shops,
       pagination: {
@@ -59,7 +66,7 @@ export async function GET(request: NextRequest) {
   } catch (err) {
     console.error('Fetch shops error:', err);
     return NextResponse.json(
-      { error: 'Failed to fetch shops' },
+      { error: 'Failed to fetch shops', detail: err instanceof Error ? err.message : String(err) },
       { status: 500 }
     );
   }
