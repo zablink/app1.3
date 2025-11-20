@@ -12,51 +12,71 @@ interface SiteSettings {
   // Branding
   site_name: string;
   site_tagline: string;
-  logo_url: string;
-  logo_dark_url: string;
-  favicon_url: string;
+  site_logo: string;
+  site_logo_dark: string;
+  site_favicon: string;
+  site_icon_192: string;
+  site_icon_512: string;
   
   // Colors
-  primary_color: string;
-  secondary_color: string;
-  accent_color: string;
-  text_primary: string;
-  text_secondary: string;
-  background_primary: string;
-  background_secondary: string;
+  brand_primary_color: string;
+  brand_secondary_color: string;
+  brand_accent_color: string;
   
-  // Homepage
-  hero_title: string;
-  hero_subtitle: string;
-  hero_image_url: string;
-  cta_primary_text: string;
-  cta_secondary_text: string;
-  
-  // Navigation
-  nav_items: {
-    items: Array<{ label: string; href: string }>;
-  };
-  
-  // Footer
-  footer_about: string;
-  footer_copyright: string;
+  // Social
   social_facebook: string;
   social_instagram: string;
+  social_twitter: string;
   social_line: string;
-  contact_email: string;
-  contact_phone: string;
+  social_tiktok: string;
   
   // SEO
-  meta_title: string;
-  meta_description: string;
-  meta_keywords: string;
-  og_image_url: string;
+  seo_title: string;
+  seo_description: string;
+  seo_keywords: string;
+  og_title: string;
+  og_description: string;
+  og_image: string;
+  og_type: string;
+  twitter_card: string;
+  twitter_site: string;
+  schema_type: string;
+  robots_meta: string;
+  canonical_url: string;
   
-  // Features
-  enable_creator_signup: boolean;
-  enable_shop_signup: boolean;
+  // Contact
+  contact_email: string;
+  contact_phone: string;
+  contact_address: string;
+  support_hours: string;
+  
+  // Site Config
+  site_timezone: string;
+  site_locale: string;
+  site_currency: string;
+  privacy_policy_url: string;
+  terms_of_service_url: string;
+  cookie_policy_url: string;
+  footer_copyright: string;
+  footer_description: string;
   maintenance_mode: boolean;
   maintenance_message: string;
+  
+  // Features
+  enable_user_registration: boolean;
+  enable_social_login: boolean;
+  enable_email_verification: boolean;
+  enable_reviews: boolean;
+  enable_ratings: boolean;
+  enable_bookmarks: boolean;
+  enable_campaigns: boolean;
+  enable_creator_program: boolean;
+  enable_subscriptions: boolean;
+  enable_payments: boolean;
+  enable_analytics: boolean;
+  
+  // Other dynamic keys
+  [key: string]: any;
 }
 
 interface SiteSettingsContextType {
@@ -162,26 +182,14 @@ export function useThemeColors() {
     const root = document.documentElement;
     
     // Set CSS Variables
-    if (settings.primary_color) {
-      root.style.setProperty('--color-primary', settings.primary_color);
+    if (settings.brand_primary_color) {
+      root.style.setProperty('--color-primary', settings.brand_primary_color);
     }
-    if (settings.secondary_color) {
-      root.style.setProperty('--color-secondary', settings.secondary_color);
+    if (settings.brand_secondary_color) {
+      root.style.setProperty('--color-secondary', settings.brand_secondary_color);
     }
-    if (settings.accent_color) {
-      root.style.setProperty('--color-accent', settings.accent_color);
-    }
-    if (settings.text_primary) {
-      root.style.setProperty('--color-text-primary', settings.text_primary);
-    }
-    if (settings.text_secondary) {
-      root.style.setProperty('--color-text-secondary', settings.text_secondary);
-    }
-    if (settings.background_primary) {
-      root.style.setProperty('--color-bg-primary', settings.background_primary);
-    }
-    if (settings.background_secondary) {
-      root.style.setProperty('--color-bg-secondary', settings.background_secondary);
+    if (settings.brand_accent_color) {
+      root.style.setProperty('--color-accent', settings.brand_accent_color);
     }
   }, [settings]);
   

@@ -2,6 +2,7 @@
 import { Inter } from "next/font/google";
 import { LocationProvider } from '@/contexts/LocationContext';
 import SessionProvider from "@/components/SessionProvider";
+import { SiteSettingsProvider } from '@/hooks/useSiteSettings';
 import Navbar from "@/components/layout/Navbar";
 import { getSiteMetadata } from '@/lib/settings';
 import "./globals.css";
@@ -23,10 +24,12 @@ export default function RootLayout({
     <html lang="th">
       <body className={inter.className}>
         <SessionProvider>
-          <LocationProvider>
-            <Navbar />
-            {children}
-          </LocationProvider>
+          <SiteSettingsProvider>
+            <LocationProvider>
+              <Navbar />
+              {children}
+            </LocationProvider>
+          </SiteSettingsProvider>
         </SessionProvider>
       </body>
     </html>

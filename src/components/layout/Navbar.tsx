@@ -3,14 +3,17 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useSession, signOut } from 'next-auth/react';
 import { useLocation } from '@/contexts/LocationContext';
+import { useSiteSettings } from '@/hooks/useSiteSettings';
 import { MapPin, Menu, X, User, LogOut, Store, BarChart3 } from 'lucide-react';
 import LocationModal from '@/components/location/LocationModal';
 
 export default function Navbar() {
   const { data: session } = useSession();
   const { location } = useLocation();
+  const { settings, loading: settingsLoading } = useSiteSettings();
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
 
@@ -23,8 +26,20 @@ export default function Navbar() {
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
             <Link href="/" className="flex items-center gap-2">
-              <Store className="w-8 h-8 text-blue-600" />
-              <span className="text-xl font-bold text-gray-900">Zablink</span>
+              {settings.site_logo ? (
+                <Image
+                  src={settings.site_logo}
+                  alt={settings.site_name || 'Zablink'}
+                  width={32}
+                  height={32}
+                  className="w-8 h-8 object-contain"
+                />
+              ) : (
+                <Store className="w-8 h-8 text-blue-600" />
+              )}
+              <span className="text-xl font-bold text-gray-900">
+                {settings.site_name || 'Zablink'}
+              </span>
             </Link>
 
             {/* Desktop Menu */}
