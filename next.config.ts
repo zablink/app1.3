@@ -13,6 +13,12 @@ const nextConfig: NextConfig = {
 
   images: {
   remotePatterns: [
+    // Supabase Storage
+    {
+      protocol: 'https',
+      hostname: 'vygryagvxjewxdzgipea.supabase.co',
+      pathname: '/storage/v1/object/public/**',
+    },
     // Google
     {
       protocol: 'https',
