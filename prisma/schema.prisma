@@ -361,12 +361,12 @@ model SiteSetting {
   key         String   @unique
   value       String   @db.Text
   category    String   // branding, seo, features, etc.
-  dataType    String   @default("string") // string, number, boolean, json, image, color
+  dataType    String   @default("string") @map("data_type") // string, number, boolean, json, image, color
   label       String
   description String?
-  updatedBy   String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  updatedBy   String?  @map("updated_by")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
   
   history     SiteSettingHistory[]
 
@@ -376,12 +376,12 @@ model SiteSetting {
 model SiteSettingHistory {
   id          String   @id @default(cuid())
   setting     SiteSetting @relation(fields: [settingKey], references: [key])
-  settingKey  String
-  oldValue    String   @db.Text
-  newValue    String   @db.Text
-  changedBy   String
+  settingKey  String   @map("setting_key")
+  oldValue    String   @db.Text @map("old_value")
+  newValue    String   @db.Text @map("new_value")
+  changedBy   String   @map("changed_by")
   reason      String?
-  createdAt   DateTime @default(now())
+  createdAt   DateTime @default(now()) @map("created_at")
 
   @@map("site_setting_history")
 }
@@ -390,15 +390,15 @@ model HeroBanner {
   id          String   @id @default(cuid())
   title       String
   subtitle    String?
-  ctaLabel    String?
-  ctaLink     String?
-  imageUrl    String
+  ctaLabel    String?  @map("cta_label")
+  ctaLink     String?  @map("cta_link")
+  imageUrl    String   @map("image_url")
   priority    Int      @default(0) // สำหรับเรียงลำดับ
-  isActive    Boolean  @default(true)
-  startDate   DateTime?
-  endDate     DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  isActive    Boolean  @default(true) @map("is_active")
+  startDate   DateTime? @map("start_date")
+  endDate     DateTime? @map("end_date")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
   @@map("hero_banners")
 }
