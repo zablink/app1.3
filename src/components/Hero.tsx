@@ -29,17 +29,21 @@ const Hero: React.FC<HeroProps> = ({
 
   const content = (
     <section className={styles.hero} style={bgStyle}>
-      <div className={enableOverlay ? styles.overlay : styles.noOverlay}>
-        <div className={styles.content}>
-          <h1 className={styles.title}>{title}</h1>
-          <p className={styles.subtitle}>{subtitle}</p>
-          {ctaLabel && (
-            <button className={styles.cta} onClick={onCtaClick}>
-              {ctaLabel}
-            </button>
-          )}
+      {enableOverlay ? (
+        <div className={styles.overlay}>
+          <div className={styles.content}>
+            <h1 className={styles.title}>{title}</h1>
+            <p className={styles.subtitle}>{subtitle}</p>
+            {ctaLabel && (
+              <button className={styles.cta} onClick={onCtaClick}>
+                {ctaLabel}
+              </button>
+            )}
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className={styles.noOverlay} />
+      )}
     </section>
   )
 
