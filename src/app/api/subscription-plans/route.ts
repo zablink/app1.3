@@ -5,10 +5,10 @@ import prisma from "@/lib/prisma";
 
 export async function GET() {
   try {
-    const plans = await prisma.subscription_packages.findMany({
+    const packages = await prisma.subscriptionPackage.findMany({
       orderBy: { price: "asc" },
     });
-    return NextResponse.json(plans);
+    return NextResponse.json({ packages });
   } catch (err) {
     console.error(err);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });

@@ -23,14 +23,34 @@ export async function GET(request: NextRequest) {
         skip: (page - 1) * limit,
         take: limit,
         include: {
-          User: {
+          owner: {
             select: {
               id: true,
               name: true,
               email: true,
             },
           },
-          ShopCategory: true,
+          category: true,
+          tokenWallet: {
+            select: {
+              balance: true,
+            },
+          },
+          subscriptions: {
+            where: {
+              status: 'ACTIVE',
+              expiresAt: {
+                gte: new Date(),
+              },
+            },
+            include: {
+              plan: true,
+            },
+            orderBy: {
+              expiresAt: 'desc',
+            },
+            take: 1,
+          },
         },
         orderBy: { createdAt: 'desc' },
       }),
