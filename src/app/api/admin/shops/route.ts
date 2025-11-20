@@ -23,19 +23,9 @@ export async function GET(request: NextRequest) {
         skip: (page - 1) * limit,
         take: limit,
         include: {
-          owner: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-            },
-          },
+          owner: true,
           category: true,
-          tokenWallet: {
-            select: {
-              balance: true,
-            },
-          },
+          tokenWallet: true,
           subscriptions: {
             where: {
               status: 'ACTIVE',
