@@ -387,18 +387,20 @@ model SiteSettingHistory {
 }
 
 model HeroBanner {
-  id          String   @id @default(cuid())
-  title       String
-  subtitle    String?
-  ctaLabel    String?  @map("cta_label")
-  ctaLink     String?  @map("cta_link")
-  imageUrl    String   @map("image_url")
-  priority    Int      @default(0) // สำหรับเรียงลำดับ
-  isActive    Boolean  @default(true) @map("is_active")
-  startDate   DateTime? @map("start_date")
-  endDate     DateTime? @map("end_date")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  id            String   @id @default(cuid())
+  title         String
+  subtitle      String?
+  ctaLabel      String?  @map("cta_label")
+  ctaLink       String?  @map("cta_link")
+  link          String?  // Direct link when clicking banner
+  imageUrl      String   @map("image_url")
+  enableOverlay Boolean  @default(true) @map("enable_overlay")
+  priority      Int      @default(0) // สำหรับเรียงลำดับ
+  isActive      Boolean  @default(true) @map("is_active")
+  startDate     DateTime? @map("start_date")
+  endDate       DateTime? @map("end_date")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
 
   @@map("hero_banners")
 }

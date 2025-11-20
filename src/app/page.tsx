@@ -25,7 +25,9 @@ interface HeroBanner {
   subtitle?: string;
   ctaLabel?: string;
   ctaLink?: string;
+  link?: string;
   imageUrl: string;
+  enableOverlay?: boolean;
   priority: number;
   isActive: boolean;
 }
@@ -120,12 +122,13 @@ export default function HomePage() {
         <Hero 
           title={banners[currentBannerIndex].title}
           subtitle={banners[currentBannerIndex].subtitle || "ค้นหาร้านค้าและบริการที่คุณชื่นชอบได้ง่ายๆ ในพื้นที่ใกล้คุณ"}
-          ctaLabel={banners[currentBannerIndex].ctaLabel || "เริ่มค้นหา"}
-          onCtaClick={() => {
-            const link = banners[currentBannerIndex].ctaLink || '/search';
-            router.push(link);
-          }}
+          ctaLabel={banners[currentBannerIndex].ctaLabel}
+          onCtaClick={banners[currentBannerIndex].ctaLink ? () => {
+            router.push(banners[currentBannerIndex].ctaLink!);
+          } : undefined}
           backgroundImage={banners[currentBannerIndex].imageUrl}
+          enableOverlay={banners[currentBannerIndex].enableOverlay ?? true}
+          link={banners[currentBannerIndex].link}
         />
       )}
 

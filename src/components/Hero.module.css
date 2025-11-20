@@ -1,6 +1,6 @@
 .hero {
   width: 100%;
-  min-height: 320px;
+  min-height: 640px;
   background-size: cover;
   background-position: center;
   display: flex;
@@ -11,10 +11,29 @@
   overflow: hidden;
 }
 
+.heroLink {
+  display: block;
+  cursor: pointer;
+  text-decoration: none;
+  transition: opacity 0.2s ease;
+}
+
+.heroLink:hover {
+  opacity: 0.95;
+}
+
 .overlay {
   width: 100%;
   padding: 48px 24px;
   background: linear-gradient(180deg, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.45) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.noOverlay {
+  width: 100%;
+  padding: 48px 24px;
   display: flex;
   align-items: center;
   justify-content: center;

@@ -1,6 +1,7 @@
 // src/components/Hero.tsx
 
 import React from 'react'
+import Link from 'next/link'
 import styles from './Hero.module.css'
 
 type HeroProps = {
@@ -8,7 +9,9 @@ type HeroProps = {
   subtitle?: string
   ctaLabel?: string
   onCtaClick?: () => void
-  backgroundImage?: string // path under /public, e.g. '/hero.jpg'
+  backgroundImage?: string
+  enableOverlay?: boolean
+  link?: string // Direct link when clicking banner
 }
 
 const Hero: React.FC<HeroProps> = ({
@@ -17,24 +20,39 @@ const Hero: React.FC<HeroProps> = ({
   ctaLabel = 'เริ่มต้น',
   onCtaClick,
   backgroundImage = '/hero.jpg',
+  enableOverlay = true,
+  link,
 }) => {
   const bgStyle: React.CSSProperties = backgroundImage
     ? { backgroundImage: `url(${backgroundImage})` }
     : {}
 
-  return (
+  const content = (
     <section className={styles.hero} style={bgStyle}>
-      <div className={styles.overlay}>
+      <div className={enableOverlay ? styles.overlay : styles.noOverlay}>
         <div className={styles.content}>
           <h1 className={styles.title}>{title}</h1>
           <p className={styles.subtitle}>{subtitle}</p>
-          <button className={styles.cta} onClick={onCtaClick}>
-            {ctaLabel}
-          </button>
+          {ctaLabel && (
+            <button className={styles.cta} onClick={onCtaClick}>
+              {ctaLabel}
+            </button>
+          )}
         </div>
       </div>
     </section>
   )
+
+  // If link is provided, wrap in Link component
+  if (link) {
+    return (
+      <Link href={link} className={styles.heroLink}>
+        {content}
+      </Link>
+    )
+  }
+
+  return content
 }
 
 export default Hero

@@ -24,7 +24,9 @@ interface HeroBanner {
   subtitle?: string;
   ctaLabel?: string;
   ctaLink?: string;
+  link?: string;
   imageUrl: string;
+  enableOverlay?: boolean;
   priority: number;
   isActive: boolean;
   startDate?: string;
@@ -480,7 +482,9 @@ function BannerForm({ banner, onSave, onCancel }: BannerFormProps) {
     subtitle: banner?.subtitle || '',
     ctaLabel: banner?.ctaLabel || '',
     ctaLink: banner?.ctaLink || '',
+    link: banner?.link || '',
     imageUrl: banner?.imageUrl || '',
+    enableOverlay: banner?.enableOverlay !== undefined ? banner.enableOverlay : true,
     priority: banner?.priority || 0,
     isActive: banner?.isActive !== undefined ? banner.isActive : true,
     startDate: banner?.startDate || '',
@@ -561,6 +565,21 @@ function BannerForm({ banner, onSave, onCancel }: BannerFormProps) {
             />
           </div>
 
+          {/* Banner Link (Direct) */}
+          <div className="col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Banner Link (คลิกที่ Banner ทั้งหมด)
+            </label>
+            <input
+              type="text"
+              value={formData.link}
+              onChange={(e) => setFormData(prev => ({ ...prev, link: e.target.value }))}
+              placeholder="/shop/123 หรือ https://example.com"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+            />
+            <p className="text-xs text-gray-500 mt-1">ถ้าระบุ link จะทำให้ banner ทั้งหมดคลิกได้ (ไม่ต้องกดปุ่ม CTA)</p>
+          </div>
+
           {/* Priority */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -589,6 +608,23 @@ function BannerForm({ banner, onSave, onCancel }: BannerFormProps) {
               />
               <span className="text-sm">เปิดใช้งาน</span>
             </label>
+          </div>
+
+          {/* Enable Overlay */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Overlay
+            </label>
+            <label className="flex items-center gap-3 mt-2">
+              <input
+                type="checkbox"
+                checked={formData.enableOverlay}
+                onChange={(e) => setFormData(prev => ({ ...prev, enableOverlay: e.target.checked }))}
+                className="w-5 h-5 text-orange-600 rounded focus:ring-orange-500"
+              />
+              <span className="text-sm">แสดงพื้นหลังมืด</span>
+            </label>
+            <p className="text-xs text-gray-500 mt-1">ถ้าปิด รูปจะเห็นชัดเจน สีของรูปสดใส</p>
           </div>
 
           {/* Start Date */}
