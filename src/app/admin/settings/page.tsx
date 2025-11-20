@@ -624,6 +624,10 @@ function BannerForm({ banner, onSave, onCancel }: BannerFormProps) {
               onChange={(url) => setFormData(prev => ({ ...prev, imageUrl: url }))}
               folder="banners"
               maxSize={10}
+              maxWidth={1920}
+              maxHeight={1080}
+              quality={0.85}
+              enableCompression={true}
               label="รูปภาพ Banner"
             />
           </div>

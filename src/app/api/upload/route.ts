@@ -6,14 +6,55 @@ import { authOptions } from '@/lib/auth';
 import { createClient } from '@supabase/supabase-js';
 
 /**
+ * Upload configuration per folder/type
+ */
+const UPLOAD_CONFIG = {
+  banners: {
+    maxSize: 10 * 1024 * 1024, // 10MB
+    allowedTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/gif'],
+    description: 'Banner images'
+  },
+  products: {
+    maxSize: 5 * 1024 * 1024, // 5MB
+    allowedTypes: ['image/jpeg', 'image/png', 'image/webp'],
+    description: 'Product images'
+  },
+  gallery: {
+    maxSize: 8 * 1024 * 1024, // 8MB
+    allowedTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/gif'],
+    description: 'Gallery images'
+  },
+  logos: {
+    maxSize: 2 * 1024 * 1024, // 2MB
+    allowedTypes: ['image/png', 'image/svg+xml', 'image/webp'],
+    description: 'Logo and icon files'
+  },
+  avatars: {
+    maxSize: 3 * 1024 * 1024, // 3MB
+    allowedTypes: ['image/jpeg', 'image/png', 'image/webp'],
+    description: 'User avatars'
+  },
+  uploads: {
+    maxSize: 5 * 1024 * 1024, // 5MB (default)
+    allowedTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml'],
+    description: 'General uploads'
+  }
+};
+
+/**
  * POST /api/upload
  * อัปโหลดไฟล์ไปยัง Supabase Storage
+ * 
+ * Form data parameters:
+ * - file: File (required) - ไฟล์ที่จะอัปโหลด
+ * - folder: string (optional) - โฟลเดอร์ปลายทาง (banners, products, gallery, logos, avatars)
+ * - preserveFormat: boolean (optional) - เก็บ format เดิม (true = ไม่แปลงเป็น jpg, สำหรับ logo/icon)
  */
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     
-    // ตรวจสอบ Authentication (อาจปรับตาม use case)
+    // ตรวจสอบ Authentication
     if (!session) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -21,15 +62,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Debug: ตรวจสอบ environment variables
-    console.log('🔍 Environment Check:');
-    console.log('NEXT_PUBLIC_SUPABASE_URL:', process.env.NEXT_PUBLIC_SUPABASE_URL);
-    console.log('SUPABASE_SERVICE_ROLE_KEY exists:', !!process.env.SUPABASE_SERVICE_ROLE_KEY);
-    console.log('SUPABASE_SERVICE_ROLE_KEY length:', process.env.SUPABASE_SERVICE_ROLE_KEY?.length);
-
     const formData = await request.formData();
     const file = formData.get('file') as File;
     const folder = (formData.get('folder') as string) || 'uploads';
+    const preserveFormat = formData.get('preserveFormat') === 'true';
 
     if (!file) {
       return NextResponse.json(
@@ -38,33 +74,32 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Get config for this folder
+    const config = UPLOAD_CONFIG[folder as keyof typeof UPLOAD_CONFIG] || UPLOAD_CONFIG.uploads;
+
     // ตรวจสอบประเภทไฟล์
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml'];
-    if (!allowedTypes.includes(file.type)) {
+    if (!config.allowedTypes.includes(file.type)) {
       return NextResponse.json(
-        { error: 'Invalid file type. Only images are allowed.' },
+        { 
+          error: `Invalid file type for ${config.description}. Allowed: ${config.allowedTypes.join(', ')}`,
+          allowedTypes: config.allowedTypes
+        },
         { status: 400 }
       );
     }
 
-    // ตรวจสอบขนาดไฟล์ (Max 5MB)
-    const maxSize = 5 * 1024 * 1024; // 5MB
-    if (file.size > maxSize) {
+    // ตรวจสอบขนาดไฟล์
+    if (file.size > config.maxSize) {
+      const maxSizeMB = (config.maxSize / (1024 * 1024)).toFixed(1);
       return NextResponse.json(
-        { error: 'File too large. Maximum size is 5MB.' },
+        { error: `File too large. Maximum size is ${maxSizeMB}MB for ${config.description}.` },
         { status: 400 }
       );
     }
 
     // สร้าง Supabase Client
-    // HARDCODE URL เพื่อทดสอบ
     const supabaseUrl = 'https://vygryagvxjewxdzgipea.supabase.co';
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-    console.log('📍 Creating Supabase client...');
-    console.log('URL:', supabaseUrl);
-    console.log('Key exists:', !!supabaseKey);
-    console.log('Key starts with:', supabaseKey?.substring(0, 20));
 
     if (!supabaseUrl || !supabaseKey) {
       console.error('❌ Missing Supabase credentials');
@@ -80,6 +115,9 @@ export async function POST(request: NextRequest) {
     const timestamp = Date.now();
     const randomString = Math.random().toString(36).substring(7);
     const fileExt = file.name.split('.').pop();
+    
+    // ถ้า preserveFormat = true หรือเป็น SVG/PNG สำหรับ logo, ใช้ extension เดิม
+    // ถ้าไม่ และ client-side ส่ง jpg มา ก็ใช้ jpg (จาก compression)
     const fileName = `${timestamp}-${randomString}.${fileExt}`;
     const filePath = `${folder}/${fileName}`;
 
@@ -89,7 +127,7 @@ export async function POST(request: NextRequest) {
 
     // อัปโหลดไป Supabase Storage
     const { data, error } = await supabase.storage
-      .from('Public') // Bucket name ที่สร้างไว้
+      .from('Public')
       .upload(filePath, buffer, {
         contentType: file.type,
         upsert: false
@@ -98,7 +136,7 @@ export async function POST(request: NextRequest) {
     if (error) {
       console.error('Supabase upload error:', error);
       return NextResponse.json(
-        { error: 'Failed to upload file' },
+        { error: 'Failed to upload file', details: error.message },
         { status: 500 }
       );
     }
@@ -114,7 +152,8 @@ export async function POST(request: NextRequest) {
       fileName: fileName,
       filePath: filePath,
       fileSize: file.size,
-      fileType: file.type
+      fileType: file.type,
+      folder: folder
     });
   } catch (error) {
     console.error('Upload error:', error);
