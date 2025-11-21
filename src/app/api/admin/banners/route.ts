@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
         { error: 'Unauthorized' },
         { status: 401 }
       );
-    }
+    } 
 
     const searchParams = request.nextUrl.searchParams;
     const activeOnly = searchParams.get('activeOnly') === 'true';
