@@ -8,7 +8,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 
 type Shop = {
-  id: number;
+  id: string;
   name: string;
   category: string | null;
   image: string | null;
@@ -66,7 +66,7 @@ const PACKAGE_BADGES: Record<string, { emoji: string; text: string; color: strin
 export default function ShopDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const shopId = params?.id ? Number(params.id) : null;
+  const shopId = params?.id as string | undefined;
 
   const [shop, setShop] = useState<Shop | null>(null);
   const [loading, setLoading] = useState(true);
@@ -97,7 +97,7 @@ export default function ShopDetailPage() {
 
   useEffect(() => {
     async function fetchShop() {
-      if (shopId === null || isNaN(shopId)) {
+      if (!shopId) {
         setError('รหัสร้านค้าไม่ถูกต้อง');
         setLoading(false);
         return;

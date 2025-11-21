@@ -11,84 +11,90 @@ export async function GET(
 
     if (!shopId) {
       return NextResponse.json(
-        { error: 'Shop ID is required' },
+        { error: 'Invalid shop ID' },
         { status: 400 }
       );
     }
 
-    // Use raw query for better performance with all necessary joins
-    const shops = await prisma.$queryRawUnsafe<any[]>(`
-      SELECT 
-        s.id,
-        s.name,
-        s.description,
-        s.address,
-        s.image,
-        s.lat,
-        s.lng,
-        s.phone,
-        s.website,
-        s.status,
-        s."createdAt",
-        sc.name as category,
-        COALESCE(
-          (
-            SELECT sp.tier
-            FROM shop_subscriptions ss
-            JOIN subscription_packages sp ON ss.plan_id = sp.id
-            WHERE ss.shop_id = s.id
-              AND ss.status = 'ACTIVE'
-              AND ss.end_date > NOW()
-            ORDER BY 
-              CASE sp.tier
-                WHEN 'PREMIUM' THEN 1
-                WHEN 'PRO' THEN 2
-                WHEN 'BASIC' THEN 3
-                ELSE 4
-              END
-            LIMIT 1
-          ),
-          'FREE'
-        ) as package_tier
-      FROM "Shop" s
-      LEFT JOIN "ShopCategory" sc ON s."categoryId" = sc.id
-      WHERE s.id = $1
-      LIMIT 1
-    `, shopId);
+    // Fetch shop with basic info using Prisma
+    const shop = await prisma.shop.findUnique({
+      where: { id: shopId },
+      include: {
+        category: true,
+      }
+    });
 
-    if (!shops || shops.length === 0) {
+    if (!shop) {
       return NextResponse.json(
         { error: 'Shop not found' },
         { status: 404 }
       );
     }
 
-    const shop = shops[0];
+    // Get subscription tier using raw query (for complex join)
+    let packageTier = 'FREE';
+    try {
+      const tierResult = await prisma.$queryRaw<Array<{ tier: string }>>`
+        SELECT sp.tier
+        FROM shop_subscriptions ss
+        JOIN subscription_packages sp ON ss.plan_id = sp.id
+        WHERE ss.shop_id = ${shopId}::uuid
+          AND ss.status = 'ACTIVE'
+          AND ss.end_date > NOW()
+        ORDER BY 
+          CASE sp.tier
+            WHEN 'PREMIUM' THEN 1
+            WHEN 'PRO' THEN 2
+            WHEN 'BASIC' THEN 3
+            ELSE 4
+          END
+        LIMIT 1
+      `;
+      
+      if (tierResult && tierResult.length > 0) {
+        packageTier = tierResult[0].tier;
+      }
+    } catch (err) {
+      console.error('Error fetching tier:', err);
+      // Continue with FREE tier
+    }
 
     // Get location data if available
+    let locationData: {
+      subdistrict: string | null;
+      district: string | null;
+      province: string | null;
+    } = {
+      subdistrict: null,
+      district: null,
+      province: null
+    };
+
+    // Always try to get location data based on lat/lng
     if (shop.lat && shop.lng) {
       try {
-        const locationData = await prisma.$queryRawUnsafe<any[]>(`
+        const location = await prisma.$queryRaw<Array<{
+          subdistrict: string | null;
+          district: string | null;
+          province: string | null;
+        }>>`
           SELECT 
             t.name_th as subdistrict,
             a.name_th as district,
             p.name_th as province
           FROM "Shop" s
-          LEFT JOIN loc_tambons t ON s.tambon_id = t.id
-          LEFT JOIN loc_amphures a ON s.amphure_id = a.id
-          LEFT JOIN loc_provinces p ON s.province_id = p.id
-          WHERE s.id = $1
+          LEFT JOIN loc_tambons t ON ST_Contains(t.geom, ST_SetSRID(ST_MakePoint(s.lng, s.lat), 4326))
+          LEFT JOIN loc_amphures a ON ST_Contains(a.geom, ST_SetSRID(ST_MakePoint(s.lng, s.lat), 4326))
+          LEFT JOIN loc_provinces p ON ST_Contains(p.geom, ST_SetSRID(ST_MakePoint(s.lng, s.lat), 4326))
+          WHERE s.id = ${shopId}::uuid
           LIMIT 1
-        `, shopId);
+        `;
 
-        if (locationData && locationData.length > 0) {
-          shop.subdistrict = locationData[0].subdistrict;
-          shop.district = locationData[0].district;
-          shop.province = locationData[0].province;
+        if (location && location.length > 0) {
+          locationData = location[0];
         }
       } catch (err) {
-        console.error('Error fetching location data:', err);
-        // Continue without location data
+        console.error('Error fetching location:', err);
       }
     }
 
@@ -100,11 +106,26 @@ export async function GET(
       FREE: { emoji: '', text: '' },
     };
 
-    const badge = PACKAGE_BADGES[shop.package_tier] || PACKAGE_BADGES.FREE;
-    shop.badge_emoji = badge.emoji;
-    shop.badge_text = badge.text;
+    const badge = PACKAGE_BADGES[packageTier] || PACKAGE_BADGES.FREE;
 
-    return NextResponse.json(shop);
+    return NextResponse.json({
+      id: shop.id,
+      name: shop.name,
+      description: shop.description,
+      address: shop.address,
+      image: shop.image,
+      lat: shop.lat,
+      lng: shop.lng,
+      phone: null, // Not in schema, will need to add if needed
+      website: null, // Not in schema, will need to add if needed
+      status: shop.status,
+      createdAt: shop.createdAt,
+      category: shop.category?.name || null,
+      package_tier: packageTier,
+      badge_emoji: badge.emoji,
+      badge_text: badge.text,
+      ...locationData
+    });
 
   } catch (error) {
     console.error('Error fetching shop:', error);
