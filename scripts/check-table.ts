@@ -4,15 +4,27 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function main() {
-  const result = await prisma.$queryRaw`
-    SELECT column_name, data_type, is_nullable
-    FROM information_schema.columns
-    WHERE table_name = 'site_settings'
-    ORDER BY ordinal_position
-  `;
+  console.log('🔧 Checking shop_subscriptions table...');
   
-  console.log('📋 Columns in site_settings table:');
-  console.table(result);
+  const columns = await prisma.$queryRawUnsafe<Array<{column_name: string}>>(`
+    SELECT column_name 
+    FROM information_schema.columns 
+    WHERE table_schema = 'public' 
+    AND table_name = 'shop_subscriptions';
+  `);
+  
+  console.log('Columns:', columns.map(c => c.column_name).join(', '));
+  
+  const hasColumn = columns.some(c => c.column_name === 'plan_id');
+  console.log('Has plan_id:', hasColumn);
+  
+  if (!hasColumn) {
+    console.log('Adding plan_id column...');
+    await prisma.$executeRawUnsafe(`
+      ALTER TABLE shop_subscriptions ADD COLUMN plan_id TEXT;
+    `);
+    console.log('✅ Done!');
+  }
 }
 
 main()

@@ -62,9 +62,9 @@ export async function POST(
     const subscriptionId = Math.random().toString(36).substring(2, 15);
     await prisma.$executeRawUnsafe(`
       INSERT INTO shop_subscriptions 
-        (id, shop_id, plan_id, status, started_at, expires_at, auto_renew, payment_provider, payment_ref, created_at, updated_at)
+        (id, shop_id, package_id, status, start_date, end_date, payment_status, auto_renew, created_at, updated_at)
       VALUES 
-        ('${subscriptionId}', '${shopId}', '${packageId}', 'ACTIVE', '${now.toISOString()}', '${expiresAt.toISOString()}', false, 'ADMIN_GRANT', 'ADMIN_${Date.now()}', '${now.toISOString()}', '${now.toISOString()}');
+        ('${subscriptionId}', '${shopId}', '${packageId}', 'ACTIVE', '${now.toISOString()}', '${expiresAt.toISOString()}', 'COMPLETED', false, '${now.toISOString()}', '${now.toISOString()}');
     `);
 
     console.log('✅ Subscription created:', subscriptionId);
