@@ -49,6 +49,7 @@ export async function GET(request: NextRequest) {
     const lat = sp.get('lat');
     const lng = sp.get('lng');
     const limit = Number(sp.get('limit') || 50);
+    const offset = Number(sp.get('offset') || 0);
     const categoryId = sp.get('category') || null;
     const sortBy = (sp.get('sortBy') || 'createdAt') as 'distance' | 'name' | 'createdAt';
     const radiiMeters = [2 * KM, 5 * KM, 20 * KM, 50 * KM];
@@ -87,11 +88,13 @@ export async function GET(request: NextRequest) {
           LEFT JOIN "ShopCategory" sc ON s."categoryId" = sc.id
           ${whereClause}
           ORDER BY RANDOM()
-          LIMIT $${params.length + 1};
+          OFFSET $${params.length + 1}
+          LIMIT $${params.length + 2};
         `;
+        params.push(offset);
         params.push(limit);
         const rows = await prisma.$queryRawUnsafe(sql, ...params);
-        console.log('[api/shops] random rows:', Array.isArray(rows) ? rows.length : 'not array', rows);
+        console.log('[api/shops] random rows:', Array.isArray(rows) ? rows.length : 'not array', 'offset:', offset);
         return NextResponse.json({ success: true, shops: Array.isArray(rows) ? rows : [], hasLocation: false });
       } catch (sqlError) {
         console.error('[api/shops] SQL error:', sqlError);

@@ -40,12 +40,36 @@ export default function HomePage() {
   const [banners, setBanners] = useState<HeroBanner[]>([]);
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
   const [isLoadingShops, setIsLoadingShops] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasMoreShops, setHasMoreShops] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
   const [locationState, setLocationState] = useState({ status: 'idle' } as any);
   const [showLocationNotif, setShowLocationNotif] = useState(true);
+
+  const SHOPS_PER_PAGE = 50; // Total shops to load per page
 
   useEffect(() => { loadShops(); }, []);
   useEffect(() => { loadBanners(); }, []);
   useEffect(() => { requestLocation(); }, []);
+
+  // Infinite scroll: auto-load when scrolling near bottom
+  useEffect(() => {
+    const handleScroll = () => {
+      if (isLoadingMore || !hasMoreShops || isLoadingShops) return;
+      
+      const scrollHeight = document.documentElement.scrollHeight;
+      const scrollTop = document.documentElement.scrollTop;
+      const clientHeight = document.documentElement.clientHeight;
+      
+      // Load more when user is 500px from bottom
+      if (scrollHeight - scrollTop - clientHeight < 500) {
+        loadMoreShops();
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [isLoadingMore, hasMoreShops, isLoadingShops, currentPage]);
 
   // Auto-rotate banners every 5 seconds
   useEffect(() => {
@@ -73,16 +97,46 @@ export default function HomePage() {
   const loadShops = async () => {
     try {
       setIsLoadingShops(true);
-      const res = await fetch('/api/shops?limit=50');
+      const res = await fetch(`/api/shops?limit=${SHOPS_PER_PAGE}`);
       const data = await res.json();
       console.log('Loaded shops:', data.shops?.length, 'shops');
       console.log('First shop:', data.shops?.[0]);
       console.log('Subscription tiers:', data.shops?.map((s: Shop) => ({ name: s.name, tier: s.subscription_tier })));
       setShops(data.shops || []);
+      setHasMoreShops((data.shops?.length || 0) >= SHOPS_PER_PAGE);
+      setCurrentPage(1);
     } catch (err) {
       console.error('Error loading shops:', err);
     } finally {
       setIsLoadingShops(false);
+    }
+  };
+
+  const loadMoreShops = async () => {
+    if (isLoadingMore || !hasMoreShops) return;
+    
+    try {
+      setIsLoadingMore(true);
+      const nextPage = currentPage + 1;
+      const offset = currentPage * SHOPS_PER_PAGE;
+      
+      // Simple offset-based pagination (you can enhance with cursor-based later)
+      const res = await fetch(`/api/shops?limit=${SHOPS_PER_PAGE}&offset=${offset}`);
+      const data = await res.json();
+      
+      console.log('Loaded more shops:', data.shops?.length, 'shops');
+      
+      if (data.shops && data.shops.length > 0) {
+        setShops(prev => [...prev, ...data.shops]);
+        setHasMoreShops(data.shops.length >= SHOPS_PER_PAGE);
+        setCurrentPage(nextPage);
+      } else {
+        setHasMoreShops(false);
+      }
+    } catch (err) {
+      console.error('Error loading more shops:', err);
+    } finally {
+      setIsLoadingMore(false);
     }
   };
 
@@ -310,6 +364,38 @@ export default function HomePage() {
                     <ShopCard key={shop.id} shop={shop} />
                   ))}
                 </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Load More Section */}
+        {!isLoadingShops && shops.length > 0 && (
+          <div className="mt-8 mb-12">
+            {isLoadingMore && (
+              <div className="flex justify-center items-center py-8">
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-orange-600"></div>
+                <span className="ml-3 text-gray-600">กำลังโหลดร้านค้าเพิ่มเติม...</span>
+              </div>
+            )}
+            
+            {!isLoadingMore && hasMoreShops && (
+              <div className="flex flex-col items-center gap-4">
+                <button
+                  onClick={loadMoreShops}
+                  className="px-8 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-full font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300"
+                >
+                  โหลดร้านค้าเพิ่มเติม
+                </button>
+                <p className="text-sm text-gray-500">
+                  กำลังแสดง {shops.length} ร้าน • เลื่อนลงเพื่อโหลดอัตโนมัติ
+                </p>
+              </div>
+            )}
+            
+            {!hasMoreShops && shops.length > SHOPS_PER_PAGE && (
+              <div className="text-center py-8">
+                <p className="text-gray-600">🎉 แสดงร้านค้าครบทั้งหมดแล้ว ({shops.length} ร้าน)</p>
               </div>
             )}
           </div>
