@@ -34,11 +34,11 @@ export async function GET(
     // Get subscription tier using raw query (for complex join)
     let packageTier = 'FREE';
     try {
-      const tierResult = await prisma.$queryRaw<Array<{ tier: string }>>`
+      const tierResult = await prisma.$queryRaw<Array<{ tier: string }>>` 
         SELECT sp.tier
         FROM shop_subscriptions ss
         JOIN subscription_packages sp ON ss.plan_id = sp.id
-        WHERE ss.shop_id = ${shopId}::uuid
+        WHERE ss.shop_id = ${shopId}
           AND ss.status = 'ACTIVE'
           AND ss.end_date > NOW()
         ORDER BY 
@@ -49,9 +49,7 @@ export async function GET(
             ELSE 4
           END
         LIMIT 1
-      `;
-      
-      if (tierResult && tierResult.length > 0) {
+      `;      if (tierResult && tierResult.length > 0) {
         packageTier = tierResult[0].tier;
       }
     } catch (err) {
@@ -77,7 +75,7 @@ export async function GET(
           subdistrict: string | null;
           district: string | null;
           province: string | null;
-        }>>`
+        }>>` 
           SELECT 
             t.name_th as subdistrict,
             a.name_th as district,
@@ -86,11 +84,9 @@ export async function GET(
           LEFT JOIN loc_tambons t ON ST_Contains(t.geom, ST_SetSRID(ST_MakePoint(s.lng, s.lat), 4326))
           LEFT JOIN loc_amphures a ON ST_Contains(a.geom, ST_SetSRID(ST_MakePoint(s.lng, s.lat), 4326))
           LEFT JOIN loc_provinces p ON ST_Contains(p.geom, ST_SetSRID(ST_MakePoint(s.lng, s.lat), 4326))
-          WHERE s.id = ${shopId}::uuid
+          WHERE s.id = ${shopId}
           LIMIT 1
-        `;
-
-        if (location && location.length > 0) {
+        `;        if (location && location.length > 0) {
           locationData = location[0];
         }
       } catch (err) {
