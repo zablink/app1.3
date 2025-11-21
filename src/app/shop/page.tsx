@@ -7,7 +7,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 
 type Shop = {
-  id: number;
+  id: string; // Changed from number to string (UUID)
   name: string;
   category: string | null;
   image: string | null;
@@ -16,9 +16,13 @@ type Shop = {
   subdistrict: string | null;
   district: string | null;
   province: string | null;
+  description?: string | null;
+  address?: string | null;
   package_tier?: string | null;
   badge_emoji?: string | null;
   badge_text?: string | null;
+  subscriptionTier?: string | null; // API may return this
+  distance?: number | null;
 };
 
 // Package badge configuration
