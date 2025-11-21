@@ -46,29 +46,38 @@ export default function HomePage() {
   const [locationState, setLocationState] = useState({ status: 'idle' } as any);
   const [showLocationNotif, setShowLocationNotif] = useState(true);
 
-  const SHOPS_PER_PAGE = 50; // Total shops to load per page
+  const SHOPS_PER_PAGE = 24; // ลดลงจาก 50 เป็น 24 เพื่อโหลดเร็วขึ้น
 
   useEffect(() => { loadShops(); }, []);
   useEffect(() => { loadBanners(); }, []);
   useEffect(() => { requestLocation(); }, []);
 
-  // Infinite scroll: auto-load when scrolling near bottom
+  // Infinite scroll: auto-load when scrolling near bottom (with debounce)
   useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+    
     const handleScroll = () => {
       if (isLoadingMore || !hasMoreShops || isLoadingShops) return;
       
-      const scrollHeight = document.documentElement.scrollHeight;
-      const scrollTop = document.documentElement.scrollTop;
-      const clientHeight = document.documentElement.clientHeight;
-      
-      // Load more when user is 500px from bottom
-      if (scrollHeight - scrollTop - clientHeight < 500) {
-        loadMoreShops();
-      }
+      // Debounce scroll event
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        const scrollHeight = document.documentElement.scrollHeight;
+        const scrollTop = document.documentElement.scrollTop;
+        const clientHeight = document.documentElement.clientHeight;
+        
+        // Load more when user is 800px from bottom
+        if (scrollHeight - scrollTop - clientHeight < 800) {
+          loadMoreShops();
+        }
+      }, 200); // Debounce 200ms
     };
 
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => {
+      clearTimeout(timeoutId);
+      window.removeEventListener('scroll', handleScroll);
+    };
   }, [isLoadingMore, hasMoreShops, isLoadingShops, currentPage]);
 
   // Auto-rotate banners every 5 seconds
@@ -99,9 +108,6 @@ export default function HomePage() {
       setIsLoadingShops(true);
       const res = await fetch(`/api/shops?limit=${SHOPS_PER_PAGE}`);
       const data = await res.json();
-      console.log('Loaded shops:', data.shops?.length, 'shops');
-      console.log('First shop:', data.shops?.[0]);
-      console.log('Subscription tiers:', data.shops?.map((s: Shop) => ({ name: s.name, tier: s.subscription_tier })));
       setShops(data.shops || []);
       setHasMoreShops((data.shops?.length || 0) >= SHOPS_PER_PAGE);
       setCurrentPage(1);
@@ -120,11 +126,8 @@ export default function HomePage() {
       const nextPage = currentPage + 1;
       const offset = currentPage * SHOPS_PER_PAGE;
       
-      // Simple offset-based pagination (you can enhance with cursor-based later)
       const res = await fetch(`/api/shops?limit=${SHOPS_PER_PAGE}&offset=${offset}`);
       const data = await res.json();
-      
-      console.log('Loaded more shops:', data.shops?.length, 'shops');
       
       if (data.shops && data.shops.length > 0) {
         setShops(prev => [...prev, ...data.shops]);
@@ -169,18 +172,10 @@ export default function HomePage() {
 
   // Group shops by subscription tier
   const groupShopsByTier = (shops: Shop[]) => {
-    console.log('Grouping shops, total:', shops.length);
     const premium = shops.filter(s => s.subscription_tier === 'PREMIUM').slice(0, 6);
     const pro = shops.filter(s => s.subscription_tier === 'PRO').slice(0, 3);
     const basic = shops.filter(s => s.subscription_tier === 'BASIC').slice(0, 3);
     const free = shops.filter(s => !s.subscription_tier || s.subscription_tier === 'FREE').slice(0, 12);
-    
-    console.log('Grouped:', { 
-      premium: premium.length, 
-      pro: pro.length, 
-      basic: basic.length, 
-      free: free.length 
-    });
     
     return { premium, pro, basic, free };
   };

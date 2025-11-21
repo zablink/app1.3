@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -80,24 +80,42 @@ export default function ShopDetailPage() {
     comment: ""
   });
 
-  // Gallery
-  const [selectedImage, setSelectedImage] = useState(0);
-  const gallery = [shop?.image || '/images/placeholder.jpg'];
+  // Calculate average rating (memoized)
+  const averageRating = useMemo(() => {
+    return reviews.length > 0
+      ? reviews.reduce((acc, review) => acc + review.rating, 0) / reviews.length
+      : 0;
+  }, [reviews]);
 
-  // Fetch shop details
+  // Gallery memoized
+  const gallery = useMemo(() => {
+    return [shop?.image || '/images/placeholder.jpg'];
+  }, [shop?.image]);
+  
+  // Gallery state
+  const [selectedImage, setSelectedImage] = useState(0);
+
   useEffect(() => {
     async function fetchShop() {
+      if (!shopId || isNaN(shopId)) {
+        setError('รหัสร้านค้าไม่ถูกต้อง');
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
         setError(null);
 
-        const response = await fetch(`/api/shops/${shopId}`);
+        const response = await fetch(`/api/shops/${shopId}`, {
+          next: { revalidate: 60 } // Cache for 60 seconds
+        });
         
         if (!response.ok) {
           if (response.status === 404) {
             throw new Error('ไม่พบร้านค้าที่คุณต้องการ');
           }
-          throw new Error(`Failed to fetch shop: ${response.status}`);
+          throw new Error(`เกิดข้อผิดพลาดในการโหลดข้อมูล`);
         }
 
         const data = await response.json();
@@ -110,9 +128,7 @@ export default function ShopDetailPage() {
       }
     }
 
-    if (shopId) {
-      fetchShop();
-    }
+    fetchShop();
   }, [shopId]);
 
   // Submit review
@@ -144,10 +160,35 @@ export default function ShopDetailPage() {
   // Loading state
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-lg text-gray-600">กำลังโหลดข้อมูล...</p>
+      <div className="min-h-screen bg-gray-50">
+        {/* Skeleton Header */}
+        <div className="h-96 bg-gray-300 animate-pulse"></div>
+        
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Main Skeleton */}
+            <div className="lg:col-span-2 space-y-6">
+              <div className="bg-white rounded-lg shadow-sm p-6">
+                <div className="h-8 bg-gray-300 rounded w-1/3 mb-4 animate-pulse"></div>
+                <div className="space-y-3">
+                  <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
+                  <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
+                  <div className="h-4 bg-gray-200 rounded w-2/3 animate-pulse"></div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Sidebar Skeleton */}
+            <div className="space-y-6">
+              <div className="bg-white rounded-lg shadow-sm p-6">
+                <div className="h-6 bg-gray-300 rounded w-1/2 mb-4 animate-pulse"></div>
+                <div className="space-y-3">
+                  <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
+                  <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );

@@ -73,21 +73,32 @@ export async function GET(request: NextRequest) {
       
       try {
         const sql = `
-          SELECT s.id, s.name, s.description, s.address, s."categoryId", sc.name as category_name, s."createdAt", s.image,
-          (
-            SELECT sp.tier
-            FROM shop_subscriptions ss
-            JOIN subscription_packages sp ON ss.plan_id = sp.id
-            WHERE ss.shop_id = s.id
-              AND ss.status = 'ACTIVE'
-              AND ss.end_date > NOW()
-            ORDER BY sp.tier DESC
-            LIMIT 1
-          ) as subscription_tier
+          SELECT 
+            s.id, s.name, s.description, s.address, s."categoryId", 
+            sc.name as category_name, s."createdAt", s.image,
+            COALESCE(
+              (
+                SELECT sp.tier
+                FROM shop_subscriptions ss
+                JOIN subscription_packages sp ON ss.plan_id = sp.id
+                WHERE ss.shop_id = s.id
+                  AND ss.status = 'ACTIVE'
+                  AND ss.end_date > NOW()
+                ORDER BY 
+                  CASE sp.tier
+                    WHEN 'PREMIUM' THEN 1
+                    WHEN 'PRO' THEN 2
+                    WHEN 'BASIC' THEN 3
+                    ELSE 4
+                  END
+                LIMIT 1
+              ),
+              'FREE'
+            ) as subscription_tier
           FROM "Shop" s
           LEFT JOIN "ShopCategory" sc ON s."categoryId" = sc.id
           ${whereClause}
-          ORDER BY RANDOM()
+          ORDER BY s."createdAt" DESC
           OFFSET $${params.length + 1}
           LIMIT $${params.length + 2};
         `;
@@ -138,16 +149,25 @@ export async function GET(request: NextRequest) {
       's.id','s.name','s.description','s.address','s."categoryId"','sc.name as category_name','s.has_physical_store','s."createdAt"',
       // Include s.image for frontend to render shop images
       's.image',
-      // Include subscription tier (from active subscription)
-      `(
-        SELECT sp.tier
-        FROM shop_subscriptions ss
-        JOIN subscription_packages sp ON ss.plan_id = sp.id
-        WHERE ss.shop_id = s.id
-          AND ss.status = 'ACTIVE'
-          AND ss.end_date > NOW()
-        ORDER BY sp.tier DESC
-        LIMIT 1
+      // Include subscription tier (optimized with COALESCE)
+      `COALESCE(
+        (
+          SELECT sp.tier
+          FROM shop_subscriptions ss
+          JOIN subscription_packages sp ON ss.plan_id = sp.id
+          WHERE ss.shop_id = s.id
+            AND ss.status = 'ACTIVE'
+            AND ss.end_date > NOW()
+          ORDER BY 
+            CASE sp.tier
+              WHEN 'PREMIUM' THEN 1
+              WHEN 'PRO' THEN 2
+              WHEN 'BASIC' THEN 3
+              ELSE 4
+            END
+          LIMIT 1
+        ),
+        'FREE'
       ) as subscription_tier`
     ];
     if (hasAmphureCol) selectCols.push('s.amphure_id');
