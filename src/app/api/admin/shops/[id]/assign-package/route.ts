@@ -13,6 +13,8 @@ export async function POST(
     const { packageId, tokenAmount, subscriptionDays } = await request.json();
     const shopId = params.id;
 
+    console.log('Assign package request:', { shopId, packageId, tokenAmount, subscriptionDays });
+
     if (!packageId) {
       return NextResponse.json(
         { error: 'packageId is required' },
@@ -20,24 +22,31 @@ export async function POST(
       );
     }
 
-    // Check if package exists
-    const pkg = await prisma.subscriptionPackage.findUnique({
-      where: { id: packageId },
-    });
+    // Check if package exists using raw query
+    const pkgResult = await prisma.$queryRawUnsafe<Array<any>>(`
+      SELECT id, name, 
+        COALESCE(price, price_monthly, 0) as price,
+        COALESCE(period_days, 30) as period_days,
+        token_amount
+      FROM subscription_packages 
+      WHERE id = '${packageId}';
+    `);
 
-    if (!pkg) {
+    if (pkgResult.length === 0) {
       return NextResponse.json(
         { error: 'Package not found' },
         { status: 404 }
       );
     }
 
-    // Check if shop exists
-    const shop = await prisma.shop.findUnique({
-      where: { id: shopId },
-    });
+    const pkg = pkgResult[0];
 
-    if (!shop) {
+    // Check if shop exists
+    const shopResult = await prisma.$queryRawUnsafe<Array<any>>(`
+      SELECT id FROM "Shop" WHERE id = '${shopId}';
+    `);
+
+    if (shopResult.length === 0) {
       return NextResponse.json(
         { error: 'Shop not found' },
         { status: 404 }
@@ -45,74 +54,42 @@ export async function POST(
     }
 
     const now = new Date();
-    const days = parseInt(subscriptionDays as string) || pkg.periodDays;
+    const days = parseInt(subscriptionDays as string) || pkg.period_days || 30;
     const expiresAt = new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
-    const tokens = parseInt(tokenAmount as string) || pkg.tokenAmount || 0;
+    const tokens = parseInt(tokenAmount as string) || pkg.token_amount || 0;
 
-    // Create subscription
-    const subscription = await prisma.shopSubscription.create({
-      data: {
-        shopId: shopId,
-        planId: packageId,
-        status: 'ACTIVE',
-        startedAt: now,
-        expiresAt: expiresAt,
-        autoRenew: false,
-        paymentProvider: 'ADMIN_GRANT',
-        paymentRef: `ADMIN_${Date.now()}`,
-      },
-    });
+    // Create subscription using raw SQL
+    const subscriptionId = Math.random().toString(36).substring(2, 15);
+    await prisma.$executeRawUnsafe(`
+      INSERT INTO shop_subscriptions 
+        (id, shop_id, plan_id, status, started_at, expires_at, auto_renew, payment_provider, payment_ref, created_at, updated_at)
+      VALUES 
+        ('${subscriptionId}', '${shopId}', '${packageId}', 'ACTIVE', '${now.toISOString()}', '${expiresAt.toISOString()}', false, 'ADMIN_GRANT', 'ADMIN_${Date.now()}', '${now.toISOString()}', '${now.toISOString()}');
+    `);
 
-    // Add tokens if specified
+    console.log('✅ Subscription created:', subscriptionId);
+
+    // Note: Token wallet functionality disabled for now since tables don't exist
+    let tokenMessage = '';
     if (tokens > 0) {
-      // Get or create token wallet
-      let wallet = await prisma.tokenWallet.findUnique({
-        where: { shopId: shopId },
-      });
-
-      if (!wallet) {
-        wallet = await prisma.tokenWallet.create({
-          data: {
-            shopId: shopId,
-            balance: 0,
-          },
-        });
-      }
-
-      // Create token purchase record
-      const tokenPurchase = await prisma.tokenPurchase.create({
-        data: {
-          walletId: wallet.id,
-          amount: tokens,
-          remaining: tokens,
-          price: 0, // Admin grant = free
-          provider: 'ADMIN_GRANT',
-          providerRef: `ADMIN_${Date.now()}`,
-          createdAt: now,
-          expiresAt: expiresAt,
-        },
-      });
-
-      // Update wallet balance
-      await prisma.tokenWallet.update({
-        where: { id: wallet.id },
-        data: {
-          balance: {
-            increment: tokens,
-          },
-        },
-      });
+      tokenMessage = ` (${tokens} tokens requested but token_wallets table not available)`;
     }
 
     return NextResponse.json({
       success: true,
-      subscription,
-      message: 'Package and tokens assigned successfully',
+      subscription: {
+        id: subscriptionId,
+        shopId,
+        packageId,
+        status: 'ACTIVE',
+        expiresAt,
+      },
+      message: `Package assigned successfully${tokenMessage}`,
     });
   } catch (err) {
     console.error('Assign package error:', err);
     return NextResponse.json(
-      { error: 'Failed to assign package' },
+      { error: 'Failed to assign package', detail: err instanceof Error ? err.message : String(err) },
       { status: 500 }
     );
   }
