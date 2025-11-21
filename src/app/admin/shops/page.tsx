@@ -30,6 +30,14 @@ interface Shop {
     id: string;
     name: string;
   };
+  subscription?: {
+    id: string;
+    packageId: string;
+    status: string;
+    package?: {
+      name: string;
+    };
+  };
   subscriptions?: any[];
   tokenWallet?: {
     balance: number;
@@ -73,6 +81,11 @@ export default function AdminShopsPage() {
   const [tokenAmount, setTokenAmount] = useState('0');
   const [subscriptionDays, setSubscriptionDays] = useState('30');
   const [isAssigning, setIsAssigning] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+    setToast({ message, type });
+  };
 
   useEffect(() => {
     if (status === 'loading') return;
@@ -102,7 +115,10 @@ export default function AdminShopsPage() {
       }
 
       console.log('Fetching shops with params:', params.toString());
-      const res = await fetch(`/api/admin/shops?${params}`);
+      const res = await fetch(`/api/admin/shops?${params}`, {
+        cache: 'no-store',
+        headers: { 'Cache-Control': 'no-cache' },
+      });
       console.log('Response status:', res.status);
       
       const data = await res.json();
@@ -124,7 +140,10 @@ export default function AdminShopsPage() {
 
   const loadPackages = async () => {
     try {
-      const res = await fetch('/api/subscription-plans');
+      const res = await fetch('/api/subscription-plans', {
+        cache: 'no-store',
+        headers: { 'Cache-Control': 'no-cache' },
+      });
       const data = await res.json();
       if (data.packages) {
         setPackages(data.packages);
@@ -136,7 +155,10 @@ export default function AdminShopsPage() {
 
   const loadUsers = async () => {
     try {
-      const res = await fetch('/api/admin/users?limit=1000');
+      const res = await fetch('/api/admin/users?limit=1000', {
+        cache: 'no-store',
+        headers: { 'Cache-Control': 'no-cache' },
+      });
       const data = await res.json();
       if (data.users) {
         setUsers(data.users);
@@ -157,16 +179,16 @@ export default function AdminShopsPage() {
       });
 
       if (res.ok) {
-        alert('เปลี่ยนเจ้าของร้านสำเร็จ!');
+        showToast('เปลี่ยนเจ้าของร้านสำเร็จ!', 'success');
         setShowAssignModal(false);
         loadShops();
       } else {
         const data = await res.json();
-        alert(data.error || 'เกิดข้อผิดพลาด');
+        showToast(data.error || 'เกิดข้อผิดพลาด', 'error');
       }
     } catch (error) {
       console.error('Error assigning owner:', error);
-      alert('เกิดข้อผิดพลาด');
+      showToast('เกิดข้อผิดพลาด', 'error');
     }
   };
 
@@ -190,16 +212,16 @@ export default function AdminShopsPage() {
       console.log('Assign package response:', data);
 
       if (res.ok) {
-        alert(data.message || 'มอบหมาย Package และ Token สำเร็จ!');
+        showToast(data.message || 'มอบหมาย Package และ Token สำเร็จ!', 'success');
         setShowPackageModal(false);
         loadShops();
       } else {
         console.error('Assign package error:', data);
-        alert(`เกิดข้อผิดพลาด: ${data.error || 'Unknown error'}${data.detail ? '\n' + data.detail : ''}`);
+        showToast(`เกิดข้อผิดพลาด: ${data.error || 'Unknown error'}`, 'error');
       }
     } catch (error) {
       console.error('Error assigning package:', error);
-      alert('เกิดข้อผิดพลาด: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      showToast('เกิดข้อผิดพลาด: ' + (error instanceof Error ? error.message : 'Unknown error'), 'error');
     } finally {
       setIsAssigning(false);
     }
@@ -219,6 +241,26 @@ export default function AdminShopsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Toast Notification */}
+      {toast && (
+        <div className="fixed top-4 right-4 z-50 animate-fade-in">
+          <div className={`flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg min-w-[300px] ${
+            toast.type === 'success' 
+              ? 'bg-green-500 text-white' 
+              : 'bg-red-500 text-white'
+          }`}>
+            <span className="flex-1">{toast.message}</span>
+            <button
+              onClick={() => setToast(null)}
+              className="flex-shrink-0 hover:bg-white/20 rounded p-1 transition-colors"
+              aria-label="ปิด"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <header className="bg-white shadow-sm border-b">
         <div className="container mx-auto px-4 py-6">
