@@ -234,33 +234,44 @@ export default function ShopDetailPage() {
       </div>
 
       {/* Hero Image */}
-      <div className="relative h-96 w-full bg-gray-200 overflow-hidden">
+      <div className="relative h-[400px] md:h-[500px] w-full bg-gradient-to-br from-gray-800 to-gray-900 overflow-hidden">
         <img
           src={gallery[selectedImage]}
           alt={shop.name}
           className="w-full h-full object-cover"
+          onError={(e) => {
+            e.currentTarget.src = '/images/placeholder.jpg';
+          }}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
         
         {/* Shop Name Overlay */}
-        <div className="absolute bottom-0 left-0 right-0 p-8 text-white">
+        <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8 text-white">
           <div className="max-w-7xl mx-auto">
-            <div className="flex items-start justify-between">
-              <div>
-                <h1 className="text-4xl font-bold mb-2">{shop.name}</h1>
+            <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-3">
+                  <h1 className="text-3xl md:text-5xl font-bold">{shop.name}</h1>
+                  {shop.package_tier && PACKAGE_BADGES[shop.package_tier]?.emoji && (
+                    <span className="text-2xl md:text-3xl">{PACKAGE_BADGES[shop.package_tier]?.emoji}</span>
+                  )}
+                </div>
                 {shop.category && (
-                  <p className="text-xl mb-2">{shop.category}</p>
+                  <div className="inline-block px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full mb-3">
+                    <p className="text-sm md:text-base font-medium">{shop.category}</p>
+                  </div>
                 )}
                 {(shop.district || shop.province) && (
-                  <p className="text-lg opacity-90">
-                    📍 {shop.district}{shop.district && shop.province ? ', ' : ''}{shop.province}
+                  <p className="text-base md:text-lg opacity-90 flex items-center gap-2">
+                    <span>📍</span>
+                    <span>{shop.district}{shop.district && shop.province ? ', ' : ''}{shop.province}</span>
                   </p>
                 )}
               </div>
               {shop.package_tier && PACKAGE_BADGES[shop.package_tier]?.text && (
-                <div className={`${PACKAGE_BADGES[shop.package_tier].color} px-4 py-2 rounded-full text-white font-semibold shadow-lg flex items-center gap-2`}>
-                  <span className="text-xl">{PACKAGE_BADGES[shop.package_tier]?.emoji}</span>
-                  <span>{PACKAGE_BADGES[shop.package_tier]?.text}</span>
+                <div className={`${PACKAGE_BADGES[shop.package_tier].color} px-4 md:px-6 py-2 md:py-3 rounded-full text-white font-semibold shadow-xl flex items-center gap-2 self-start md:self-auto`}>
+                  <span className="text-lg md:text-xl">{PACKAGE_BADGES[shop.package_tier]?.emoji}</span>
+                  <span className="text-sm md:text-base">{PACKAGE_BADGES[shop.package_tier]?.text}</span>
                 </div>
               )}
             </div>
@@ -275,12 +286,19 @@ export default function ShopDetailPage() {
           <div className="lg:col-span-2 space-y-6">
             {/* Description */}
             <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-2xl font-bold mb-4">เกี่ยวกับร้าน</h2>
-              <p className="text-gray-700 leading-relaxed">
-                ร้าน{shop.name} เป็นร้านที่ให้บริการ{shop.category}คุณภาพดี 
-                ตั้งอยู่ใจกลางเมืองที่สะดวกต่อการเดินทาง 
-                พร้อมบริการด้วยความใส่ใจและคุณภาพในทุกจานอาหาร
+              <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+                <span>📝</span>
+                เกี่ยวกับร้าน
+              </h2>
+              <p className="text-gray-700 leading-relaxed whitespace-pre-line">
+                {shop.description || `ร้าน ${shop.name} ${shop.category ? `เป็นร้าน${shop.category}` : ''} ที่พร้อมให้บริการคุณด้วยความใส่ใจและคุณภาพ`}
               </p>
+              {shop.address && (
+                <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                  <p className="text-sm text-gray-600 mb-1">📍 ที่อยู่</p>
+                  <p className="text-gray-800">{shop.address}</p>
+                </div>
+              )}
             </div>
 
             {/* Reviews Section */}
@@ -391,78 +409,157 @@ export default function ShopDetailPage() {
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* Contact Info */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h3 className="text-lg font-semibold mb-4">ข้อมูลติดต่อ</h3>
+            {/* Quick Actions */}
+            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg shadow-sm p-6 border border-blue-100">
+              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <span>⚡</span>
+                ดำเนินการด่วน
+              </h3>
               <div className="space-y-3">
-                <div>
-                  <span className="text-gray-600">📍 ที่อยู่:</span>
-                  <p className="font-medium mt-1">
-                    {shop.subdistrict && `${shop.subdistrict}, `}
-                    {shop.district && `${shop.district}, `}
-                    {shop.province}
-                  </p>
-                </div>
+                <button
+                  onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${shop.lat},${shop.lng}`, '_blank')}
+                  disabled={!shop.lat || !shop.lng}
+                  className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition disabled:bg-gray-300 disabled:cursor-not-allowed font-medium shadow-sm"
+                >
+                  <span>🗺️</span>
+                  <span>เปิดแผนที่</span>
+                </button>
+                <button
+                  className="w-full flex items-center justify-center gap-2 bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 transition font-medium shadow-sm"
+                  onClick={() => alert('ฟีเจอร์กำลังพัฒนา')}
+                >
+                  <span>💬</span>
+                  <span>ติดต่อร้านค้า</span>
+                </button>
+                <button
+                  className="w-full flex items-center justify-center gap-2 bg-pink-600 text-white px-4 py-3 rounded-lg hover:bg-pink-700 transition font-medium shadow-sm"
+                  onClick={() => alert('ฟีเจอร์กำลังพัฒนา')}
+                >
+                  <span>❤️</span>
+                  <span>บันทึกร้านโปรด</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Location Info */}
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <span>📍</span>
+                ที่อยู่ร้าน
+              </h3>
+              <div className="space-y-2 text-gray-700">
+                {shop.subdistrict && (
+                  <p>ตำบล/แขวง: <span className="font-medium">{shop.subdistrict}</span></p>
+                )}
+                {shop.district && (
+                  <p>อำเภอ/เขต: <span className="font-medium">{shop.district}</span></p>
+                )}
+                {shop.province && (
+                  <p>จังหวัด: <span className="font-medium">{shop.province}</span></p>
+                )}
+                {(!shop.subdistrict && !shop.district && !shop.province) && (
+                  <p className="text-gray-500 text-sm">ไม่มีข้อมูลที่อยู่</p>
+                )}
               </div>
             </div>
 
             {/* Delivery Links */}
             <div className="bg-white rounded-lg shadow-sm p-6">
-              <h3 className="text-lg font-semibold mb-4">สั่งออนไลน์</h3>
-              <div className="space-y-3">
+              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <span>🛵</span>
+                สั่งออนไลน์
+              </h3>
+              <div className="space-y-2">
                 <a
-                  href="#"
-                  className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition group"
+                  href={`https://lineman.line.me/search?q=${encodeURIComponent(shop.name)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 p-3 border border-green-200 rounded-lg hover:bg-green-50 hover:border-green-400 transition group"
                 >
-                  <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                    <span className="text-green-600 font-bold">L</span>
+                  <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
+                    <span className="text-white font-bold text-sm">L</span>
                   </div>
                   <div className="flex-1">
-                    <p className="font-semibold">LINE MAN</p>
-                    <p className="text-sm text-gray-500">ส่งฟรี เมื่อสั่งครบ 100 บาท</p>
+                    <p className="font-semibold text-gray-800 group-hover:text-green-700">LINE MAN</p>
+                    <p className="text-xs text-gray-500">สั่งผ่าน LINE MAN</p>
                   </div>
+                  <span className="text-gray-400 group-hover:text-green-600">→</span>
                 </a>
                 
                 <a
-                  href="#"
-                  className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition group"
+                  href={`https://food.grab.com/th/th/search?query=${encodeURIComponent(shop.name)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 p-3 border border-green-200 rounded-lg hover:bg-green-50 hover:border-green-400 transition group"
                 >
-                  <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                    <span className="text-green-600 font-bold">G</span>
+                  <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center">
+                    <span className="text-white font-bold text-sm">G</span>
                   </div>
                   <div className="flex-1">
-                    <p className="font-semibold">Grab Food</p>
-                    <p className="text-sm text-gray-500">ส่งเร็ว ภายใน 30 นาที</p>
+                    <p className="font-semibold text-gray-800 group-hover:text-green-700">Grab Food</p>
+                    <p className="text-xs text-gray-500">สั่งผ่าน Grab</p>
                   </div>
+                  <span className="text-gray-400 group-hover:text-green-600">→</span>
                 </a>
 
                 <a
-                  href="#"
-                  className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition group"
+                  href={`https://www.foodpanda.co.th/search?query=${encodeURIComponent(shop.name)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 p-3 border border-pink-200 rounded-lg hover:bg-pink-50 hover:border-pink-400 transition group"
                 >
-                  <div className="w-10 h-10 bg-pink-100 rounded-lg flex items-center justify-center">
-                    <span className="text-pink-600 font-bold">F</span>
+                  <div className="w-10 h-10 bg-pink-500 rounded-lg flex items-center justify-center">
+                    <span className="text-white font-bold text-sm">F</span>
                   </div>
                   <div className="flex-1">
-                    <p className="font-semibold">foodpanda</p>
-                    <p className="text-sm text-gray-500">โปรโมชั่นพิเศษ</p>
+                    <p className="font-semibold text-gray-800 group-hover:text-pink-700">foodpanda</p>
+                    <p className="text-xs text-gray-500">สั่งผ่าน foodpanda</p>
                   </div>
+                  <span className="text-gray-400 group-hover:text-pink-600">→</span>
                 </a>
               </div>
 
-              <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                <p className="text-sm text-blue-700">
-                  💡 คลิกลิงก์ข้างบนเพื่อสั่งอาหารผ่านแอปฯ
+              <div className="mt-4 p-3 bg-blue-50 border border-blue-100 rounded-lg">
+                <p className="text-xs text-blue-700">
+                  💡 <strong>หมายเหตุ:</strong> ลิงก์จะเปิดหน้าค้นหาบนแพลตฟอร์มต่างๆ
                 </p>
               </div>
             </div>
 
-            {/* Map Placeholder */}
+            {/* Map */}
             <div className="bg-white rounded-lg shadow-sm p-6">
-              <h3 className="text-lg font-semibold mb-4">แผนที่</h3>
-              <div className="bg-gray-200 h-48 rounded-lg flex items-center justify-center">
-                <p className="text-gray-500">🗺️ แผนที่ (Coming Soon)</p>
-              </div>
+              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <span>🗺️</span>
+                แผนที่
+              </h3>
+              {shop.lat && shop.lng ? (
+                <div className="relative">
+                  <div className="rounded-lg overflow-hidden border border-gray-200">
+                    <iframe
+                      src={`https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&q=${shop.lat},${shop.lng}&zoom=15`}
+                      width="100%"
+                      height="200"
+                      style={{ border: 0 }}
+                      allowFullScreen
+                      loading="lazy"
+                      referrerPolicy="no-referrer-when-downgrade"
+                      title="Shop Location Map"
+                    />
+                  </div>
+                  <button
+                    onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&destination=${shop.lat},${shop.lng}`, '_blank')}
+                    className="mt-3 w-full flex items-center justify-center gap-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition text-sm font-medium"
+                  >
+                    <span>🧭</span>
+                    <span>นำทาง</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="bg-gray-100 h-48 rounded-lg flex flex-col items-center justify-center text-gray-500">
+                  <span className="text-4xl mb-2">📍</span>
+                  <p className="text-sm">ไม่มีข้อมูลพิกัด</p>
+                </div>
+              )}
             </div>
 
             {/* Back Button */}
