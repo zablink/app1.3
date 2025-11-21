@@ -75,6 +75,9 @@ export default function HomePage() {
       setIsLoadingShops(true);
       const res = await fetch('/api/shops?limit=50');
       const data = await res.json();
+      console.log('Loaded shops:', data.shops?.length, 'shops');
+      console.log('First shop:', data.shops?.[0]);
+      console.log('Subscription tiers:', data.shops?.map((s: Shop) => ({ name: s.name, tier: s.subscription_tier })));
       setShops(data.shops || []);
     } catch (err) {
       console.error('Error loading shops:', err);
@@ -205,31 +208,6 @@ export default function HomePage() {
       )}
 
       <main className="container mx-auto px-4 py-6">
-        {/* Packages showcase (presentational) */}
-        <section className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div className="p-4 rounded-lg bg-gray-100 flex items-center justify-between">
-            <div>
-              <h4 className="font-semibold">Free</h4>
-              <p className="text-sm text-gray-600">Basic listing, no priority</p>
-            </div>
-            <div className="text-xs text-gray-500">Free</div>
-          </div>
-          <div className="p-4 rounded-lg bg-blue-50 flex items-center justify-between">
-            <div>
-              <h4 className="font-semibold text-blue-700">Pro</h4>
-              <p className="text-sm text-blue-600">Priority listing and featured</p>
-            </div>
-            <div className="text-xs text-blue-700">Pro</div>
-          </div>
-          <div className="p-4 rounded-lg bg-yellow-50 flex items-center justify-between">
-            <div>
-              <h4 className="font-semibold text-yellow-700">Premium</h4>
-              <p className="text-sm text-yellow-600">Pinned highlight and top placement</p>
-            </div>
-            <div className="text-xs text-yellow-700">Premium</div>
-          </div>
-        </section>
-
         {isLoadingShops && (
           <div className="flex justify-center items-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
