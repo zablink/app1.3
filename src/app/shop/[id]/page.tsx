@@ -87,6 +87,9 @@ export default function ShopDetailPage() {
       : 0;
   }, [reviews]);
 
+  // Calculate total reviews
+  const totalReviews = useMemo(() => reviews.length, [reviews]);
+
   // Gallery memoized
   const gallery = useMemo(() => {
     return [shop?.image || '/images/placeholder.jpg'];
