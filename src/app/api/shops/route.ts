@@ -79,7 +79,7 @@ export async function GET(request: NextRequest) {
             JOIN subscription_packages sp ON ss.plan_id = sp.id
             WHERE ss.shop_id = s.id
               AND ss.status = 'ACTIVE'
-              AND ss.expires_at > NOW()
+              AND ss.end_date > NOW()
             ORDER BY sp.tier DESC
             LIMIT 1
           ) as subscription_tier
@@ -102,11 +102,13 @@ export async function GET(request: NextRequest) {
           LEFT JOIN "ShopCategory" sc ON s."categoryId" = sc.id
           ${whereClause}
           ORDER BY RANDOM()
-          LIMIT $${params.length + 1};
+          LIMIT $${params.length};
         `;
-        const rows = await prisma.$queryRawUnsafe(simpleSql, ...params);
-        console.log('[api/shops] fallback random rows:', rows.length);
-        return NextResponse.json({ success: true, shops: rows, hasLocation: false });
+        const fallbackParams = params.slice(0, -1); // Remove the last param (limit) that was already added
+        fallbackParams.push(limit); // Add limit again
+        const rows = await prisma.$queryRawUnsafe(simpleSql, ...fallbackParams);
+        console.log('[api/shops] fallback random rows:', Array.isArray(rows) ? rows.length : 0);
+        return NextResponse.json({ success: true, shops: Array.isArray(rows) ? rows : [], hasLocation: false });
       }
     }
 
@@ -140,7 +142,7 @@ export async function GET(request: NextRequest) {
         JOIN subscription_packages sp ON ss.plan_id = sp.id
         WHERE ss.shop_id = s.id
           AND ss.status = 'ACTIVE'
-          AND ss.expires_at > NOW()
+          AND ss.end_date > NOW()
         ORDER BY sp.tier DESC
         LIMIT 1
       ) as subscription_tier`
