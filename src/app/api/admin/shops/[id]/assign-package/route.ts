@@ -64,7 +64,18 @@ export async function POST(
       INSERT INTO shop_subscriptions 
         (id, shop_id, package_id, status, start_date, end_date, payment_status, auto_renew, created_at, updated_at)
       VALUES 
-        ('${subscriptionId}', '${shopId}', '${packageId}', 'ACTIVE', '${now.toISOString()}', '${expiresAt.toISOString()}', 'COMPLETED', false, '${now.toISOString()}', '${now.toISOString()}');
+        (
+          '${subscriptionId}', 
+          '${shopId}', 
+          '${packageId}', 
+          'ACTIVE', 
+          TIMESTAMP '${now.toISOString()}', 
+          TIMESTAMP '${expiresAt.toISOString()}', 
+          'COMPLETED', 
+          false, 
+          TIMESTAMP '${now.toISOString()}', 
+          TIMESTAMP '${now.toISOString()}'
+        );
     `);
 
     console.log('✅ Subscription created:', subscriptionId);
