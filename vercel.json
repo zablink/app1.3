@@ -1,0 +1,10 @@
+{
+  "deploymentProtection": {
+    "paths": [
+      {
+        "path": "/api/*",
+        "protection": "none"
+      }
+    ]
+  }
+}

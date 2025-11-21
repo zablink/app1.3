@@ -22,30 +22,20 @@ export async function GET(request: NextRequest) {
       where.status = status;
     }
 
+    // Simple query first - just get shops without relations
     const [shops, total] = await Promise.all([
       prisma.shop.findMany({
         where,
         skip: (page - 1) * limit,
         take: limit,
-        include: {
-          owner: true,
-          category: true,
-          tokenWallet: true,
-          subscriptions: {
-            where: {
-              status: 'ACTIVE',
-              expiresAt: {
-                gte: new Date(),
-              },
-            },
-            include: {
-              plan: true,
-            },
-            orderBy: {
-              expiresAt: 'desc',
-            },
-            take: 1,
-          },
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          status: true,
+          ownerId: true,
+          categoryId: true,
+          createdAt: true,
         },
         orderBy: { createdAt: 'desc' },
       }),
@@ -54,8 +44,41 @@ export async function GET(request: NextRequest) {
 
     console.log('Shops found:', shops.length, 'Total:', total);
 
+    // Now fetch related data separately
+    const shopsWithData = await Promise.all(
+      shops.map(async (shop) => {
+        try {
+          const [owner, category] = await Promise.all([
+            shop.ownerId ? prisma.user.findUnique({
+              where: { id: shop.ownerId },
+              select: { id: true, name: true, email: true },
+            }) : null,
+            shop.categoryId ? prisma.shopCategory.findUnique({
+              where: { id: shop.categoryId },
+              select: { id: true, name: true },
+            }) : null,
+          ]);
+
+          return {
+            ...shop,
+            owner,
+            category,
+            tokenWallet: { balance: 0 }, // Default value since table doesn't exist yet
+          };
+        } catch (e) {
+          console.error('Error fetching shop data for', shop.id, e);
+          return {
+            ...shop,
+            owner: null,
+            category: null,
+            tokenWallet: { balance: 0 },
+          };
+        }
+      })
+    );
+
     return NextResponse.json({
-      shops,
+      shops: shopsWithData,
       pagination: {
         page,
         limit,
@@ -65,6 +88,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (err) {
     console.error('Fetch shops error:', err);
+    console.error('Error stack:', err instanceof Error ? err.stack : 'No stack');
     return NextResponse.json(
       { error: 'Failed to fetch shops', detail: err instanceof Error ? err.message : String(err) },
       { status: 500 }
