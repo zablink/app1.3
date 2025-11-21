@@ -12,27 +12,29 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-/* ---------------------------
-   MODELS
-   --------------------------- */
+/**
+ * ---------------------------
+ * MODELS
+ * ---------------------------
+ */
 
 model User {
-  id            String   @id @default(cuid())
-  name          String?
-  email         String?  @unique
-  password      String?  // ใช้กรณี email/password
-  image         String?
-  role          Role     @default(USER)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id        String   @id @default(cuid())
+  name      String?
+  email     String?  @unique
+  password  String? // ใช้กรณี email/password
+  image     String?
+  role      Role     @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  shops         Shop[]   // ผู้ใช้สามารถเป็นเจ้าของร้านได้หลายร้าน
-  accounts      Account[]
-  sessions      Session[]
+  shops    Shop[] // ผู้ใช้สามารถเป็นเจ้าของร้านได้หลายร้าน
+  accounts Account[]
+  sessions Session[]
 
   // reviewer relations
-  reviewers     Reviewer[]
+  reviewers Reviewer[]
   // NOTE: payouts field removed here to avoid missing opposite relation on ReviewerPayout.
   // If you want User.payouts, add a user relation to ReviewerPayout (I can add this if desired).
 
@@ -40,27 +42,33 @@ model User {
 }
 
 model Shop {
-  id            String       @id @default(cuid())
-  name          String
-  description   String?
-  address       String?
-  lat           Float?
-  lng           Float?
-  image         String?
-  category      ShopCategory @relation(fields: [categoryId], references: [id])
-  categoryId    String
-  owner         User         @relation(fields: [ownerId], references: [id])
-  ownerId       String
-  status        ShopStatus   @default(PENDING)
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
+  id          String       @id @default(cuid())
+  name        String
+  description String?
+  address     String?
+  lat         Float?
+  lng         Float?
+  image       String?
+  category    ShopCategory @relation(fields: [categoryId], references: [id])
+  categoryId  String
+  owner       User         @relation(fields: [ownerId], references: [id])
+  ownerId     String
+  status      ShopStatus   @default(PENDING)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  // Delivery links
+  lineManUrl   String? @map("lineman_url")
+  grabFoodUrl  String? @map("grabfood_url")
+  foodPandaUrl String? @map("foodpanda_url")
+  shopeeUrl    String? @map("shopee_url")
 
   // Ads package ปัจจุบัน (separate from subscription)
-  adPackage     AdPackage?   @relation(fields: [adPackageId], references: [id])
-  adPackageId   String?
+  adPackage   AdPackage? @relation(fields: [adPackageId], references: [id])
+  adPackageId String?
 
-  menus         Menu[]
-  analytics     Analytics[]
+  menus     Menu[]
+  analytics Analytics[]
 
   // Subscriptions & tokens & ads
   subscriptions ShopSubscription[]
@@ -69,6 +77,24 @@ model Shop {
 
   // Reviewer hires for this shop (opposite of ReviewerHire.shop)
   reviewerHires ReviewerHire[]
+
+  // Shop reviews
+  reviews ShopReview[]
+}
+
+model ShopReview {
+  id        String   @id @default(cuid())
+  shop      Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  shopId    String   @map("shop_id")
+  userName  String   @map("user_name")
+  rating    Int // 1-5
+  comment   String   @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([shopId])
+  @@index([rating])
+  @@map("shop_reviews")
 }
 
 model ShopCategory {
@@ -77,7 +103,7 @@ model ShopCategory {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  shops     Shop[]
+  shops Shop[]
 }
 
 model Menu {
@@ -93,40 +119,42 @@ model Menu {
 
 model AdPackage {
   id        String   @id @default(cuid())
-  name      String   // e.g., Free, Pro1, Pro2, Pro3, Special
+  name      String // e.g., Free, Pro1, Pro2, Pro3, Special
   scope     AdScope
-  priority  Int      // ใช้สำหรับจัดลำดับเวลาแสดงร้าน
+  priority  Int // ใช้สำหรับจัดลำดับเวลาแสดงร้าน
   price     Float    @default(0.0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   shops       Shop[]
-  adPurchases AdPurchase[]  // <-- added opposite relation for AdPurchase.adPackage
+  adPurchases AdPurchase[] // <-- added opposite relation for AdPurchase.adPackage
 }
 
 model Analytics {
-  id        String   @id @default(cuid())
-  shop      Shop     @relation(fields: [shopId], references: [id])
-  shopId    String
-  date      DateTime @default(now())
-  views     Int      @default(0)
-  clicks    Int      @default(0) // เช่น click ไปยัง delivery platform
+  id     String   @id @default(cuid())
+  shop   Shop     @relation(fields: [shopId], references: [id])
+  shopId String
+  date   DateTime @default(now())
+  views  Int      @default(0)
+  clicks Int      @default(0) // เช่น click ไปยัง delivery platform
 }
 
-/* Auth related models (original) */
+/**
+ * Auth related models (original)
+ */
 model Account {
-  id                 String  @id @default(cuid())
-  userId             String
-  type               String
-  provider           String
-  providerAccountId  String
-  refresh_token      String?  @db.Text
-  access_token       String?  @db.Text
-  expires_at         Int?
-  token_type         String?
-  scope              String?
-  id_token           String?  @db.Text
-  session_state      String?
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
 
   user User @relation(fields: [userId], references: [id])
 
@@ -144,10 +172,12 @@ model Session {
   @@map("sessions")
 }
 
-/* Geography models (kept from original) */
+/**
+ * Geography models (kept from original)
+ */
 model Geography {
-  id   Int    @id
-  name String
+  id        Int        @id
+  name      String
   provinces Province[]
 }
 
@@ -170,28 +200,30 @@ model Amphure {
 }
 
 model Tambon {
-  id         Int      @id
-  zip_code   String?
-  name_th    String
-  name_en    String
-  amphure    Amphure  @relation(fields: [amphureId], references: [id])
-  amphureId  Int
-  geom       String?  // WKT polygon
+  id        Int     @id
+  zip_code  String?
+  name_th   String
+  name_en   String
+  amphure   Amphure @relation(fields: [amphureId], references: [id])
+  amphureId Int
+  geom      String? // WKT polygon
 }
 
-/* ---------------------------
-   SUBSCRIPTION models (mapping to existing tables)
-   --------------------------- */
+/**
+ * ---------------------------
+ * SUBSCRIPTION models (mapping to existing tables)
+ * ---------------------------
+ */
 model SubscriptionPackage {
-  id          String   @id @default(cuid())
+  id          String            @id @default(cuid())
   name        String
   price       Float
   periodDays  Int
-  tokenAmount Int?     // tokens granted when purchasing this subscription
+  tokenAmount Int? // tokens granted when purchasing this subscription
   features    String?
-  tier        subscription_tier?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @default(now())
+  tier        SubscriptionTier?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @default(now())
 
   shopSubscriptions ShopSubscription[]
 
@@ -199,32 +231,34 @@ model SubscriptionPackage {
 }
 
 model ShopSubscription {
-  id               String   @id @default(cuid())
-  shop             Shop     @relation(fields: [shopId], references: [id])
-  shopId           String
-  plan             SubscriptionPackage @relation(fields: [planId], references: [id])
-  planId           String
-  status           subscription_status   @default(ACTIVE)
-  startedAt        DateTime @default(now())
-  expiresAt        DateTime
-  autoRenew        Boolean  @default(false)
-  paymentProvider  String?
-  paymentRef       String?
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @default(now())
+  id              String              @id @default(cuid())
+  shop            Shop                @relation(fields: [shopId], references: [id])
+  shopId          String
+  plan            SubscriptionPackage @relation(fields: [planId], references: [id])
+  planId          String
+  status          SubscriptionStatus  @default(ACTIVE)
+  startedAt       DateTime            @default(now())
+  expiresAt       DateTime
+  autoRenew       Boolean             @default(false)
+  paymentProvider String?
+  paymentRef      String?
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @default(now())
 
   @@map("shop_subscriptions")
 }
 
-/* ---------------------------
-   TOKEN models (batch-based)
-   --------------------------- */
+/**
+ * ---------------------------
+ * TOKEN models (batch-based)
+ * ---------------------------
+ */
 model TokenWallet {
-  id        String   @id @default(cuid())
-  shop      Shop     @relation(fields: [shopId], references: [id])
-  shopId    String   @unique
-  balance   Int      @default(0)
-  updatedAt DateTime @updatedAt
+  id        String          @id @default(cuid())
+  shop      Shop            @relation(fields: [shopId], references: [id])
+  shopId    String          @unique
+  balance   Int             @default(0)
+  updatedAt DateTime        @updatedAt
   purchases TokenPurchase[]
   usages    TokenUsage[]
 
@@ -232,67 +266,71 @@ model TokenWallet {
 }
 
 model TokenPurchase {
-  id          String   @id @default(cuid())
+  id          String      @id @default(cuid())
   wallet      TokenWallet @relation(fields: [walletId], references: [id])
   walletId    String
   amount      Int
-  remaining   Int      // remaining tokens in this batch
+  remaining   Int // remaining tokens in this batch
   price       Float
   provider    String?
   providerRef String?
-  createdAt   DateTime @default(now())
+  createdAt   DateTime    @default(now())
   expiresAt   DateTime
 
   @@map("token_purchases")
 }
 
 model TokenUsage {
-  id          String   @id @default(cuid())
+  id          String      @id @default(cuid())
   wallet      TokenWallet @relation(fields: [walletId], references: [id])
   walletId    String
-  type        String   // 'ad_purchase' | 'hire_reviewer' | 'other'
+  type        String // 'ad_purchase' | 'hire_reviewer' | 'other'
   referenceId String?
   amount      Int
-  createdAt   DateTime @default(now())
+  createdAt   DateTime    @default(now())
 
   @@map("token_usages")
 }
 
-/* ---------------------------
-   Ad purchases
-   --------------------------- */
+/**
+ * ---------------------------
+ * Ad purchases
+ * ---------------------------
+ */
 model AdPurchase {
-  id          String   @id @default(cuid())
-  shop        Shop     @relation(fields: [shopId], references: [id])
-  shopId      String
-  adPackage   AdPackage? @relation(fields: [adPackageId], references: [id])
-  adPackageId String?
-  position    String?
-  scope       AdScope
+  id           String     @id @default(cuid())
+  shop         Shop       @relation(fields: [shopId], references: [id])
+  shopId       String
+  adPackage    AdPackage? @relation(fields: [adPackageId], references: [id])
+  adPackageId  String?
+  position     String?
+  scope        AdScope
   durationDays Int
-  tokenCost   Int
-  startAt     DateTime  @default(now())
-  endAt       DateTime
-  createdAt   DateTime  @default(now())
-  provider    String?
-  providerRef String?
+  tokenCost    Int
+  startAt      DateTime   @default(now())
+  endAt        DateTime
+  createdAt    DateTime   @default(now())
+  provider     String?
+  providerRef  String?
 
   @@map("ad_purchases")
 }
 
-/* ---------------------------
-   REVIEWER models & rates
-   --------------------------- */
+/**
+ * ---------------------------
+ * REVIEWER models & rates
+ * ---------------------------
+ */
 model Reviewer {
-  id          String   @id @default(cuid())
-  user        User     @relation(fields: [userId], references: [id])
+  id          String                @id @default(cuid())
+  user        User                  @relation(fields: [userId], references: [id])
   userId      String
   bio         String?
-  status      CreatorStatus @default(PENDING)
-  approved    Boolean  @default(false)
+  status      CreatorStatus         @default(PENDING)
+  approved    Boolean               @default(false)
   tier        CreatorTier?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @default(now())
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @default(now())
   rates       ReviewerRate[]
   rateHistory ReviewerRateHistory[]
   hires       ReviewerHire[]
@@ -305,7 +343,7 @@ model ReviewerRate {
   id          String   @id @default(cuid())
   reviewer    Reviewer @relation(fields: [reviewerId], references: [id])
   reviewerId  String
-  skillLevel  String?  // e.g., 'junior', 'senior'
+  skillLevel  String? // e.g., 'junior', 'senior'
   pricePerJob Float
   active      Boolean  @default(true)
   createdAt   DateTime @default(now())
@@ -315,110 +353,115 @@ model ReviewerRate {
 }
 
 model ReviewerRateHistory {
-  id          String   @id @default(cuid())
-  reviewer    Reviewer @relation(fields: [reviewerId], references: [id])
-  reviewerId  String
-  oldPrice    Float
-  newPrice    Float
-  changedAt   DateTime @default(now())
-  reason      String?
+  id         String   @id @default(cuid())
+  reviewer   Reviewer @relation(fields: [reviewerId], references: [id])
+  reviewerId String
+  oldPrice   Float
+  newPrice   Float
+  changedAt  DateTime @default(now())
+  reason     String?
 
   @@map("reviewer_rate_history")
 }
 
 model ReviewerHire {
-  id          String   @id @default(cuid())
-  reviewer    Reviewer @relation(fields: [reviewerId], references: [id])
-  reviewerId  String
-  shop        Shop     @relation(fields: [shopId], references: [id])
-  shopId      String
-  tokenCost   Int
-  status      ReviewStatus
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @default(now())
+  id         String       @id @default(cuid())
+  reviewer   Reviewer     @relation(fields: [reviewerId], references: [id])
+  reviewerId String
+  shop       Shop         @relation(fields: [shopId], references: [id])
+  shopId     String
+  tokenCost  Int
+  status     ReviewStatus
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @default(now())
 
   @@map("reviewer_hires")
 }
 
 model ReviewerPayout {
-  id           String   @id @default(cuid())
-  reviewer     Reviewer @relation(fields: [reviewerId], references: [id])
-  reviewerId   String
-  amount        Float
-  bankAccount   String?
-  reference     String?
-  createdAt     DateTime @default(now())
+  id          String   @id @default(cuid())
+  reviewer    Reviewer @relation(fields: [reviewerId], references: [id])
+  reviewerId  String
+  amount      Float
+  bankAccount String?
+  reference   String?
+  createdAt   DateTime @default(now())
 
   @@map("reviewer_payouts")
 }
 
-/* ---------------------------
-   SITE SETTINGS & BANNERS
-   --------------------------- */
+/**
+ * ---------------------------
+ * SITE SETTINGS & BANNERS
+ * ---------------------------
+ */
 
 model SiteSetting {
   id          String   @id @default(cuid())
   key         String   @unique
   value       String   @db.Text
-  category    String   // branding, seo, features, etc.
+  category    String // branding, seo, features, etc.
   dataType    String   @default("string") @map("data_type") // string, number, boolean, json, image, color
   label       String
   description String?
   updatedBy   String?  @map("updated_by")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
-  
-  history     SiteSettingHistory[]
+
+  history SiteSettingHistory[]
 
   @@map("site_settings")
 }
 
 model SiteSettingHistory {
-  id          String   @id @default(cuid())
-  setting     SiteSetting @relation(fields: [settingKey], references: [key])
-  settingKey  String   @map("setting_key")
-  oldValue    String   @db.Text @map("old_value")
-  newValue    String   @db.Text @map("new_value")
-  changedBy   String   @map("changed_by")
-  reason      String?
-  createdAt   DateTime @default(now()) @map("created_at")
+  id         String      @id @default(cuid())
+  setting    SiteSetting @relation(fields: [settingKey], references: [key])
+  settingKey String      @map("setting_key")
+  oldValue   String      @map("old_value") @db.Text
+  newValue   String      @map("new_value") @db.Text
+  changedBy  String      @map("changed_by")
+  reason     String?
+  createdAt  DateTime    @default(now()) @map("created_at")
 
   @@map("site_setting_history")
 }
 
 model HeroBanner {
-  id            String   @id @default(cuid())
+  id            String    @id @default(cuid())
   title         String
   subtitle      String?
-  ctaLabel      String?  @map("cta_label")
-  ctaLink       String?  @map("cta_link")
-  link          String?  // Direct link when clicking banner
-  imageUrl      String   @map("image_url")
-  enableOverlay Boolean  @default(true) @map("enable_overlay")
-  priority      Int      @default(0) // สำหรับเรียงลำดับ
-  isActive      Boolean  @default(true) @map("is_active")
+  ctaLabel      String?   @map("cta_label")
+  ctaLink       String?   @map("cta_link")
+  link          String? // Direct link when clicking banner
+  imageUrl      String    @map("image_url")
+  enableOverlay Boolean   @default(true) @map("enable_overlay")
+  priority      Int       @default(0) // สำหรับเรียงลำดับ
+  isActive      Boolean   @default(true) @map("is_active")
   startDate     DateTime? @map("start_date")
   endDate       DateTime? @map("end_date")
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
 
   @@map("hero_banners")
 }
 
-/* ---------------------------
-   NOTE ABOUT backup_* tables
-   ---------------------------
-   Any existing tables whose names start with `backup_` were intentionally NOT included as models.
-   If you need to access them via Prisma, I can add mapped models on request.
-*/
+/**
+ * ---------------------------
+ * NOTE ABOUT backup_* tables
+ * ---------------------------
+ * Any existing tables whose names start with `backup_` were intentionally NOT included as models.
+ * If you need to access them via Prisma, I can add mapped models on request.
+ */
 
-/* ---------------------------
-   ENUMS (as you requested)
-   --------------------------- */
+/**
+ * ---------------------------
+ * ENUMS (as you requested)
+ * ---------------------------
+ */
 
-/*
-  Primary Role enum with expanded roles
-*/
+/**
+ * Primary Role enum with expanded roles
+ */
 enum Role {
   USER
   SHOP
@@ -428,9 +471,9 @@ enum Role {
   ADMIN
 }
 
-/*
-  Shop status workflow
-*/
+/**
+ * Shop status workflow
+ */
 enum ShopStatus {
   PENDING
   APPROVED
@@ -438,9 +481,9 @@ enum ShopStatus {
   SUSPENDED
 }
 
-/*
-  Creator (reviewer) status
-*/
+/**
+ * Creator (reviewer) status
+ */
 enum CreatorStatus {
   PENDING
   ACTIVE
@@ -448,9 +491,9 @@ enum CreatorStatus {
   REJECTED
 }
 
-/*
-  Package types used historically / compatibility
-*/
+/**
+ * Package types used historically / compatibility
+ */
 enum PackageType {
   FREE
   PRO1
@@ -458,9 +501,9 @@ enum PackageType {
   SPECIAL
 }
 
-/*
-  Ad scope (as you asked)
-*/
+/**
+ * Ad scope (as you asked)
+ */
 enum AdScope {
   SUBDISTRICT
   DISTRICT
@@ -468,9 +511,9 @@ enum AdScope {
   NATIONWIDE
 }
 
-/*
-  Creator tier
-*/
+/**
+ * Creator tier
+ */
 enum CreatorTier {
   BRONZE
   SILVER
@@ -478,9 +521,9 @@ enum CreatorTier {
   PLATINUM
 }
 
-/*
-  Review / hire status lifecycle
-*/
+/**
+ * Review / hire status lifecycle
+ */
 enum ReviewStatus {
   PENDING
   ACCEPTED
@@ -491,9 +534,9 @@ enum ReviewStatus {
   CANCELLED
 }
 
-/*
-  Withdrawal payout statuses
-*/
+/**
+ * Withdrawal payout statuses
+ */
 enum WithdrawalStatus {
   PENDING
   PROCESSING
@@ -501,17 +544,17 @@ enum WithdrawalStatus {
   REJECTED
 }
 
-/*
-  Subscription enums (kept as requested)
-*/
-enum subscription_status {
+/**
+ * Subscription enums (standardized to PascalCase)
+ */
+enum SubscriptionStatus {
   ACTIVE
   EXPIRED
   CANCELLED
   SUSPENDED
 }
 
-enum subscription_tier {
+enum SubscriptionTier {
   FREE
   BASIC
   PRO

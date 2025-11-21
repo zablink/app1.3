@@ -94,7 +94,7 @@ export async function GET(request: NextRequest) {
                 LIMIT 1
               ),
               'FREE'
-            ) as subscription_tier
+            ) as "subscriptionTier"
           FROM "Shop" s
           LEFT JOIN "ShopCategory" sc ON s."categoryId" = sc.id
           ${whereClause}
@@ -109,7 +109,7 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ success: true, shops: Array.isArray(rows) ? rows : [], hasLocation: false });
       } catch (sqlError) {
         console.error('[api/shops] SQL error:', sqlError);
-        // Fallback: try without subscription_tier
+        // Fallback: try without subscriptionTier
         const simpleSql = `
           SELECT s.id, s.name, s.description, s.address, s."categoryId", sc.name as category_name, s."createdAt", s.image
           FROM "Shop" s
@@ -168,7 +168,7 @@ export async function GET(request: NextRequest) {
           LIMIT 1
         ),
         'FREE'
-      ) as subscription_tier`
+      ) as "subscriptionTier"`
     ];
     if (hasAmphureCol) selectCols.push('s.amphure_id');
     if (hasTambonCol) selectCols.push('s.tambon_id');

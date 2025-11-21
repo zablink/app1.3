@@ -17,7 +17,7 @@ interface Shop {
   website?: string;
   distance?: number | null;
   activeSubscription?: any;
-  subscription_tier?: 'FREE' | 'BASIC' | 'PRO' | 'PREMIUM' | null;
+  subscriptionTier?: 'FREE' | 'BASIC' | 'PRO' | 'PREMIUM' | null;
 }
 
 interface HeroBanner {
@@ -172,10 +172,10 @@ export default function HomePage() {
 
   // Group shops by subscription tier
   const groupShopsByTier = (shops: Shop[]) => {
-    const premium = shops.filter(s => s.subscription_tier === 'PREMIUM').slice(0, 6);
-    const pro = shops.filter(s => s.subscription_tier === 'PRO').slice(0, 3);
-    const basic = shops.filter(s => s.subscription_tier === 'BASIC').slice(0, 3);
-    const free = shops.filter(s => !s.subscription_tier || s.subscription_tier === 'FREE').slice(0, 12);
+    const premium = shops.filter(s => s.subscriptionTier === 'PREMIUM').slice(0, 6);
+    const pro = shops.filter(s => s.subscriptionTier === 'PRO').slice(0, 3);
+    const basic = shops.filter(s => s.subscriptionTier === 'BASIC').slice(0, 3);
+    const free = shops.filter(s => !s.subscriptionTier || s.subscriptionTier === 'FREE').slice(0, 12);
     
     return { premium, pro, basic, free };
   };

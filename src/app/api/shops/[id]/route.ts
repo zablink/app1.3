@@ -17,10 +17,10 @@ export async function GET(
     }
 
     // Fetch shop with basic info using Prisma
-    const shop = await prisma.shop.findUnique({
+    const shop: any = await prisma.shop.findUnique({
       where: { id: shopId },
       include: {
-        category: true,
+        category: true
       }
     });
 
@@ -124,6 +124,10 @@ export async function GET(
       package_tier: packageTier,
       badge_emoji: badge.emoji,
       badge_text: badge.text,
+      lineManUrl: shop.lineManUrl,
+      grabFoodUrl: shop.grabFoodUrl,
+      foodPandaUrl: shop.foodPandaUrl,
+      shopeeUrl: shop.shopeeUrl,
       ...locationData
     });
 

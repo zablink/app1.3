@@ -281,6 +281,137 @@ export default function ShopDetailPage() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 py-8">
+        {/* Delivery Links - Mobile Only (แสดงก่อนเนื้อหาหลักบน mobile) */}
+        <div className="lg:hidden mb-6">
+          <div className="bg-white rounded-lg shadow-sm p-6">
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <span>🛵</span>
+              สั่งออนไลน์
+            </h3>
+            <div className="space-y-2">
+              {shop.lineManUrl ? (
+                <a
+                  href={shop.lineManUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 p-3 border border-green-200 rounded-lg hover:bg-green-50 hover:border-green-400 transition group"
+                >
+                  <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
+                    <span className="text-white font-bold text-sm">L</span>
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-gray-800 group-hover:text-green-700">LINE MAN</p>
+                    <p className="text-xs text-gray-500">สั่งผ่าน LINE MAN</p>
+                  </div>
+                  <span className="text-gray-400 group-hover:text-green-600">→</span>
+                </a>
+              ) : (
+                <a
+                  href={`https://lineman.line.me/search?q=${encodeURIComponent(shop.name)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-green-50 hover:border-green-400 transition group opacity-60"
+                >
+                  <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
+                    <span className="text-white font-bold text-sm">L</span>
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-gray-800 group-hover:text-green-700">LINE MAN</p>
+                    <p className="text-xs text-gray-500">ค้นหาร้านบน LINE MAN</p>
+                  </div>
+                  <span className="text-gray-400 group-hover:text-green-600">→</span>
+                </a>
+              )}
+              
+              {shop.grabFoodUrl ? (
+                <a
+                  href={shop.grabFoodUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 p-3 border border-green-200 rounded-lg hover:bg-green-50 hover:border-green-400 transition group"
+                >
+                  <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center">
+                    <span className="text-white font-bold text-sm">G</span>
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-gray-800 group-hover:text-green-700">Grab Food</p>
+                    <p className="text-xs text-gray-500">สั่งผ่าน Grab</p>
+                  </div>
+                  <span className="text-gray-400 group-hover:text-green-600">→</span>
+                </a>
+              ) : (
+                <a
+                  href={`https://food.grab.com/th/th/search?query=${encodeURIComponent(shop.name)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-green-50 hover:border-green-400 transition group opacity-60"
+                >
+                  <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center">
+                    <span className="text-white font-bold text-sm">G</span>
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-gray-800 group-hover:text-green-700">Grab Food</p>
+                    <p className="text-xs text-gray-500">ค้นหาร้านบน Grab</p>
+                  </div>
+                  <span className="text-gray-400 group-hover:text-green-600">→</span>
+                </a>
+              )}
+
+              {shop.foodPandaUrl ? (
+                <a
+                  href={shop.foodPandaUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 p-3 border border-pink-200 rounded-lg hover:bg-pink-50 hover:border-pink-400 transition group"
+                >
+                  <div className="w-10 h-10 bg-pink-500 rounded-lg flex items-center justify-center">
+                    <span className="text-white font-bold text-sm">F</span>
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-gray-800 group-hover:text-pink-700">foodpanda</p>
+                    <p className="text-xs text-gray-500">สั่งผ่าน foodpanda</p>
+                  </div>
+                  <span className="text-gray-400 group-hover:text-pink-600">→</span>
+                </a>
+              ) : (
+                <a
+                  href={`https://www.foodpanda.co.th/search?query=${encodeURIComponent(shop.name)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-pink-50 hover:border-pink-400 transition group opacity-60"
+                >
+                  <div className="w-10 h-10 bg-pink-500 rounded-lg flex items-center justify-center">
+                    <span className="text-white font-bold text-sm">F</span>
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-gray-800 group-hover:text-pink-700">foodpanda</p>
+                    <p className="text-xs text-gray-500">ค้นหาร้านบน foodpanda</p>
+                  </div>
+                  <span className="text-gray-400 group-hover:text-pink-600">→</span>
+                </a>
+              )}
+
+              {shop.shopeeUrl && (
+                <a
+                  href={shop.shopeeUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 p-3 border border-orange-200 rounded-lg hover:bg-orange-50 hover:border-orange-400 transition group"
+                >
+                  <div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center">
+                    <span className="text-white font-bold text-sm">S</span>
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-gray-800 group-hover:text-orange-700">Shopee Food</p>
+                    <p className="text-xs text-gray-500">สั่งผ่าน Shopee</p>
+                  </div>
+                  <span className="text-gray-400 group-hover:text-orange-600">→</span>
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Column */}
           <div className="lg:col-span-2 space-y-6">
@@ -301,6 +432,7 @@ export default function ShopDetailPage() {
               )}
             </div>
 
+
             {/* Reviews Section */}
             <div className="bg-white rounded-lg shadow-sm p-6">
               <div className="flex items-center gap-4 mb-6">
@@ -319,96 +451,207 @@ export default function ShopDetailPage() {
                     ))}
                   </div>
                   <span className="text-gray-600">
-                    ({averageRating.toFixed(1)} จาก {reviews.length} รีวิว)
+                    ({averageRating.toFixed(1)} จาก {totalReviews} รีวิว)
                   </span>
                 </div>
               </div>
 
-              {/* Add Review Form */}
-              <div className="border-t pt-6 mb-6">
-                <h3 className="text-lg font-semibold mb-4">เขียนรีวิว</h3>
-                <form onSubmit={handleSubmitReview} className="space-y-4">
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <input
-                      type="text"
-                      placeholder="ชื่อของคุณ"
-                      value={newReview.userName}
-                      onChange={(e) => setNewReview({...newReview, userName: e.target.value})}
-                      className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-                      required
-                    />
-                    <div className="flex items-center gap-2">
-                      <span>คะแนน:</span>
-                      <select
-                        value={newReview.rating}
-                        onChange={(e) => setNewReview({...newReview, rating: parseInt(e.target.value)})}
-                        className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-                      >
-                        {[5, 4, 3, 2, 1].map((rating) => (
-                          <option key={rating} value={rating}>{rating} ดาว</option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-                  <textarea
-                    placeholder="เขียนรีวิวของคุณ..."
-                    value={newReview.comment}
-                    onChange={(e) => setNewReview({...newReview, comment: e.target.value})}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg h-24 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                    required
-                  />
-                  <button
-                    type="submit"
-                    className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition"
-                  >
-                    ส่งรีวิว
-                  </button>
-                </form>
-              </div>
-
               {/* Reviews List */}
-              <div className="space-y-4">
-                {reviews.map((review) => (
-                  <motion.div
-                    key={review.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="border-b pb-4 last:border-b-0"
-                  >
-                    <div className="flex items-center gap-4 mb-2">
-                      <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                        <span className="text-blue-600 font-semibold">
-                          {review.userName.charAt(0)}
-                        </span>
-                      </div>
-                      <div>
-                        <p className="font-semibold">{review.userName}</p>
-                        <div className="flex items-center gap-2">
-                          <div className="flex">
-                            {[1, 2, 3, 4, 5].map((star) => (
-                              <span
-                                key={star}
-                                className={`text-sm ${
-                                  star <= review.rating ? "text-yellow-400" : "text-gray-300"
-                                }`}
-                              >
-                                ⭐
-                              </span>
-                            ))}
+              <div className="border-t pt-6">
+                {reviewsLoading ? (
+                  <div className="space-y-4">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="animate-pulse">
+                        <div className="flex items-center gap-4 mb-2">
+                          <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
+                          <div className="flex-1">
+                            <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
+                            <div className="h-3 bg-gray-200 rounded w-1/3"></div>
                           </div>
-                          <span className="text-sm text-gray-500">{review.date}</span>
                         </div>
+                        <div className="h-4 bg-gray-200 rounded ml-14"></div>
                       </div>
-                    </div>
-                    <p className="text-gray-700 ml-14">{review.comment}</p>
-                  </motion.div>
-                ))}
+                    ))}
+                  </div>
+                ) : reviews.length > 0 ? (
+                  <div className="space-y-4">
+                    {reviews.map((review) => (
+                      <motion.div
+                        key={review.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="border-b pb-4 last:border-b-0"
+                      >
+                        <div className="flex items-center gap-4 mb-2">
+                          <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                            <span className="text-blue-600 font-semibold">
+                              {review.userName.charAt(0)}
+                            </span>
+                          </div>
+                          <div>
+                            <p className="font-semibold">{review.userName}</p>
+                            <div className="flex items-center gap-2">
+                              <div className="flex">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                  <span
+                                    key={star}
+                                    className={`text-sm ${
+                                      star <= review.rating ? "text-yellow-400" : "text-gray-300"
+                                    }`}
+                                  >
+                                    ⭐
+                                  </span>
+                                ))}
+                              </div>
+                              <span className="text-sm text-gray-500">{review.date}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <p className="text-gray-700 ml-14">{review.comment}</p>
+                      </motion.div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <span className="text-4xl mb-2 block">💬</span>
+                    <p>ยังไม่มีรีวิว</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
 
           {/* Sidebar */}
           <div className="space-y-6">
+            {/* Delivery Links - Desktop Only */}
+            <div className="hidden lg:block bg-white rounded-lg shadow-sm p-6">
+              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <span>🛵</span>
+                สั่งออนไลน์
+              </h3>
+              <div className="space-y-2">
+                {shop.lineManUrl ? (
+                  <a
+                    href={shop.lineManUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 p-3 border border-green-200 rounded-lg hover:bg-green-50 hover:border-green-400 transition group"
+                  >
+                    <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
+                      <span className="text-white font-bold text-sm">L</span>
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-semibold text-gray-800 group-hover:text-green-700">LINE MAN</p>
+                      <p className="text-xs text-gray-500">สั่งผ่าน LINE MAN</p>
+                    </div>
+                    <span className="text-gray-400 group-hover:text-green-600">→</span>
+                  </a>
+                ) : (
+                  <a
+                    href={`https://lineman.line.me/search?q=${encodeURIComponent(shop.name)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-green-50 hover:border-green-400 transition group opacity-60"
+                  >
+                    <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
+                      <span className="text-white font-bold text-sm">L</span>
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-semibold text-gray-800 group-hover:text-green-700">LINE MAN</p>
+                      <p className="text-xs text-gray-500">ค้นหาร้านบน LINE MAN</p>
+                    </div>
+                    <span className="text-gray-400 group-hover:text-green-600">→</span>
+                  </a>
+                )}
+                
+                {shop.grabFoodUrl ? (
+                  <a
+                    href={shop.grabFoodUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 p-3 border border-green-200 rounded-lg hover:bg-green-50 hover:border-green-400 transition group"
+                  >
+                    <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center">
+                      <span className="text-white font-bold text-sm">G</span>
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-semibold text-gray-800 group-hover:text-green-700">Grab Food</p>
+                      <p className="text-xs text-gray-500">สั่งผ่าน Grab</p>
+                    </div>
+                    <span className="text-gray-400 group-hover:text-green-600">→</span>
+                  </a>
+                ) : (
+                  <a
+                    href={`https://food.grab.com/th/th/search?query=${encodeURIComponent(shop.name)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-green-50 hover:border-green-400 transition group opacity-60"
+                  >
+                    <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center">
+                      <span className="text-white font-bold text-sm">G</span>
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-semibold text-gray-800 group-hover:text-green-700">Grab Food</p>
+                      <p className="text-xs text-gray-500">ค้นหาร้านบน Grab</p>
+                    </div>
+                    <span className="text-gray-400 group-hover:text-green-600">→</span>
+                  </a>
+                )}
+
+                {shop.foodPandaUrl ? (
+                  <a
+                    href={shop.foodPandaUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 p-3 border border-pink-200 rounded-lg hover:bg-pink-50 hover:border-pink-400 transition group"
+                  >
+                    <div className="w-10 h-10 bg-pink-500 rounded-lg flex items-center justify-center">
+                      <span className="text-white font-bold text-sm">F</span>
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-semibold text-gray-800 group-hover:text-pink-700">foodpanda</p>
+                      <p className="text-xs text-gray-500">สั่งผ่าน foodpanda</p>
+                    </div>
+                    <span className="text-gray-400 group-hover:text-pink-600">→</span>
+                  </a>
+                ) : (
+                  <a
+                    href={`https://www.foodpanda.co.th/search?query=${encodeURIComponent(shop.name)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-pink-50 hover:border-pink-400 transition group opacity-60"
+                  >
+                    <div className="w-10 h-10 bg-pink-500 rounded-lg flex items-center justify-center">
+                      <span className="text-white font-bold text-sm">F</span>
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-semibold text-gray-800 group-hover:text-pink-700">foodpanda</p>
+                      <p className="text-xs text-gray-500">ค้นหาร้านบน foodpanda</p>
+                    </div>
+                    <span className="text-gray-400 group-hover:text-pink-600">→</span>
+                  </a>
+                )}
+
+                {shop.shopeeUrl && (
+                  <a
+                    href={shop.shopeeUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 p-3 border border-orange-200 rounded-lg hover:bg-orange-50 hover:border-orange-400 transition group"
+                  >
+                    <div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center">
+                      <span className="text-white font-bold text-sm">S</span>
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-semibold text-gray-800 group-hover:text-orange-700">Shopee Food</p>
+                      <p className="text-xs text-gray-500">สั่งผ่าน Shopee</p>
+                    </div>
+                    <span className="text-gray-400 group-hover:text-orange-600">→</span>
+                  </a>
+                )}
+              </div>
+            </div>
+
             {/* Quick Actions */}
             <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg shadow-sm p-6 border border-blue-100">
               <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
