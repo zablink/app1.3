@@ -62,8 +62,12 @@ export default function ShopListPage() {
         }
 
         const data = await response.json();
-        setShops(data);
-        setFilteredShops(data);
+        
+        // Handle both response formats: array or { shops: array }
+        const shopsData = Array.isArray(data) ? data : (data.shops || []);
+        
+        setShops(shopsData);
+        setFilteredShops(shopsData);
       } catch (err) {
         console.error('Error fetching shops:', err);
         setError(err instanceof Error ? err.message : 'เกิดข้อผิดพลาดในการโหลดข้อมูล');
