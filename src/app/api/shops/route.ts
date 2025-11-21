@@ -69,28 +69,45 @@ export async function GET(request: NextRequest) {
         whereParts.push(`s."categoryId" = $${params.length}`);
       }
       const whereClause = whereParts.length > 0 ? `WHERE ${whereParts.join(' AND ')}` : '';
-      const sql = `
-        SELECT s.id, s.name, s.description, s.address, s."categoryId", sc.name as category_name, s."createdAt", s.image,
-        (
-          SELECT sp.tier
-          FROM "shop_subscriptions" ss
-          JOIN "subscription_packages" sp ON ss."planId" = sp.id
-          WHERE ss."shopId" = s.id
-            AND ss.status = 'ACTIVE'
-            AND ss."expiresAt" > NOW()
-          ORDER BY sp.tier DESC
-          LIMIT 1
-        ) as subscription_tier
-        FROM "Shop" s
-        LEFT JOIN "ShopCategory" sc ON s."categoryId" = sc.id
-        ${whereClause}
-        ORDER BY RANDOM()
-        LIMIT $${params.length + 1};
-      `;
-      params.push(limit);
-      const rows = await prisma.$queryRawUnsafe(sql, ...params);
-      console.log('[api/shops] random rows:', rows.length);
-      return NextResponse.json({ success: true, shops: rows, hasLocation: false });
+      
+      try {
+        const sql = `
+          SELECT s.id, s.name, s.description, s.address, s."categoryId", sc.name as category_name, s."createdAt", s.image,
+          (
+            SELECT sp.tier
+            FROM shop_subscriptions ss
+            JOIN subscription_packages sp ON ss.plan_id = sp.id
+            WHERE ss.shop_id = s.id
+              AND ss.status = 'ACTIVE'
+              AND ss.expires_at > NOW()
+            ORDER BY sp.tier DESC
+            LIMIT 1
+          ) as subscription_tier
+          FROM "Shop" s
+          LEFT JOIN "ShopCategory" sc ON s."categoryId" = sc.id
+          ${whereClause}
+          ORDER BY RANDOM()
+          LIMIT $${params.length + 1};
+        `;
+        params.push(limit);
+        const rows = await prisma.$queryRawUnsafe(sql, ...params);
+        console.log('[api/shops] random rows:', Array.isArray(rows) ? rows.length : 'not array', rows);
+        return NextResponse.json({ success: true, shops: Array.isArray(rows) ? rows : [], hasLocation: false });
+      } catch (sqlError) {
+        console.error('[api/shops] SQL error:', sqlError);
+        // Fallback: try without subscription_tier
+        const simpleSql = `
+          SELECT s.id, s.name, s.description, s.address, s."categoryId", sc.name as category_name, s."createdAt", s.image
+          FROM "Shop" s
+          LEFT JOIN "ShopCategory" sc ON s."categoryId" = sc.id
+          ${whereClause}
+          ORDER BY RANDOM()
+          LIMIT $${params.length + 1};
+        `;
+        const rows = await prisma.$queryRawUnsafe(simpleSql, ...params);
+        console.log('[api/shops] fallback random rows:', rows.length);
+        return NextResponse.json({ success: true, shops: rows, hasLocation: false });
+      }
     }
 
     const latitude = parseFloat(lat);
@@ -119,11 +136,11 @@ export async function GET(request: NextRequest) {
       // Include subscription tier (from active subscription)
       `(
         SELECT sp.tier
-        FROM "shop_subscriptions" ss
-        JOIN "subscription_packages" sp ON ss."planId" = sp.id
-        WHERE ss."shopId" = s.id
+        FROM shop_subscriptions ss
+        JOIN subscription_packages sp ON ss.plan_id = sp.id
+        WHERE ss.shop_id = s.id
           AND ss.status = 'ACTIVE'
-          AND ss."expiresAt" > NOW()
+          AND ss.expires_at > NOW()
         ORDER BY sp.tier DESC
         LIMIT 1
       ) as subscription_tier`
