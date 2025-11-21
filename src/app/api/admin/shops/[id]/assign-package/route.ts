@@ -60,17 +60,21 @@ export async function POST(
 
     // Create subscription using raw SQL
     const subscriptionId = Math.random().toString(36).substring(2, 15);
+    const price = parseFloat(pkg.price) || 0;
+    
     await prisma.$executeRawUnsafe(`
       INSERT INTO shop_subscriptions 
-        (id, shop_id, package_id, status, start_date, end_date, payment_status, auto_renew, created_at, updated_at)
+        (id, shop_id, package_id, status, start_date, end_date, original_price, final_price, payment_status, auto_renew, created_at, updated_at)
       VALUES 
         (
           '${subscriptionId}', 
           '${shopId}', 
           '${packageId}', 
           'ACTIVE', 
-          TIMESTAMP '${now.toISOString()}', 
-          TIMESTAMP '${expiresAt.toISOString()}', 
+          DATE '${now.toISOString().split('T')[0]}', 
+          DATE '${expiresAt.toISOString().split('T')[0]}', 
+          ${price},
+          ${price},
           'COMPLETED', 
           false, 
           TIMESTAMP '${now.toISOString()}', 
