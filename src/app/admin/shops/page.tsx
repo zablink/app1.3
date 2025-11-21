@@ -434,8 +434,17 @@ export default function AdminShopsPage() {
                           <button
                             onClick={() => {
                               setSelectedShop(shop);
-                              setSelectedPackageId('');
-                              setTokenAmount('0');
+                              // Pre-fill with current subscription data if exists
+                              if (shop.subscription) {
+                                setSelectedPackageId(shop.subscription.packageId || '');
+                                const pkg = packages.find(p => p.id === shop.subscription?.packageId);
+                                setTokenAmount(pkg?.tokenAmount?.toString() || '0');
+                                setSubscriptionDays(pkg?.periodDays?.toString() || '30');
+                              } else {
+                                setSelectedPackageId('');
+                                setTokenAmount('0');
+                                setSubscriptionDays('30');
+                              }
                               setShowPackageModal(true);
                             }}
                             className="p-2 text-green-600 hover:bg-green-50 rounded-lg"
@@ -565,11 +574,26 @@ export default function AdminShopsPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   ร้านค้า
                 </label>
-                <div className="p-3 bg-gray-50 rounded-lg">
+                <div className="p-3 bg-gray-50 rounded-lg space-y-2">
                   <div className="font-medium">{selectedShop.name}</div>
-                  <div className="text-sm text-gray-600 mt-1">
-                    Token ปัจจุบัน: {selectedShop.tokenWallet?.balance || 0}
+                  <div className="text-sm text-gray-600">
+                    Token ปัจจุบัน: <span className="font-semibold text-yellow-600">{selectedShop.tokenWallet?.balance || 0}</span>
                   </div>
+                  {selectedShop.subscription && (
+                    <div className="text-sm text-gray-600">
+                      Package ปัจจุบัน: <span className="font-semibold text-green-600">{selectedShop.subscription.package?.name || 'N/A'}</span>
+                    </div>
+                  )}
+                  {selectedShop.subscription?.endDate && (
+                    <div className="text-sm text-gray-600">
+                      หมดอายุ: <span className="font-semibold">{new Date(selectedShop.subscription.endDate).toLocaleDateString('th-TH')}</span>
+                    </div>
+                  )}
+                  {!selectedShop.subscription && (
+                    <div className="text-sm text-orange-600">
+                      ยังไม่มี Package
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="mb-4">
