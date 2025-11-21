@@ -17,9 +17,15 @@ type Shop = {
   subdistrict: string | null;
   district: string | null;
   province: string | null;
+  description?: string | null;
+  address?: string | null;
   package_tier?: string | null;
   badge_emoji?: string | null;
   badge_text?: string | null;
+  lineManUrl?: string | null;
+  grabFoodUrl?: string | null;
+  foodPandaUrl?: string | null;
+  shopeeUrl?: string | null;
 };
 
 type Review = {
@@ -74,6 +80,7 @@ export default function ShopDetailPage() {
   
   // Reviews state
   const [reviews, setReviews] = useState<Review[]>(mockReviews);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
   const [newReview, setNewReview] = useState({
     userName: "",
     rating: 5,
