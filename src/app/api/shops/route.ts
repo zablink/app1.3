@@ -70,7 +70,17 @@ export async function GET(request: NextRequest) {
       }
       const whereClause = whereParts.length > 0 ? `WHERE ${whereParts.join(' AND ')}` : '';
       const sql = `
-        SELECT s.id, s.name, s.description, s.address, s."categoryId", sc.name as category_name, s."createdAt", s.image
+        SELECT s.id, s.name, s.description, s.address, s."categoryId", sc.name as category_name, s."createdAt", s.image,
+        (
+          SELECT sp.tier
+          FROM "shop_subscriptions" ss
+          JOIN "subscription_packages" sp ON ss."planId" = sp.id
+          WHERE ss."shopId" = s.id
+            AND ss.status = 'ACTIVE'
+            AND ss."expiresAt" > NOW()
+          ORDER BY sp.tier DESC
+          LIMIT 1
+        ) as subscription_tier
         FROM "Shop" s
         LEFT JOIN "ShopCategory" sc ON s."categoryId" = sc.id
         ${whereClause}
@@ -105,7 +115,18 @@ export async function GET(request: NextRequest) {
     const selectCols = [
       's.id','s.name','s.description','s.address','s."categoryId"','sc.name as category_name','s.has_physical_store','s."createdAt"',
       // Include s.image for frontend to render shop images
-      's.image'
+      's.image',
+      // Include subscription tier (from active subscription)
+      `(
+        SELECT sp.tier
+        FROM "shop_subscriptions" ss
+        JOIN "subscription_packages" sp ON ss."planId" = sp.id
+        WHERE ss."shopId" = s.id
+          AND ss.status = 'ACTIVE'
+          AND ss."expiresAt" > NOW()
+        ORDER BY sp.tier DESC
+        LIMIT 1
+      ) as subscription_tier`
     ];
     if (hasAmphureCol) selectCols.push('s.amphure_id');
     if (hasTambonCol) selectCols.push('s.tambon_id');
