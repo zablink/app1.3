@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
     const shopsWithData = await Promise.all(
       shops.map(async (shop) => {
         try {
-          const [owner, category] = await Promise.all([
+          const [owner, category, tokenWallet, subscription] = await Promise.all([
             shop.ownerId ? prisma.user.findUnique({
               where: { id: shop.ownerId },
               select: { id: true, name: true, email: true },
@@ -57,13 +57,35 @@ export async function GET(request: NextRequest) {
               where: { id: shop.categoryId },
               select: { id: true, name: true },
             }) : null,
+            // Get token wallet balance
+            prisma.$queryRawUnsafe<any[]>(`
+              SELECT balance FROM token_wallets WHERE shop_id = '${shop.id}' LIMIT 1;
+            `).then(rows => rows[0] || { balance: 0 }).catch(() => ({ balance: 0 })),
+            // Get active subscription with package
+            prisma.$queryRawUnsafe<any[]>(`
+              SELECT ss.id, ss.package_id, ss.start_date, ss.end_date, ss.status,
+                     sp.name as package_name
+              FROM shop_subscriptions ss
+              LEFT JOIN subscription_packages sp ON ss.package_id = sp.id
+              WHERE ss.shop_id = '${shop.id}' AND ss.status = 'ACTIVE'
+              ORDER BY ss.created_at DESC
+              LIMIT 1;
+            `).then(rows => rows[0] ? {
+              id: rows[0].id,
+              packageId: rows[0].package_id,
+              status: rows[0].status,
+              startDate: rows[0].start_date,
+              endDate: rows[0].end_date,
+              package: { name: rows[0].package_name },
+            } : null).catch(() => null),
           ]);
 
           return {
             ...shop,
             owner,
             category,
-            tokenWallet: { balance: 0 }, // Default value since table doesn't exist yet
+            tokenWallet,
+            subscription,
           };
         } catch (e) {
           console.error('Error fetching shop data for', shop.id, e);
@@ -72,6 +94,7 @@ export async function GET(request: NextRequest) {
             owner: null,
             category: null,
             tokenWallet: { balance: 0 },
+            subscription: null,
           };
         }
       })

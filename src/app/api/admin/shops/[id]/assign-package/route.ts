@@ -84,10 +84,39 @@ export async function POST(
 
     console.log('✅ Subscription created:', subscriptionId);
 
-    // Note: Token wallet functionality disabled for now since tables don't exist
+    // Update or create token wallet
     let tokenMessage = '';
     if (tokens > 0) {
-      tokenMessage = ` (${tokens} tokens requested but token_wallets table not available)`;
+      try {
+        // Check if wallet exists
+        const walletExists = await prisma.$queryRawUnsafe<any[]>(`
+          SELECT id, balance FROM token_wallets WHERE shop_id = '${shopId}';
+        `);
+
+        if (walletExists.length > 0) {
+          // Update existing wallet
+          const currentBalance = parseInt(walletExists[0].balance) || 0;
+          const newBalance = currentBalance + tokens;
+          await prisma.$executeRawUnsafe(`
+            UPDATE token_wallets 
+            SET balance = ${newBalance}, updated_at = NOW()
+            WHERE shop_id = '${shopId}';
+          `);
+          tokenMessage = ` และเพิ่ม ${tokens} tokens (ยอดรวม: ${newBalance})`;
+          console.log('✅ Updated wallet:', { shopId, oldBalance: currentBalance, newBalance });
+        } else {
+          // Create new wallet
+          await prisma.$executeRawUnsafe(`
+            INSERT INTO token_wallets (shop_id, balance, created_at, updated_at)
+            VALUES ('${shopId}', ${tokens}, NOW(), NOW());
+          `);
+          tokenMessage = ` และเพิ่ม ${tokens} tokens`;
+          console.log('✅ Created wallet:', { shopId, balance: tokens });
+        }
+      } catch (walletError) {
+        console.error('Token wallet error:', walletError);
+        tokenMessage = ` (ไม่สามารถเพิ่ม tokens ได้: ${walletError instanceof Error ? walletError.message : String(walletError)})`;
+      }
     }
 
     return NextResponse.json({
@@ -99,7 +128,7 @@ export async function POST(
         status: 'ACTIVE',
         expiresAt,
       },
-      message: `Package assigned successfully${tokenMessage}`,
+      message: `มอบหมาย package สำเร็จ${tokenMessage}`,
     });
   } catch (err) {
     console.error('Assign package error:', err);
