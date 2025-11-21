@@ -152,11 +152,6 @@ export default function ShopDetailPage() {
     setNewReview({ userName: "", rating: 5, comment: "" });
   };
 
-  // Calculate average rating
-  const averageRating = reviews.length > 0
-    ? reviews.reduce((acc, review) => acc + review.rating, 0) / reviews.length
-    : 0;
-
   // Loading state
   if (loading) {
     return (
