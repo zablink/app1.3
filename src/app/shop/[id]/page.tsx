@@ -66,7 +66,7 @@ const PACKAGE_BADGES: Record<string, { emoji: string; text: string; color: strin
 export default function ShopDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const shopId = Number(params?.id);
+  const shopId = params?.id ? Number(params.id) : null;
 
   const [shop, setShop] = useState<Shop | null>(null);
   const [loading, setLoading] = useState(true);
@@ -97,7 +97,7 @@ export default function ShopDetailPage() {
 
   useEffect(() => {
     async function fetchShop() {
-      if (!shopId || isNaN(shopId)) {
+      if (shopId === null || isNaN(shopId)) {
         setError('รหัสร้านค้าไม่ถูกต้อง');
         setLoading(false);
         return;
