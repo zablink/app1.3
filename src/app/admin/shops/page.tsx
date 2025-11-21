@@ -72,6 +72,7 @@ export default function AdminShopsPage() {
   const [selectedPackageId, setSelectedPackageId] = useState('');
   const [tokenAmount, setTokenAmount] = useState('0');
   const [subscriptionDays, setSubscriptionDays] = useState('30');
+  const [isAssigning, setIsAssigning] = useState(false);
 
   useEffect(() => {
     if (status === 'loading') return;
@@ -172,7 +173,9 @@ export default function AdminShopsPage() {
   const handleAssignPackage = async () => {
     if (!selectedShop || !selectedPackageId) return;
 
+    setIsAssigning(true);
     try {
+      console.log('Sending assign package request...');
       const res = await fetch(`/api/admin/shops/${selectedShop.id}/assign-package`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -183,17 +186,22 @@ export default function AdminShopsPage() {
         }),
       });
 
+      const data = await res.json();
+      console.log('Assign package response:', data);
+
       if (res.ok) {
-        alert('มอบหมาย Package และ Token สำเร็จ!');
+        alert(data.message || 'มอบหมาย Package และ Token สำเร็จ!');
         setShowPackageModal(false);
         loadShops();
       } else {
-        const data = await res.json();
-        alert(data.error || 'เกิดข้อผิดพลาด');
+        console.error('Assign package error:', data);
+        alert(`เกิดข้อผิดพลาด: ${data.error || 'Unknown error'}${data.detail ? '\n' + data.detail : ''}`);
       }
     } catch (error) {
       console.error('Error assigning package:', error);
-      alert('เกิดข้อผิดพลาด');
+      alert('เกิดข้อผิดพลาด: ' + (error instanceof Error ? error.message : 'Unknown error'));
+    } finally {
+      setIsAssigning(false);
     }
   };
 
@@ -567,16 +575,24 @@ export default function AdminShopsPage() {
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowPackageModal(false)}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                  disabled={isAssigning}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   ยกเลิก
                 </button>
                 <button
                   onClick={handleAssignPackage}
-                  disabled={!selectedPackageId}
-                  className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={!selectedPackageId || isAssigning}
+                  className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
-                  มอบหมาย
+                  {isAssigning ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <span>กำลังมอบหมาย...</span>
+                    </>
+                  ) : (
+                    'มอบหมาย'
+                  )}
                 </button>
               </div>
             </div>
