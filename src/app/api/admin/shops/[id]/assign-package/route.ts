@@ -86,6 +86,7 @@ export async function POST(
 
     // Update or create token wallet
     let tokenMessage = '';
+    let newWalletBalance = 0;
     if (tokens > 0) {
       try {
         // Check if wallet exists
@@ -96,22 +97,23 @@ export async function POST(
         if (walletExists.length > 0) {
           // Update existing wallet
           const currentBalance = parseInt(walletExists[0].balance) || 0;
-          const newBalance = currentBalance + tokens;
+          newWalletBalance = currentBalance + tokens;
           await prisma.$executeRawUnsafe(`
             UPDATE token_wallets 
-            SET balance = ${newBalance}, updated_at = NOW()
+            SET balance = ${newWalletBalance}, updated_at = NOW()
             WHERE shop_id = '${shopId}';
           `);
-          tokenMessage = ` และเพิ่ม ${tokens} tokens (ยอดรวม: ${newBalance})`;
-          console.log('✅ Updated wallet:', { shopId, oldBalance: currentBalance, newBalance });
+          tokenMessage = ` และเพิ่ม ${tokens} tokens (ยอดรวม: ${newWalletBalance})`;
+          console.log('✅ Updated wallet:', { shopId, oldBalance: currentBalance, newBalance: newWalletBalance });
         } else {
           // Create new wallet
+          newWalletBalance = tokens;
           await prisma.$executeRawUnsafe(`
             INSERT INTO token_wallets (shop_id, balance, created_at, updated_at)
-            VALUES ('${shopId}', ${tokens}, NOW(), NOW());
+            VALUES ('${shopId}', ${newWalletBalance}, NOW(), NOW());
           `);
           tokenMessage = ` และเพิ่ม ${tokens} tokens`;
-          console.log('✅ Created wallet:', { shopId, balance: tokens });
+          console.log('✅ Created wallet:', { shopId, balance: newWalletBalance });
         }
       } catch (walletError) {
         console.error('Token wallet error:', walletError);
@@ -127,6 +129,9 @@ export async function POST(
         packageId,
         status: 'ACTIVE',
         expiresAt,
+      },
+      tokenWallet: {
+        balance: newWalletBalance,
       },
       message: `มอบหมาย package สำเร็จ${tokenMessage}`,
     });

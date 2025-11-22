@@ -101,10 +101,15 @@ export default function AdminShopsPage() {
   useEffect(() => {
     if (session?.user.role === 'ADMIN') {
       loadShops();
+    }
+  }, [session, page, statusFilter]);
+
+  useEffect(() => {
+    if (session?.user.role === 'ADMIN') {
       loadPackages();
       loadUsers();
     }
-  }, [session, page, statusFilter]);
+  }, [session]);
 
   const loadShops = async () => {
     try {
@@ -185,7 +190,19 @@ export default function AdminShopsPage() {
       if (res.ok) {
         showToast('เปลี่ยนเจ้าของร้านสำเร็จ!', 'success');
         setShowAssignModal(false);
-        loadShops();
+        
+        // Update shop in state instead of reloading
+        const newOwner = users.find(u => u.id === selectedUserId);
+        setShops(prevShops => 
+          prevShops.map((shop): Shop => 
+            shop.id === selectedShop.id 
+              ? { 
+                  ...shop, 
+                  owner: newOwner ? { id: newOwner.id, name: newOwner.name, email: newOwner.email } : undefined
+                }
+              : shop
+          )
+        );
       } else {
         const data = await res.json();
         showToast(data.error || 'เกิดข้อผิดพลาด', 'error');
@@ -200,6 +217,8 @@ export default function AdminShopsPage() {
     if (!selectedShop || !selectedPackageId) return;
 
     setIsAssigning(true);
+    const tokens = parseInt(tokenAmount) || 0;
+    
     try {
       console.log('Sending assign package request...');
       const res = await fetch(`/api/admin/shops/${selectedShop.id}/assign-package`, {
@@ -207,7 +226,7 @@ export default function AdminShopsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           packageId: selectedPackageId,
-          tokenAmount: parseInt(tokenAmount) || 0,
+          tokenAmount: tokens,
           subscriptionDays: parseInt(subscriptionDays) || 30,
         }),
       });
@@ -218,7 +237,33 @@ export default function AdminShopsPage() {
       if (res.ok) {
         showToast(data.message || 'มอบหมาย Package และ Token สำเร็จ!', 'success');
         setShowPackageModal(false);
-        loadShops();
+        
+        // Update shop in state with new subscription and token data from API response
+        const selectedPackage = packages.find(p => p.id === selectedPackageId);
+        setShops(prevShops => 
+          prevShops.map(shop => {
+            if (shop.id === selectedShop.id) {
+              return {
+                ...shop,
+                subscription: data.subscription ? {
+                  id: data.subscription.id,
+                  packageId: selectedPackageId,
+                  status: 'ACTIVE',
+                  startDate: new Date().toISOString(),
+                  endDate: data.subscription.expiresAt,
+                  package: { name: selectedPackage?.name || 'Unknown' },
+                } : shop.subscription,
+                tokenWallet: data.tokenWallet || shop.tokenWallet
+              };
+            }
+            return shop;
+          })
+        );
+        
+        // Reset form
+        setSelectedPackageId('');
+        setTokenAmount('0');
+        setSubscriptionDays('30');
       } else {
         console.error('Assign package error:', data);
         showToast(`เกิดข้อผิดพลาด: ${data.error || 'Unknown error'}`, 'error');
