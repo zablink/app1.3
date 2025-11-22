@@ -42,29 +42,21 @@ export default function ShopListPage() {
   // Categories from API
   const [availableCategories, setAvailableCategories] = useState<Array<{ id: string; name: string; slug: string; icon?: string | null }>>([]);
   
+  // Location data from loc_* tables
+  const [availableProvinces, setAvailableProvinces] = useState<Array<{ id: number; name: string }>>([]);
+  const [availableDistricts, setAvailableDistricts] = useState<Array<{ id: number; name: string }>>([]);
+  const [availableSubdistricts, setAvailableSubdistricts] = useState<Array<{ id: number; name: string }>>([]);
+  
   // Filters
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
-  const [selectedProvince, setSelectedProvince] = useState<string>("all");
-  const [selectedDistrict, setSelectedDistrict] = useState<string>("all");
-  const [selectedSubdistrict, setSelectedSubdistrict] = useState<string>("all");
+  const [selectedProvinceId, setSelectedProvinceId] = useState<number | null>(null);
+  const [selectedDistrictId, setSelectedDistrictId] = useState<number | null>(null);
+  const [selectedSubdistrictId, setSelectedSubdistrictId] = useState<number | null>(null);
   
   // Location state
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [loadingLocation, setLoadingLocation] = useState(false);
-  
-  // Get unique values for dropdowns
-  const provinces = ["all", ...Array.from(new Set(shops.map(s => s.province).filter(Boolean)))]
-  
-  // Filter districts based on selected province
-  const districts = selectedProvince === "all" 
-    ? ["all", ...Array.from(new Set(shops.map(s => s.district).filter(Boolean)))]
-    : ["all", ...Array.from(new Set(shops.filter(s => s.province === selectedProvince).map(s => s.district).filter(Boolean)))];
-  
-  // Filter subdistricts based on selected district
-  const subdistricts = selectedDistrict === "all"
-    ? ["all", ...Array.from(new Set(shops.map(s => s.subdistrict).filter(Boolean)))]
-    : ["all", ...Array.from(new Set(shops.filter(s => s.district === selectedDistrict).map(s => s.subdistrict).filter(Boolean)))];
 
   // Fetch categories
   useEffect(() => {
@@ -84,6 +76,71 @@ export default function ShopListPage() {
 
     fetchCategories();
   }, []);
+
+  // Fetch provinces
+  useEffect(() => {
+    async function fetchProvinces() {
+      try {
+        const response = await fetch('/api/locations/provinces');
+        const data = await response.json();
+        console.log('📍 Provinces response:', data);
+        if (Array.isArray(data)) {
+          setAvailableProvinces(data.map(p => ({ id: p.id, name: p.name_th })));
+          console.log('✅ Loaded provinces:', data.length);
+        }
+      } catch (error) {
+        console.error('❌ Error fetching provinces:', error);
+      }
+    }
+
+    fetchProvinces();
+  }, []);
+
+  // Fetch districts when province changes
+  useEffect(() => {
+    async function fetchDistricts() {
+      if (!selectedProvinceId) {
+        setAvailableDistricts([]);
+        setSelectedDistrictId(null);
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/locations/districts?provinceId=${selectedProvinceId}`);
+        const data = await response.json();
+        if (data.success) {
+          setAvailableDistricts(data.districts.map((d: any) => ({ id: d.id, name: d.name })));
+        }
+      } catch (error) {
+        console.error('❌ Error fetching districts:', error);
+      }
+    }
+
+    fetchDistricts();
+  }, [selectedProvinceId]);
+
+  // Fetch subdistricts when district changes
+  useEffect(() => {
+    async function fetchSubdistricts() {
+      if (!selectedDistrictId) {
+        setAvailableSubdistricts([]);
+        setSelectedSubdistrictId(null);
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/locations/subdistricts?districtId=${selectedDistrictId}`);
+        const data = await response.json();
+        if (data.success) {
+          setAvailableSubdistricts(data.subdistricts.map((s: any) => ({ id: s.id, name: s.name })));
+        }
+      } catch (error) {
+        console.error('❌ Error fetching subdistricts:', error);
+      }
+    }
+
+    fetchSubdistricts();
+  }, [selectedDistrictId]);
 
   // Fetch shops from API
   useEffect(() => {
@@ -147,19 +204,28 @@ export default function ShopListPage() {
       );
     }
 
-    // Province filter
-    if (selectedProvince !== "all") {
-      result = result.filter(shop => shop.province === selectedProvince);
+    // Province filter (by name match)
+    if (selectedProvinceId) {
+      const provinceName = availableProvinces.find(p => p.id === selectedProvinceId)?.name;
+      if (provinceName) {
+        result = result.filter(shop => shop.province === provinceName);
+      }
     }
 
-    // District filter
-    if (selectedDistrict !== "all") {
-      result = result.filter(shop => shop.district === selectedDistrict);
+    // District filter (by name match)
+    if (selectedDistrictId) {
+      const districtName = availableDistricts.find(d => d.id === selectedDistrictId)?.name;
+      if (districtName) {
+        result = result.filter(shop => shop.district === districtName);
+      }
     }
 
-    // Subdistrict filter
-    if (selectedSubdistrict !== "all") {
-      result = result.filter(shop => shop.subdistrict === selectedSubdistrict);
+    // Subdistrict filter (by name match)
+    if (selectedSubdistrictId) {
+      const subdistrictName = availableSubdistricts.find(s => s.id === selectedSubdistrictId)?.name;
+      if (subdistrictName) {
+        result = result.filter(shop => shop.subdistrict === subdistrictName);
+      }
     }
 
     // Sort by distance if user location is available
@@ -183,7 +249,7 @@ export default function ShopListPage() {
     }
 
     setFilteredShops(result);
-  }, [searchQuery, selectedCategory, selectedProvince, selectedDistrict, selectedSubdistrict, shops, userLocation]);
+  }, [searchQuery, selectedCategory, selectedProvinceId, selectedDistrictId, selectedSubdistrictId, shops, userLocation, availableProvinces, availableDistricts, availableSubdistricts]);
 
   // Calculate distance between two points (Haversine formula)
   const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
@@ -214,9 +280,9 @@ export default function ShopListPage() {
         });
         setLoadingLocation(false);
         // Clear location filters when using nearby
-        setSelectedProvince("all");
-        setSelectedDistrict("all");
-        setSelectedSubdistrict("all");
+        setSelectedProvinceId(null);
+        setSelectedDistrictId(null);
+        setSelectedSubdistrictId(null);
       },
       (error) => {
         console.error('Error getting location:', error);
@@ -345,17 +411,18 @@ export default function ShopListPage() {
                 📍 จังหวัด
               </label>
               <select
-                value={selectedProvince}
+                value={selectedProvinceId || ""}
                 onChange={(e) => {
-                  setSelectedProvince(e.target.value);
-                  setSelectedDistrict("all");
-                  setSelectedSubdistrict("all");
+                  setSelectedProvinceId(e.target.value ? parseInt(e.target.value) : null);
+                  setSelectedDistrictId(null);
+                  setSelectedSubdistrictId(null);
                 }}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
               >
-                {provinces.map((prov) => (
-                  <option key={prov} value={prov}>
-                    {prov === "all" ? "ทั้งหมด" : prov}
+                <option value="">ทั้งหมด</option>
+                {availableProvinces.map((prov) => (
+                  <option key={prov.id} value={prov.id}>
+                    {prov.name}
                   </option>
                 ))}
               </select>
@@ -367,17 +434,18 @@ export default function ShopListPage() {
                 🏘️ อำเภอ/เขต
               </label>
               <select
-                value={selectedDistrict}
+                value={selectedDistrictId || ""}
                 onChange={(e) => {
-                  setSelectedDistrict(e.target.value);
-                  setSelectedSubdistrict("all");
+                  setSelectedDistrictId(e.target.value ? parseInt(e.target.value) : null);
+                  setSelectedSubdistrictId(null);
                 }}
-                disabled={selectedProvince === "all"}
+                disabled={!selectedProvinceId}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:bg-gray-100 disabled:cursor-not-allowed"
               >
-                {districts.map((dist) => (
-                  <option key={dist} value={dist}>
-                    {dist === "all" ? "ทั้งหมด" : dist}
+                <option value="">ทั้งหมด</option>
+                {availableDistricts.map((dist) => (
+                  <option key={dist.id} value={dist.id}>
+                    {dist.name}
                   </option>
                 ))}
               </select>
@@ -389,14 +457,15 @@ export default function ShopListPage() {
                 🏡 ตำบล/แขวง
               </label>
               <select
-                value={selectedSubdistrict}
-                onChange={(e) => setSelectedSubdistrict(e.target.value)}
-                disabled={selectedDistrict === "all"}
+                value={selectedSubdistrictId || ""}
+                onChange={(e) => setSelectedSubdistrictId(e.target.value ? parseInt(e.target.value) : null)}
+                disabled={!selectedDistrictId}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:bg-gray-100 disabled:cursor-not-allowed"
               >
-                {subdistricts.map((sub) => (
-                  <option key={sub} value={sub}>
-                    {sub === "all" ? "ทั้งหมด" : sub}
+                <option value="">ทั้งหมด</option>
+                {availableSubdistricts.map((sub) => (
+                  <option key={sub.id} value={sub.id}>
+                    {sub.name}
                   </option>
                 ))}
               </select>
@@ -404,15 +473,15 @@ export default function ShopListPage() {
           </div>
 
           {/* Clear Filters */}
-          {(searchQuery || selectedCategory !== "all" || selectedProvince !== "all" || selectedDistrict !== "all" || selectedSubdistrict !== "all" || userLocation) && (
+          {(searchQuery || selectedCategory !== "all" || selectedProvinceId || selectedDistrictId || selectedSubdistrictId || userLocation) && (
             <div className="mt-4 flex gap-2">
               <button
                 onClick={() => {
                   setSearchQuery("");
                   setSelectedCategory("all");
-                  setSelectedProvince("all");
-                  setSelectedDistrict("all");
-                  setSelectedSubdistrict("all");
+                  setSelectedProvinceId(null);
+                  setSelectedDistrictId(null);
+                  setSelectedSubdistrictId(null);
                   setUserLocation(null);
                 }}
                 className="text-sm text-blue-600 hover:text-blue-700 hover:underline"
