@@ -33,6 +33,16 @@ const PACKAGE_BADGES: Record<string, { emoji: string; text: string; color: strin
   FREE: { emoji: '', text: '', color: '' },
 };
 
+// Helper: Check if coordinates are valid Thailand location
+function isValidThailandLocation(lat: number | null, lng: number | null): boolean {
+  if (lat === null || lng === null) return false;
+  if (lat === 0 && lng === 0) return false; // Default GPS error
+  
+  // Thailand boundaries (approximate)
+  const inThailand = lat >= 5.5 && lat <= 21 && lng >= 97 && lng <= 106;
+  return inThailand;
+}
+
 export default function ShopListPage() {
   const [shops, setShops] = useState<Shop[]>([]);
   const [filteredShops, setFilteredShops] = useState<Shop[]>([]);
@@ -235,7 +245,7 @@ export default function ShopListPage() {
     // Sort by distance if user location is available
     if (userLocation) {
       result = result.map(shop => {
-        if (shop.lat && shop.lng) {
+        if (shop.lat && shop.lng && isValidThailandLocation(shop.lat, shop.lng)) {
           const distance = calculateDistance(
             userLocation.lat,
             userLocation.lng,

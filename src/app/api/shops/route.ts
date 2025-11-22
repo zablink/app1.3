@@ -11,6 +11,13 @@ const KM = 1000;
 const VALID_AREA_TABLES = ['loc_tambons', 'loc_amphures', 'loc_provinces'] as const;
 type AreaTable = (typeof VALID_AREA_TABLES)[number];
 
+// Helper: Validate Thailand coordinates
+function isValidThailandCoordinates(lat: number, lng: number): boolean {
+  if (lat === 0 && lng === 0) return false; // Default GPS error
+  // Thailand boundaries (approximate): 5.5°N to 21°N, 97°E to 106°E
+  return lat >= 5.5 && lat <= 21 && lng >= 97 && lng <= 106;
+}
+
 function assertAreaTable(t: string): asserts t is AreaTable {
   if (!VALID_AREA_TABLES.includes(t as AreaTable)) {
     throw new Error(`Invalid area table: ${t}`);
@@ -46,13 +53,32 @@ async function tableHasColumn(tableName: string, columnName: string) {
 export async function GET(request: NextRequest) {
   try {
     const sp = request.nextUrl.searchParams;
-    const lat = sp.get('lat');
-    const lng = sp.get('lng');
+    const latStr = sp.get('lat');
+    const lngStr = sp.get('lng');
     const limit = Number(sp.get('limit') || 50);
     const offset = Number(sp.get('offset') || 0);
     // categoryId removed - now using many-to-many categories
     const sortBy = (sp.get('sortBy') || 'createdAt') as 'distance' | 'name' | 'createdAt';
     const radiiMeters = [2 * KM, 5 * KM, 20 * KM, 50 * KM];
+    
+    // Validate and parse lat/lng
+    let lat: string | null = null;
+    let lng: string | null = null;
+    
+    if (latStr && lngStr) {
+      const latNum = parseFloat(latStr);
+      const lngNum = parseFloat(lngStr);
+      
+      if (isValidThailandCoordinates(latNum, lngNum)) {
+        lat = latStr;
+        lng = lngStr;
+      } else {
+        console.log(`⚠️ Invalid coordinates ignored: (${latNum}, ${lngNum})`);
+        // Set to null to use random fallback instead
+        lat = null;
+        lng = null;
+      }
+    }
 
     const hasStatusCol = await tableHasColumn('shop', 'status');
     const hasLocationCol = await tableHasColumn('shop', 'location');
