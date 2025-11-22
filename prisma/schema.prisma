@@ -97,7 +97,7 @@ model ShopCategoryMapping {
   id         String       @id @default(cuid())
   shopId     String       @map("shop_id")
   categoryId String       @map("category_id")
-  createdAt  DateTime     @default(now())
+  createdAt  DateTime     @default(now()) @map("created_at")
   shop       Shop         @relation(fields: [shopId], references: [id], onDelete: Cascade)
   category   ShopCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
