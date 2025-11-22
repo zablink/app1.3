@@ -9,7 +9,6 @@ import Link from "next/link";
 type Shop = {
   id: string; // Changed from number to string (UUID)
   name: string;
-  category: string | null;
   image: string | null;
   lat: number | null;
   lng: number | null;
@@ -23,6 +22,7 @@ type Shop = {
   badge_text?: string | null;
   subscriptionTier?: string | null; // API may return this
   distance?: number | null;
+  categories?: Array<{ id: string; name: string; slug: string; icon: string | null }> | null;
 };
 
 // Package badge configuration
@@ -39,6 +39,9 @@ export default function ShopListPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
+  // Categories from API
+  const [availableCategories, setAvailableCategories] = useState<Array<{ id: string; name: string; slug: string }>>([]);
+  
   // Filters
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
@@ -51,8 +54,7 @@ export default function ShopListPage() {
   const [loadingLocation, setLoadingLocation] = useState(false);
   
   // Get unique values for dropdowns
-  const categories = ["all", ...Array.from(new Set(shops.map(s => s.category).filter(Boolean)))];
-  const provinces = ["all", ...Array.from(new Set(shops.map(s => s.province).filter(Boolean)))];
+  const provinces = ["all", ...Array.from(new Set(shops.map(s => s.province).filter(Boolean)))]
   
   // Filter districts based on selected province
   const districts = selectedProvince === "all" 
@@ -81,6 +83,9 @@ export default function ShopListPage() {
         
         // Handle both response formats: array or { shops: array }
         const shopsData = Array.isArray(data) ? data : (data.shops || []);
+        
+        console.log('📦 Loaded shops:', shopsData.length);
+        console.log('📍 Sample shop:', shopsData[0]);
         
         setShops(shopsData);
         setFilteredShops(shopsData);

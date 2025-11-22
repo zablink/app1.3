@@ -75,7 +75,10 @@ export async function GET(request: NextRequest) {
         const sql = `
           SELECT 
             s.id, s.name, s.description, s.address, s."categoryId", 
-            sc.name as category_name, s."createdAt", s.image,
+            sc.name as category, s."createdAt", s.image, s.lat, s.lng,
+            lt.name_th as subdistrict,
+            la.name_th as district,
+            lp.name_th as province,
             COALESCE(
               (
                 SELECT sp.tier
@@ -97,6 +100,9 @@ export async function GET(request: NextRequest) {
             ) as "subscriptionTier"
           FROM "Shop" s
           LEFT JOIN "ShopCategory" sc ON s."categoryId" = sc.id
+          LEFT JOIN loc_tambons lt ON s.tambon_id = lt.id
+          LEFT JOIN loc_amphures la ON s.amphure_id = la.id
+          LEFT JOIN loc_provinces lp ON s.province_id = lp.id
           ${whereClause}
           ORDER BY s."createdAt" DESC
           OFFSET $${params.length + 1}
@@ -111,9 +117,16 @@ export async function GET(request: NextRequest) {
         console.error('[api/shops] SQL error:', sqlError);
         // Fallback: try without subscriptionTier
         const simpleSql = `
-          SELECT s.id, s.name, s.description, s.address, s."categoryId", sc.name as category_name, s."createdAt", s.image
+          SELECT s.id, s.name, s.description, s.address, s."categoryId", sc.name as category, s."createdAt", s.image, s.lat, s.lng,
+            lt.name_th as subdistrict,
+            la.name_th as district,
+            lp.name_th as province,
+            'FREE' as "subscriptionTier"
           FROM "Shop" s
           LEFT JOIN "ShopCategory" sc ON s."categoryId" = sc.id
+          LEFT JOIN loc_tambons lt ON s.tambon_id = lt.id
+          LEFT JOIN loc_amphures la ON s.amphure_id = la.id
+          LEFT JOIN loc_provinces lp ON s.province_id = lp.id
           ${whereClause}
           ORDER BY RANDOM()
           LIMIT $${params.length};
@@ -146,9 +159,15 @@ export async function GET(request: NextRequest) {
 
     // Build SELECT columns
     const selectCols = [
-      's.id','s.name','s.description','s.address','s."categoryId"','sc.name as category_name','s.has_physical_store','s."createdAt"',
+      's.id','s.name','s.description','s.address','s."categoryId"','sc.name as category','s.has_physical_store','s."createdAt"',
       // Include s.image for frontend to render shop images
       's.image',
+      // Include lat, lng for map display
+      's.lat', 's.lng',
+      // Include location fields
+      'lt.name_th as subdistrict',
+      'la.name_th as district', 
+      'lp.name_th as province',
       // Include subscription tier (optimized with COALESCE)
       `COALESCE(
         (
@@ -198,6 +217,9 @@ export async function GET(request: NextRequest) {
         SELECT ${selectList}
         FROM "Shop" s
         LEFT JOIN "ShopCategory" sc ON s."categoryId" = sc.id
+        LEFT JOIN loc_tambons lt ON s.tambon_id = lt.id
+        LEFT JOIN loc_amphures la ON s.amphure_id = la.id
+        LEFT JOIN loc_provinces lp ON s.province_id = lp.id
         ${whereParts.length > 0 ? `WHERE ${whereParts.join(' AND ')}` : ''}
         ORDER BY ${ (sortBy === 'distance' && hasLocationCol) ? 'distance ASC NULLS LAST' : (sortBy === 'name' ? 's.name ASC' : 's."createdAt" DESC') }
         LIMIT $${params.length};
@@ -227,6 +249,9 @@ export async function GET(request: NextRequest) {
           SELECT ${selectList}
           FROM "Shop" s
           LEFT JOIN "ShopCategory" sc ON s."categoryId" = sc.id
+          LEFT JOIN loc_tambons lt ON s.tambon_id = lt.id
+          LEFT JOIN loc_amphures la ON s.amphure_id = la.id
+          LEFT JOIN loc_provinces lp ON s.province_id = lp.id
           WHERE ${whereClauseParts.join(' AND ')}
           ORDER BY distance ASC
           LIMIT $${params.length};
@@ -254,6 +279,9 @@ export async function GET(request: NextRequest) {
       SELECT ${selectList.replace(/CASE WHEN s.location.*?END as distance/, 'NULL as distance')}
       FROM "Shop" s
       LEFT JOIN "ShopCategory" sc ON s."categoryId" = sc.id
+      LEFT JOIN loc_tambons lt ON s.tambon_id = lt.id
+      LEFT JOIN loc_amphures la ON s.amphure_id = la.id
+      LEFT JOIN loc_provinces lp ON s.province_id = lp.id
       ${whereFinal.length > 0 ? `WHERE ${whereFinal.join(' AND ')}` : ''}
       ORDER BY RANDOM()
       LIMIT $${paramsFinal.length};
