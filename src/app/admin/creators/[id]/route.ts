@@ -10,7 +10,7 @@ export async function GET(
   if (error) return error;
 
   try {
-    const creator = await prisma.creator.findUnique({
+    const creator = await prisma.creators.findUnique({
       where: { id: params.id },
       include: {
         user: {
@@ -21,7 +21,7 @@ export async function GET(
             image: true,
           },
         },
-        priceHistory: {
+        creator_price_history: {
           orderBy: { effectiveFrom: 'desc' },
           take: 10,
         },

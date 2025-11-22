@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import prisma from "@/lib/prisma";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route"; // Adjust path as needed
+import { authOptions } from "@/lib/auth";
 
 export async function POST(request: NextRequest) {
   try {
@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     const userId = session.user.id;
 
     // Check if user already has a creator profile
-    const existingCreator = await prisma.creator.findUnique({
+    const existingCreator = await prisma.creators.findUnique({
       where: { userId },
     });
 
@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check display name uniqueness
-    const nameExists = await prisma.creator.findFirst({
+    const nameExists = await prisma.creators.findFirst({
       where: {
         displayName: {
           equals: displayName,
@@ -94,23 +94,20 @@ export async function POST(request: NextRequest) {
     const primaryArea = coverageAreas[0];
 
     // Create creator profile
-    const creator = await prisma.creator.create({
+    const creator = await prisma.creators.create({
       data: {
+        id: `creator_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         userId,
         displayName,
         bio,
         phone,
         coverageLevel: primaryArea.level,
-        provinceId: primaryArea.provinceId,
-        amphureId: primaryArea.amphureId || null,
-        tambonId: primaryArea.tambonId || null,
         hasExperience,
         priceRangeMin: hasExperience && priceRangeMin ? parseInt(priceRangeMin) : null,
         priceRangeMax: hasExperience && priceRangeMax ? parseInt(priceRangeMax) : null,
-        socialMedia: socialMedia || {},
-        portfolioLinks: portfolioLinks.filter((link: string) => link.trim() !== ""),
         applicationStatus: "PENDING",
         appliedAt: new Date(),
+        updatedAt: new Date(),
       },
     });
 

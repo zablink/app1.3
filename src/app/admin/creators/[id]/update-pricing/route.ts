@@ -34,10 +34,10 @@ export async function POST(
       );
     }
 
-    const creator = await prisma.creator.findUnique({
+    const creator = await prisma.creators.findUnique({
       where: { id: params.id },
       include: {
-        priceHistory: {
+        creator_price_history: {
           where: { effectiveTo: null },
           orderBy: { effectiveFrom: 'desc' },
           take: 1,
@@ -62,15 +62,16 @@ export async function POST(
     const now = new Date();
 
     const result = await prisma.$transaction(async (tx) => {
-      if (creator.priceHistory.length > 0) {
-        await tx.creatorPriceHistory.update({
-          where: { id: creator.priceHistory[0].id },
+      if (creator.creator_price_history.length > 0) {
+        await tx.creator_price_history.update({
+          where: { id: creator.creator_price_history[0].id },
           data: { effectiveTo: now },
         });
       }
 
-      const newHistory = await tx.creatorPriceHistory.create({
+      const newHistory = await tx.creator_price_history.create({
         data: {
+          id: `cph_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
           creatorId: params.id,
           priceMin: parseInt(newPriceMin),
           priceMax: parseInt(newPriceMax),
@@ -81,7 +82,7 @@ export async function POST(
         },
       });
 
-      const updatedCreator = await tx.creator.update({
+      const updatedCreator = await tx.creators.update({
         where: { id: params.id },
         data: {
           currentPriceMin: parseInt(newPriceMin),
@@ -115,11 +116,11 @@ export async function GET(
   if (error) return error;
 
   try {
-    const priceHistory = await prisma.creatorPriceHistory.findMany({
+    const priceHistory = await prisma.creator_price_history.findMany({
       where: { creatorId: params.id },
       orderBy: { effectiveFrom: 'desc' },
       include: {
-        creator: {
+        creators: {
           select: {
             displayName: true,
           },

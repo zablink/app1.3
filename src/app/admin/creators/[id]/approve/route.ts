@@ -38,7 +38,7 @@ export async function POST(
 
     const result = await prisma.$transaction(async (tx) => {
       // Update creator status
-      const creator = await tx.creator.update({
+      const creator = await tx.creators.update({
         where: { id: params.id },
         data: {
           applicationStatus: 'APPROVED',
@@ -49,8 +49,9 @@ export async function POST(
       });
 
       // Create initial price history
-      await tx.creatorPriceHistory.create({
+      await tx.creator_price_history.create({
         data: {
+          id: `cph_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
           creatorId: params.id,
           priceMin: parseInt(priceMin),
           priceMax: parseInt(priceMax),

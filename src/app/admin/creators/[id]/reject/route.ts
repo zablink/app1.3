@@ -20,7 +20,7 @@ export async function POST(
       );
     }
 
-    const creator = await prisma.creator.update({
+    const creator = await prisma.creators.update({
       where: { id: params.id },
       data: {
         applicationStatus: 'REJECTED',
