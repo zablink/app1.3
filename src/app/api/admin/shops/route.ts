@@ -34,7 +34,6 @@ export async function GET(request: NextRequest) {
           description: true,
           status: true,
           ownerId: true,
-          categoryId: true,
           createdAt: true,
         },
         orderBy: { createdAt: 'desc' },
@@ -48,15 +47,21 @@ export async function GET(request: NextRequest) {
     const shopsWithData = await Promise.all(
       shops.map(async (shop) => {
         try {
-          const [owner, category, tokenWallet, subscription] = await Promise.all([
+          const [owner, categories, tokenWallet, subscription] = await Promise.all([
             shop.ownerId ? prisma.user.findUnique({
               where: { id: shop.ownerId },
               select: { id: true, name: true, email: true },
             }) : null,
-            shop.categoryId ? prisma.shopCategory.findUnique({
-              where: { id: shop.categoryId },
-              select: { id: true, name: true },
-            }) : null,
+            // Get categories via junction table
+            prisma.shopCategoryMapping.findMany({
+              where: { shopId: shop.id },
+              include: {
+                category: {
+                  select: { id: true, name: true, slug: true, icon: true },
+                },
+              },
+            }).then(mappings => mappings.map(m => m.category)),
+            null,
             // Get token wallet balance
             prisma.$queryRawUnsafe<any[]>(`
               SELECT balance FROM token_wallets WHERE shop_id = '${shop.id}' LIMIT 1;

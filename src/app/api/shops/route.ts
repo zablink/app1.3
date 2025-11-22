@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
     const lng = sp.get('lng');
     const limit = Number(sp.get('limit') || 50);
     const offset = Number(sp.get('offset') || 0);
-    const categoryId = sp.get('category') || null;
+    // categoryId removed - now using many-to-many categories
     const sortBy = (sp.get('sortBy') || 'createdAt') as 'distance' | 'name' | 'createdAt';
     const radiiMeters = [2 * KM, 5 * KM, 20 * KM, 50 * KM];
 
@@ -65,10 +65,7 @@ export async function GET(request: NextRequest) {
       const whereParts: string[] = [];
       const params: any[] = [];
       if (hasStatusCol) whereParts.push(`s.status = 'APPROVED'`);
-      if (categoryId) {
-        params.push(categoryId);
-        whereParts.push(`s."categoryId" = $${params.length}`);
-      }
+      // Category filter removed - now using many-to-many
       const whereClause = whereParts.length > 0 ? `WHERE ${whereParts.join(' AND ')}` : '';
       
       try {
@@ -226,13 +223,12 @@ export async function GET(request: NextRequest) {
       const whereParts: string[] = [];
       if (hasStatusCol) whereParts.push(`s.status = 'APPROVED'`);
       if (areaConditions.length > 0) whereParts.push(`(${areaConditions.join(' OR ')})`);
-      if (categoryId) { params.push(categoryId); whereParts.push(`s."categoryId" = $${params.length}`); }
+      // categoryId filter removed
       params.push(limit);
 
       const sql = `
         SELECT ${selectList}
         FROM "Shop" s
-        LEFT JOIN "ShopCategory" sc ON s."categoryId" = sc.id
         LEFT JOIN loc_tambons lt ON s.tambon_id = lt.id
         LEFT JOIN loc_amphures la ON s.amphure_id = la.id
         LEFT JOIN loc_provinces lp ON s.province_id = lp.id
@@ -260,11 +256,10 @@ export async function GET(request: NextRequest) {
         const whereClauseParts = [];
         if (hasStatusCol) whereClauseParts.push(`s.status = 'APPROVED'`);
         whereClauseParts.push(`ST_DWithin(s.location::geography, ST_SetSRID(ST_MakePoint($1,$2),4326)::geography, $3)`);
-        if (categoryId) { params.splice(3,0,categoryId); whereClauseParts.push(`s."categoryId" = $4`); params.push(limit); }
+        // categoryId filter removed
         const sql = `
           SELECT ${selectList}
           FROM "Shop" s
-          LEFT JOIN "ShopCategory" sc ON s."categoryId" = sc.id
           LEFT JOIN loc_tambons lt ON s.tambon_id = lt.id
           LEFT JOIN loc_amphures la ON s.amphure_id = la.id
           LEFT JOIN loc_provinces lp ON s.province_id = lp.id
@@ -289,12 +284,11 @@ export async function GET(request: NextRequest) {
     const paramsFinal: any[] = [];
     const whereFinal: string[] = [];
     if (hasStatusCol) whereFinal.push(`s.status = 'APPROVED'`);
-    if (categoryId) { paramsFinal.push(categoryId); whereFinal.push(`s."categoryId" = $${paramsFinal.length}`); }
+    // categoryId filter removed
     paramsFinal.push(limit);
     const sqlFinal = `
       SELECT ${selectList.replace(/CASE WHEN s.location.*?END as distance/, 'NULL as distance')}
       FROM "Shop" s
-      LEFT JOIN "ShopCategory" sc ON s."categoryId" = sc.id
       LEFT JOIN loc_tambons lt ON s.tambon_id = lt.id
       LEFT JOIN loc_amphures la ON s.amphure_id = la.id
       LEFT JOIN loc_provinces lp ON s.province_id = lp.id
