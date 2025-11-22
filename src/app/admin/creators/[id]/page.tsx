@@ -112,7 +112,7 @@ export default function CreatorDetailPage() {
 
   const fetchCreator = async () => {
     try {
-      const response = await fetch(`/admin/creators/${creatorId}`);
+      const response = await fetch(`/api/admin/creators/${creatorId}`);
       if (!response.ok) throw new Error('Failed to fetch creator');
       const data = await response.json();
       setCreator(data);
@@ -126,7 +126,7 @@ export default function CreatorDetailPage() {
 
   const fetchJobs = async () => {
     try {
-      const response = await fetch(`/admin/creators/${creatorId}/jobs`);
+      const response = await fetch(`/api/admin/creators/${creatorId}/jobs`);
       if (!response.ok) throw new Error('Failed to fetch jobs');
       const data = await response.json();
       setJobs(data.jobs || []);
@@ -144,7 +144,7 @@ export default function CreatorDetailPage() {
 
     setApproving(true);
     try {
-      const response = await fetch(`/admin/creators/${creatorId}/approve`, {
+      const response = await fetch(`/api/admin/creators/${creatorId}/approve`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ priceMin, priceMax }),
@@ -171,7 +171,7 @@ export default function CreatorDetailPage() {
 
     setRejecting(true);
     try {
-      const response = await fetch(`/admin/creators/${creatorId}/reject`, {
+      const response = await fetch(`/api/admin/creators/${creatorId}/reject`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ reason: rejectReason }),
@@ -198,7 +198,7 @@ export default function CreatorDetailPage() {
 
     setUpdatingPricing(true);
     try {
-      const response = await fetch(`/admin/creators/${creatorId}/update-pricing`, {
+      const response = await fetch(`/api/admin/creators/${creatorId}/update-pricing`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

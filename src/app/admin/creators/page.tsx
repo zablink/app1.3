@@ -65,7 +65,7 @@ export default function AdminCreatorsPage() {
         params.append('status', statusFilter);
       }
 
-      const response = await fetch(`/admin/creators?${params.toString()}`);
+      const response = await fetch(`/api/admin/creators?${params.toString()}`);
       if (!response.ok) throw new Error('Failed to fetch creators');
 
       const data = await response.json();
