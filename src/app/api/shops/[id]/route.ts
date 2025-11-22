@@ -20,7 +20,11 @@ export async function GET(
     const shop: any = await prisma.shop.findUnique({
       where: { id: shopId },
       include: {
-        category: true
+        categories: {
+          include: {
+            category: true
+          }
+        }
       }
     });
 
@@ -104,6 +108,14 @@ export async function GET(
 
     const badge = PACKAGE_BADGES[packageTier] || PACKAGE_BADGES.FREE;
 
+    // Transform categories to array format
+    const categories = shop.categories?.map((sc: any) => ({
+      id: sc.category.id,
+      name: sc.category.name,
+      slug: sc.category.slug,
+      icon: sc.category.icon
+    })) || [];
+
     return NextResponse.json({
       id: shop.id,
       name: shop.name,
@@ -116,7 +128,7 @@ export async function GET(
       website: null, // Not in schema, will need to add if needed
       status: shop.status,
       createdAt: shop.createdAt,
-      category: shop.category?.name || null,
+      categories: categories,
       package_tier: packageTier,
       badge_emoji: badge.emoji,
       badge_text: badge.text,

@@ -207,8 +207,12 @@ export default function ShopListPage() {
     // Province filter (by name match)
     if (selectedProvinceId) {
       const provinceName = availableProvinces.find(p => p.id === selectedProvinceId)?.name;
+      console.log('🔍 Filtering by province:', { provinceName, selectedProvinceId });
+      console.log('📊 Shops before filter:', result.length);
+      console.log('📍 Sample shop provinces:', result.slice(0, 5).map(s => s.province));
       if (provinceName) {
         result = result.filter(shop => shop.province === provinceName);
+        console.log('📊 Shops after filter:', result.length);
       }
     }
 

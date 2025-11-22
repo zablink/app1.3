@@ -10,7 +10,12 @@ import { motion } from "framer-motion";
 type Shop = {
   id: string;
   name: string;
-  category: string | null;
+  categories?: Array<{
+    id: string;
+    name: string;
+    slug: string;
+    icon?: string | null;
+  }>;
   image: string | null;
   lat: number | null;
   lng: number | null;
@@ -266,9 +271,14 @@ export default function ShopDetailPage() {
                     <span className="text-2xl md:text-3xl">{PACKAGE_BADGES[shop.package_tier]?.emoji}</span>
                   )}
                 </div>
-                {shop.category && (
-                  <div className="inline-block px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full mb-3">
-                    <p className="text-sm md:text-base font-medium">{shop.category}</p>
+                {shop.categories && shop.categories.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {shop.categories.map((cat) => (
+                      <div key={cat.id} className="inline-flex items-center gap-1 px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full">
+                        {cat.icon && <span className="text-sm">{cat.icon}</span>}
+                        <p className="text-sm md:text-base font-medium">{cat.name}</p>
+                      </div>
+                    ))}
                   </div>
                 )}
                 {(shop.district || shop.province) && (
@@ -432,7 +442,7 @@ export default function ShopDetailPage() {
                 เกี่ยวกับร้าน
               </h2>
               <p className="text-gray-700 leading-relaxed whitespace-pre-line">
-                {shop.description || `ร้าน ${shop.name} ${shop.category ? `เป็นร้าน${shop.category}` : ''} ที่พร้อมให้บริการคุณด้วยความใส่ใจและคุณภาพ`}
+                {shop.description || `ร้าน ${shop.name} ${shop.categories && shop.categories.length > 0 ? `เป็นร้าน${shop.categories[0].name}` : ''} ที่พร้อมให้บริการคุณด้วยความใส่ใจและคุณภาพ`}
               </p>
               {shop.address && (
                 <div className="mt-4 p-4 bg-gray-50 rounded-lg">
