@@ -43,66 +43,79 @@ export async function GET(request: NextRequest) {
 
     console.log('Shops found:', shops.length, 'Total:', total);
 
-    // Now fetch related data separately
-    const shopsWithData = await Promise.all(
-      shops.map(async (shop) => {
-        try {
-          const [owner, categories, tokenWallet, subscription] = await Promise.all([
-            shop.ownerId ? prisma.user.findUnique({
-              where: { id: shop.ownerId },
-              select: { id: true, name: true, email: true },
-            }) : null,
-            // Get categories via junction table
-            prisma.shopCategoryMapping.findMany({
-              where: { shopId: shop.id },
-              include: {
-                category: {
-                  select: { id: true, name: true, slug: true, icon: true },
-                },
-              },
-            }).then(mappings => mappings.map(m => m.category)),
-            // Get token wallet balance
-            prisma.$queryRawUnsafe<any[]>(`
-              SELECT balance FROM token_wallets WHERE shop_id = '${shop.id}' LIMIT 1;
-            `).then(rows => rows[0] || { balance: 0 }).catch(() => ({ balance: 0 })),
-            // Get active subscription with package
-            prisma.$queryRawUnsafe<any[]>(`
-              SELECT ss.id, ss.package_id, ss.start_date, ss.end_date, ss.status,
-                     sp.name as package_name
-              FROM shop_subscriptions ss
-              LEFT JOIN subscription_packages sp ON ss.package_id = sp.id
-              WHERE ss.shop_id = '${shop.id}' AND ss.status = 'ACTIVE'
-              ORDER BY ss.created_at DESC
-              LIMIT 1;
-            `).then(rows => rows[0] ? {
-              id: rows[0].id,
-              packageId: rows[0].package_id,
-              status: rows[0].status,
-              startDate: rows[0].start_date,
-              endDate: rows[0].end_date,
-              package: { name: rows[0].package_name },
-            } : null).catch(() => null),
-          ]);
+    // Fetch all related data in bulk to avoid connection pool exhaustion
+    const shopIds = shops.map(s => s.id);
+    const ownerIds = shops.map(s => s.ownerId).filter(Boolean) as string[];
 
-          return {
-            ...shop,
-            owner,
-            categories,
-            tokenWallet,
-            subscription,
-          };
-        } catch (e) {
-          console.error('Error fetching shop data for', shop.id, e);
-          return {
-            ...shop,
-            owner: null,
-            categories: [],
-            tokenWallet: { balance: 0 },
-            subscription: null,
-          };
-        }
-      })
-    );
+    // Batch fetch all data
+    const [ownersData, categoriesData, walletsData, subscriptionsData] = await Promise.all([
+      // Get all owners in one query
+      ownerIds.length > 0 
+        ? prisma.user.findMany({
+            where: { id: { in: ownerIds } },
+            select: { id: true, name: true, email: true },
+          })
+        : [],
+      // Get all categories in one query
+      prisma.shopCategoryMapping.findMany({
+        where: { shopId: { in: shopIds } },
+        include: {
+          category: {
+            select: { id: true, name: true, slug: true, icon: true },
+          },
+        },
+      }),
+      // Get all token wallets in one query
+      prisma.$queryRaw<any[]>`
+        SELECT shop_id, balance 
+        FROM token_wallets 
+        WHERE shop_id IN (${shopIds.map(id => `'${id}'`).join(',')})
+      `.catch(() => []),
+      // Get all active subscriptions in one query
+      prisma.$queryRaw<any[]>`
+        SELECT ss.shop_id, ss.id, ss.package_id, ss.start_date, ss.end_date, ss.status,
+               sp.name as package_name
+        FROM shop_subscriptions ss
+        LEFT JOIN subscription_packages sp ON ss.package_id = sp.id
+        WHERE ss.shop_id IN (${shopIds.map(id => `'${id}'`).join(',')})
+          AND ss.status = 'ACTIVE'
+        ORDER BY ss.created_at DESC
+      `.catch(() => []),
+    ]);
+
+    // Create lookup maps for O(1) access
+    const ownersMap = new Map(ownersData.map(o => [o.id, o]));
+    const categoriesMap = new Map<string, any[]>();
+    categoriesData.forEach(mapping => {
+      if (!categoriesMap.has(mapping.shopId)) {
+        categoriesMap.set(mapping.shopId, []);
+      }
+      categoriesMap.get(mapping.shopId)!.push(mapping.category);
+    });
+    const walletsMap = new Map(walletsData.map((w: any) => [w.shop_id, { balance: w.balance || 0 }]));
+    const subscriptionsMap = new Map<string, any>();
+    subscriptionsData.forEach((sub: any) => {
+      // Only keep the first (most recent) subscription per shop
+      if (!subscriptionsMap.has(sub.shop_id)) {
+        subscriptionsMap.set(sub.shop_id, {
+          id: sub.id,
+          packageId: sub.package_id,
+          status: sub.status,
+          startDate: sub.start_date,
+          endDate: sub.end_date,
+          package: { name: sub.package_name },
+        });
+      }
+    });
+
+    // Map shops with their related data
+    const shopsWithData = shops.map(shop => ({
+      ...shop,
+      owner: shop.ownerId ? ownersMap.get(shop.ownerId) || null : null,
+      categories: categoriesMap.get(shop.id) || [],
+      tokenWallet: walletsMap.get(shop.id) || { balance: 0 },
+      subscription: subscriptionsMap.get(shop.id) || null,
+    }));
 
     return NextResponse.json({
       shops: shopsWithData,
