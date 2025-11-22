@@ -32,7 +32,6 @@ model Shop {
   updatedAt            DateTime                 @updatedAt
   adPackageId          String?
   address              String?
-  categoryId           String
   image                String?
   location             Unsupported("geometry")?
   has_physical_store   Boolean                  @default(false)
