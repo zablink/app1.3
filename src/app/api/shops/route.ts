@@ -74,8 +74,7 @@ export async function GET(request: NextRequest) {
       try {
         const sql = `
           SELECT 
-            s.id, s.name, s.description, s.address, s."categoryId", 
-            sc.name as category, s."createdAt", s.image, s.lat, s.lng,
+            s.id, s.name, s.description, s.address, s."createdAt", s.image, s.lat, s.lng,
             lt.name_th as subdistrict,
             la.name_th as district,
             lp.name_th as province,
@@ -97,9 +96,14 @@ export async function GET(request: NextRequest) {
                 LIMIT 1
               ),
               'FREE'
-            ) as "subscriptionTier"
+            ) as "subscriptionTier",
+            (
+              SELECT JSON_AGG(JSON_BUILD_OBJECT('id', sc.id, 'name', sc.name, 'slug', sc.slug, 'icon', sc.icon))
+              FROM shop_category_mapping scm
+              JOIN "ShopCategory" sc ON scm.category_id = sc.id
+              WHERE scm.shop_id = s.id
+            ) as categories
           FROM "Shop" s
-          LEFT JOIN "ShopCategory" sc ON s."categoryId" = sc.id
           LEFT JOIN loc_tambons lt ON s.tambon_id = lt.id
           LEFT JOIN loc_amphures la ON s.amphure_id = la.id
           LEFT JOIN loc_provinces lp ON s.province_id = lp.id
@@ -117,13 +121,18 @@ export async function GET(request: NextRequest) {
         console.error('[api/shops] SQL error:', sqlError);
         // Fallback: try without subscriptionTier
         const simpleSql = `
-          SELECT s.id, s.name, s.description, s.address, s."categoryId", sc.name as category, s."createdAt", s.image, s.lat, s.lng,
+          SELECT s.id, s.name, s.description, s.address, s."createdAt", s.image, s.lat, s.lng,
             lt.name_th as subdistrict,
             la.name_th as district,
             lp.name_th as province,
-            'FREE' as "subscriptionTier"
+            'FREE' as "subscriptionTier",
+            (
+              SELECT JSON_AGG(JSON_BUILD_OBJECT('id', sc.id, 'name', sc.name, 'slug', sc.slug, 'icon', sc.icon))
+              FROM shop_category_mapping scm
+              JOIN "ShopCategory" sc ON scm.category_id = sc.id
+              WHERE scm.shop_id = s.id
+            ) as categories
           FROM "Shop" s
-          LEFT JOIN "ShopCategory" sc ON s."categoryId" = sc.id
           LEFT JOIN loc_tambons lt ON s.tambon_id = lt.id
           LEFT JOIN loc_amphures la ON s.amphure_id = la.id
           LEFT JOIN loc_provinces lp ON s.province_id = lp.id
@@ -159,7 +168,7 @@ export async function GET(request: NextRequest) {
 
     // Build SELECT columns
     const selectCols = [
-      's.id','s.name','s.description','s.address','s."categoryId"','sc.name as category','s.has_physical_store','s."createdAt"',
+      's.id','s.name','s.description','s.address','s.has_physical_store','s."createdAt"',
       // Include s.image for frontend to render shop images
       's.image',
       // Include lat, lng for map display
@@ -187,7 +196,14 @@ export async function GET(request: NextRequest) {
           LIMIT 1
         ),
         'FREE'
-      ) as "subscriptionTier"`
+      ) as "subscriptionTier"`,
+      // Include categories as JSON array
+      `(
+        SELECT JSON_AGG(JSON_BUILD_OBJECT('id', sc.id, 'name', sc.name, 'slug', sc.slug, 'icon', sc.icon))
+        FROM shop_category_mapping scm
+        JOIN "ShopCategory" sc ON scm.category_id = sc.id
+        WHERE scm.shop_id = s.id
+      ) as categories`
     ];
     if (hasAmphureCol) selectCols.push('s.amphure_id');
     if (hasTambonCol) selectCols.push('s.tambon_id');

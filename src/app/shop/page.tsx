@@ -107,18 +107,23 @@ export default function ShopListPage() {
     // Search filter
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
-      result = result.filter(shop => 
-        shop.name.toLowerCase().includes(query) ||
-        shop.category?.toLowerCase().includes(query) ||
-        shop.district?.toLowerCase().includes(query) ||
-        shop.province?.toLowerCase().includes(query) ||
-        shop.subdistrict?.toLowerCase().includes(query)
-      );
+      result = result.filter(shop => {
+        const categoryMatch = shop.categories?.some(cat => 
+          cat.name.toLowerCase().includes(query)
+        );
+        return shop.name.toLowerCase().includes(query) ||
+          categoryMatch ||
+          shop.district?.toLowerCase().includes(query) ||
+          shop.province?.toLowerCase().includes(query) ||
+          shop.subdistrict?.toLowerCase().includes(query);
+      });
     }
 
-    // Category filter
+    // Category filter (check if shop has this category by slug)
     if (selectedCategory !== "all") {
-      result = result.filter(shop => shop.category === selectedCategory);
+      result = result.filter(shop => 
+        shop.categories?.some(cat => cat.slug === selectedCategory)
+      );
     }
 
     // Province filter
@@ -304,9 +309,10 @@ export default function ShopListPage() {
                 onChange={(e) => setSelectedCategory(e.target.value)}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
               >
-                {categories.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat === "all" ? "ทั้งหมด" : cat}
+                <option value="all">ทั้งหมด</option>
+                {availableCategories.map((cat) => (
+                  <option key={cat.id} value={cat.slug}>
+                    {cat.icon} {cat.name}
                   </option>
                 ))}
               </select>
@@ -429,14 +435,38 @@ export default function ShopListPage() {
 
                   {/* Content */}
                   <div className="p-4">
-                    <h3 className="font-semibold text-lg mb-1 line-clamp-1">
+                    <h3 className="font-semibold text-lg mb-2 line-clamp-1">
                       {shop.name}
                     </h3>
-                    {shop.category && (
-                      <p className="text-sm text-gray-500 mb-2">
-                        {shop.category}
+                    
+                    {/* Category Badges */}
+                    {shop.categories && shop.categories.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mb-2">
+                        {shop.categories.slice(0, 3).map((cat) => (
+                          <span 
+                            key={cat.id} 
+                            className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50 text-blue-700 rounded-full text-xs"
+                          >
+                            <span>{cat.icon}</span>
+                            <span>{cat.name}</span>
+                          </span>
+                        ))}
+                        {shop.categories.length > 3 && (
+                          <span className="inline-flex items-center px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full text-xs">
+                            +{shop.categories.length - 3}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    
+                    {/* Distance */}
+                    {shop.distance !== null && shop.distance !== undefined && (
+                      <p className="text-xs text-green-600 font-medium mb-1">
+                        📍 {shop.distance.toFixed(1)} km
                       </p>
                     )}
+                    
+                    {/* Location */}
                     {(shop.district || shop.province) && (
                       <p className="text-xs text-gray-400 flex items-center gap-1">
                         <span>📍</span>
