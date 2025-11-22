@@ -105,7 +105,7 @@ export async function GET(request: NextRequest) {
               (
                 SELECT sp.tier
                 FROM shop_subscriptions ss
-                JOIN subscription_packages sp ON ss.plan_id = sp.id
+                JOIN subscription_packages sp ON ss.package_id = sp.id
                 WHERE ss.shop_id = s.id
                   AND ss.status = 'ACTIVE'
                   AND ss.end_date > NOW()
@@ -205,7 +205,7 @@ export async function GET(request: NextRequest) {
         (
           SELECT sp.tier
           FROM shop_subscriptions ss
-          JOIN subscription_packages sp ON ss.plan_id = sp.id
+          JOIN subscription_packages sp ON ss.package_id = sp.id
           WHERE ss.shop_id = s.id
             AND ss.status = 'ACTIVE'
             AND ss.end_date > NOW()
