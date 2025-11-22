@@ -43,10 +43,26 @@ export default function ShopListPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedProvince, setSelectedProvince] = useState<string>("all");
+  const [selectedDistrict, setSelectedDistrict] = useState<string>("all");
+  const [selectedSubdistrict, setSelectedSubdistrict] = useState<string>("all");
   
-  // Get unique categories and provinces
+  // Location state
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [loadingLocation, setLoadingLocation] = useState(false);
+  
+  // Get unique values for dropdowns
   const categories = ["all", ...Array.from(new Set(shops.map(s => s.category).filter(Boolean)))];
   const provinces = ["all", ...Array.from(new Set(shops.map(s => s.province).filter(Boolean)))];
+  
+  // Filter districts based on selected province
+  const districts = selectedProvince === "all" 
+    ? ["all", ...Array.from(new Set(shops.map(s => s.district).filter(Boolean)))]
+    : ["all", ...Array.from(new Set(shops.filter(s => s.province === selectedProvince).map(s => s.district).filter(Boolean)))];
+  
+  // Filter subdistricts based on selected district
+  const subdistricts = selectedDistrict === "all"
+    ? ["all", ...Array.from(new Set(shops.map(s => s.subdistrict).filter(Boolean)))]
+    : ["all", ...Array.from(new Set(shops.filter(s => s.district === selectedDistrict).map(s => s.subdistrict).filter(Boolean)))];
 
   // Fetch shops from API
   useEffect(() => {
@@ -90,7 +106,8 @@ export default function ShopListPage() {
         shop.name.toLowerCase().includes(query) ||
         shop.category?.toLowerCase().includes(query) ||
         shop.district?.toLowerCase().includes(query) ||
-        shop.province?.toLowerCase().includes(query)
+        shop.province?.toLowerCase().includes(query) ||
+        shop.subdistrict?.toLowerCase().includes(query)
       );
     }
 
@@ -104,8 +121,84 @@ export default function ShopListPage() {
       result = result.filter(shop => shop.province === selectedProvince);
     }
 
+    // District filter
+    if (selectedDistrict !== "all") {
+      result = result.filter(shop => shop.district === selectedDistrict);
+    }
+
+    // Subdistrict filter
+    if (selectedSubdistrict !== "all") {
+      result = result.filter(shop => shop.subdistrict === selectedSubdistrict);
+    }
+
+    // Sort by distance if user location is available
+    if (userLocation) {
+      result = result.map(shop => {
+        if (shop.lat && shop.lng) {
+          const distance = calculateDistance(
+            userLocation.lat,
+            userLocation.lng,
+            shop.lat,
+            shop.lng
+          );
+          return { ...shop, distance };
+        }
+        return { ...shop, distance: null };
+      }).sort((a, b) => {
+        if (a.distance === null) return 1;
+        if (b.distance === null) return -1;
+        return a.distance - b.distance;
+      });
+    }
+
     setFilteredShops(result);
-  }, [searchQuery, selectedCategory, selectedProvince, shops]);
+  }, [searchQuery, selectedCategory, selectedProvince, selectedDistrict, selectedSubdistrict, shops, userLocation]);
+
+  // Calculate distance between two points (Haversine formula)
+  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+    const R = 6371; // Radius of the Earth in km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = 
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  };
+
+  // Get user location
+  const handleFindNearby = () => {
+    if (!navigator.geolocation) {
+      alert('เบราว์เซอร์ของคุณไม่รองรับการหาตำแหน่ง');
+      return;
+    }
+
+    setLoadingLocation(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setUserLocation({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        });
+        setLoadingLocation(false);
+        // Clear location filters when using nearby
+        setSelectedProvince("all");
+        setSelectedDistrict("all");
+        setSelectedSubdistrict("all");
+      },
+      (error) => {
+        console.error('Error getting location:', error);
+        alert('ไม่สามารถเข้าถึงตำแหน่งของคุณได้ กรุณาอนุญาตการเข้าถึงตำแหน่ง');
+        setLoadingLocation(false);
+      }
+    );
+  };
+
+  // Reset location filter
+  const handleClearLocation = () => {
+    setUserLocation(null);
+  };
 
   // Loading state
   if (loading) {
@@ -143,14 +236,47 @@ export default function ShopListPage() {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">ร้านค้าทั้งหมด</h1>
-          <p className="text-gray-600">พบทั้งหมด {filteredShops.length} ร้าน</p>
+          <div className="flex items-center justify-between">
+            <p className="text-gray-600">
+              พบทั้งหมด {filteredShops.length} ร้าน
+              {userLocation && <span className="ml-2 text-blue-600">(เรียงตามระยะทาง)</span>}
+            </p>
+            
+            {/* Find Nearby Button */}
+            <button
+              onClick={userLocation ? handleClearLocation : handleFindNearby}
+              disabled={loadingLocation}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition ${
+                userLocation 
+                  ? 'bg-gray-200 text-gray-700 hover:bg-gray-300' 
+                  : 'bg-blue-600 text-white hover:bg-blue-700'
+              } disabled:opacity-50 disabled:cursor-not-allowed`}
+            >
+              {loadingLocation ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                  <span>กำลังหาตำแหน่ง...</span>
+                </>
+              ) : userLocation ? (
+                <>
+                  <span>✖️</span>
+                  <span>ล้างตำแหน่ง</span>
+                </>
+              ) : (
+                <>
+                  <span>📍</span>
+                  <span>ร้านใกล้ฉัน</span>
+                </>
+              )}
+            </button>
+          </div>
         </div>
 
         {/* Filters */}
         <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {/* Search */}
-            <div>
+            <div className="lg:col-span-3">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 🔍 ค้นหา
               </label>
@@ -188,7 +314,11 @@ export default function ShopListPage() {
               </label>
               <select
                 value={selectedProvince}
-                onChange={(e) => setSelectedProvince(e.target.value)}
+                onChange={(e) => {
+                  setSelectedProvince(e.target.value);
+                  setSelectedDistrict("all");
+                  setSelectedSubdistrict("all");
+                }}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
               >
                 {provinces.map((prov) => (
@@ -198,20 +328,64 @@ export default function ShopListPage() {
                 ))}
               </select>
             </div>
+
+            {/* District Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                🏘️ อำเภอ/เขต
+              </label>
+              <select
+                value={selectedDistrict}
+                onChange={(e) => {
+                  setSelectedDistrict(e.target.value);
+                  setSelectedSubdistrict("all");
+                }}
+                disabled={selectedProvince === "all"}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:bg-gray-100 disabled:cursor-not-allowed"
+              >
+                {districts.map((dist) => (
+                  <option key={dist} value={dist}>
+                    {dist === "all" ? "ทั้งหมด" : dist}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Subdistrict Filter */}
+            <div className="lg:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                🏡 ตำบล/แขวง
+              </label>
+              <select
+                value={selectedSubdistrict}
+                onChange={(e) => setSelectedSubdistrict(e.target.value)}
+                disabled={selectedDistrict === "all"}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:bg-gray-100 disabled:cursor-not-allowed"
+              >
+                {subdistricts.map((sub) => (
+                  <option key={sub} value={sub}>
+                    {sub === "all" ? "ทั้งหมด" : sub}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           {/* Clear Filters */}
-          {(searchQuery || selectedCategory !== "all" || selectedProvince !== "all") && (
-            <div className="mt-4">
+          {(searchQuery || selectedCategory !== "all" || selectedProvince !== "all" || selectedDistrict !== "all" || selectedSubdistrict !== "all" || userLocation) && (
+            <div className="mt-4 flex gap-2">
               <button
                 onClick={() => {
                   setSearchQuery("");
                   setSelectedCategory("all");
                   setSelectedProvince("all");
+                  setSelectedDistrict("all");
+                  setSelectedSubdistrict("all");
+                  setUserLocation(null);
                 }}
                 className="text-sm text-blue-600 hover:text-blue-700 hover:underline"
               >
-                ล้างตัวกรอง
+                ล้างตัวกรองทั้งหมด
               </button>
             </div>
           )}
