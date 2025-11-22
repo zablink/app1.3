@@ -40,7 +40,7 @@ export default function ShopListPage() {
   const [error, setError] = useState<string | null>(null);
   
   // Categories from API
-  const [availableCategories, setAvailableCategories] = useState<Array<{ id: string; name: string; slug: string }>>([]);
+  const [availableCategories, setAvailableCategories] = useState<Array<{ id: string; name: string; slug: string; icon?: string | null }>>([]);
   
   // Filters
   const [searchQuery, setSearchQuery] = useState("");
@@ -66,6 +66,25 @@ export default function ShopListPage() {
     ? ["all", ...Array.from(new Set(shops.map(s => s.subdistrict).filter(Boolean)))]
     : ["all", ...Array.from(new Set(shops.filter(s => s.district === selectedDistrict).map(s => s.subdistrict).filter(Boolean)))];
 
+  // Fetch categories
+  useEffect(() => {
+    async function fetchCategories() {
+      try {
+        const response = await fetch('/api/categories');
+        const data = await response.json();
+        console.log('🏷️ Categories response:', data);
+        if (data.success) {
+          setAvailableCategories(data.categories || []);
+          console.log('✅ Loaded categories:', data.categories?.length);
+        }
+      } catch (error) {
+        console.error('❌ Error fetching categories:', error);
+      }
+    }
+
+    fetchCategories();
+  }, []);
+
   // Fetch shops from API
   useEffect(() => {
     async function fetchShops() {
@@ -86,6 +105,8 @@ export default function ShopListPage() {
         
         console.log('📦 Loaded shops:', shopsData.length);
         console.log('📍 Sample shop:', shopsData[0]);
+        console.log('🏷️ Sample categories:', shopsData[0]?.categories);
+        console.log('📍 Sample province:', shopsData[0]?.province);
         
         setShops(shopsData);
         setFilteredShops(shopsData);
