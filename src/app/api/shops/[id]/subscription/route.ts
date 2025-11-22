@@ -25,10 +25,10 @@ export async function POST(req: Request, { params }: { params: { id: string } })
 
   try {
     const body = await req.json();
-    const { planId, autoRenew = false, paymentProvider, paymentRef } = body;
-    if (!planId) return NextResponse.json({ error: "planId required" }, { status: 400 });
+    const { packageId, autoRenew = false, paymentProvider, paymentRef } = body;
+    if (!packageId) return NextResponse.json({ error: "packageId required" }, { status: 400 });
 
-    const plan = await prisma.subscriptionPackage.findUnique({ where: { id: planId } });
+    const plan = await prisma.subscriptionPackage.findUnique({ where: { id: packageId } });
     if (!plan) return NextResponse.json({ error: "Plan not found" }, { status: 404 });
 
     const startedAt = new Date();
@@ -37,7 +37,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     const sub = await prisma.shopSubscription.create({
       data: {
         shop: { connect: { id: shopId } },
-        plan: { connect: { id: planId } },
+        plan: { connect: { id: packageId } },
         status: "ACTIVE",
         startedAt,
         expiresAt,
