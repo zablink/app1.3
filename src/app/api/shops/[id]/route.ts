@@ -136,6 +136,8 @@ export async function GET(
       grabFoodUrl: shop.grabFoodUrl,
       foodPandaUrl: shop.foodPandaUrl,
       shopeeUrl: shop.shopeeUrl,
+      has_physical_store: shop.has_physical_store,
+      show_location_on_map: shop.show_location_on_map,
       ...locationData
     });
 

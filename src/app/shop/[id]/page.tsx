@@ -31,6 +31,8 @@ type Shop = {
   grabFoodUrl?: string | null;
   foodPandaUrl?: string | null;
   shopeeUrl?: string | null;
+  has_physical_store?: boolean;
+  show_location_on_map?: boolean;
 };
 
 type Review = {
@@ -109,6 +111,15 @@ export default function ShopDetailPage() {
   
   // Gallery state
   const [selectedImage, setSelectedImage] = useState(0);
+
+  // Determine if map should be shown
+  const shouldShowMap = useMemo(() => {
+    if (!shop) return false;
+    // ไม่มีหน้าร้าน = ไม่แสดงแผนที่
+    if (!shop.has_physical_store) return false;
+    // มีหน้าร้าน + show_location_on_map = true = แสดงแผนที่
+    return shop.show_location_on_map === true;
+  }, [shop]);
 
   useEffect(() => {
     async function fetchShop() {
@@ -686,14 +697,16 @@ export default function ShopDetailPage() {
                 ดำเนินการด่วน
               </h3>
               <div className="space-y-3">
-                <button
-                  onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${shop.lat},${shop.lng}`, '_blank')}
-                  disabled={!shop.lat || !shop.lng}
-                  className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition disabled:bg-gray-300 disabled:cursor-not-allowed font-medium shadow-sm"
-                >
-                  <span>🗺️</span>
-                  <span>เปิดแผนที่</span>
-                </button>
+                {shouldShowMap && (
+                  <button
+                    onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${shop.lat},${shop.lng}`, '_blank')}
+                    disabled={!shop.lat || !shop.lng}
+                    className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition disabled:bg-gray-300 disabled:cursor-not-allowed font-medium shadow-sm"
+                  >
+                    <span>🗺️</span>
+                    <span>เปิดแผนที่</span>
+                  </button>
+                )}
                 <button
                   className="w-full flex items-center justify-center gap-2 bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 transition font-medium shadow-sm"
                   onClick={() => alert('ฟีเจอร์กำลังพัฒนา')}
@@ -799,42 +812,44 @@ export default function ShopDetailPage() {
             </div>
 
             {/* Map */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                <span>🗺️</span>
-                แผนที่
-              </h3>
-              {shop.lat && shop.lng ? (
-                <div className="relative">
-                  <div className="rounded-lg overflow-hidden border border-gray-200">
-                    <iframe
-                      src={`https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&q=${shop.lat},${shop.lng}&zoom=15`}
-                      width="100%"
-                      height="200"
-                      style={{ border: 0 }}
-                      allowFullScreen
-                      loading="lazy"
-                      referrerPolicy="no-referrer-when-downgrade"
-                      title="Shop Location Map"
-                    />
+            {shouldShowMap && (
+              <div className="bg-white rounded-lg shadow-sm p-6">
+                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                  <span>🗺️</span>
+                  แผนที่
+                </h3>
+                {shop.lat && shop.lng ? (
+                  <div className="relative">
+                    <div className="rounded-lg overflow-hidden border border-gray-200">
+                      <iframe
+                        src={`https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&q=${shop.lat},${shop.lng}&zoom=15`}
+                        width="100%"
+                        height="200"
+                        style={{ border: 0 }}
+                        allowFullScreen
+                        loading="lazy"
+                        referrerPolicy="no-referrer-when-downgrade"
+                        title="Shop Location Map"
+                      />
+                    </div>
+                    <button
+                      onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&destination=${shop.lat},${shop.lng}`, '_blank')}
+                      className="mt-3 w-full flex items-center justify-center gap-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition text-sm font-medium"
+                    >
+                      <span>🧭</span>
+                      <span>นำทาง</span>
+                    </button>
                   </div>
-                  <button
-                    onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&destination=${shop.lat},${shop.lng}`, '_blank')}
-                    className="mt-3 w-full flex items-center justify-center gap-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition text-sm font-medium"
-                  >
-                    <span>🧭</span>
-                    <span>นำทาง</span>
-                  </button>
-                </div>
-              ) : (
-                <div className="bg-gray-100 h-48 rounded-lg flex flex-col items-center justify-center text-gray-500">
-                  <svg className="w-12 h-12 mb-2" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-                  </svg>
-                  <p className="text-sm">ไม่มีข้อมูลพิกัด</p>
-                </div>
-              )}
-            </div>
+                ) : (
+                  <div className="bg-gray-100 h-48 rounded-lg flex flex-col items-center justify-center text-gray-500">
+                    <svg className="w-12 h-12 mb-2" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                    </svg>
+                    <p className="text-sm">ไม่มีข้อมูลพิกัด</p>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Back Button */}
             <Link
