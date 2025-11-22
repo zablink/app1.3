@@ -26,14 +26,18 @@ interface Shop {
     name?: string;
     email?: string;
   };
-  category?: {
+  categories?: Array<{
     id: string;
     name: string;
-  };
+    slug?: string;
+    icon?: string;
+  }>;
   subscription?: {
     id: string;
     packageId: string;
     status: string;
+    startDate?: string;
+    endDate?: string;
     package?: {
       name: string;
     };
@@ -390,7 +394,9 @@ export default function AdminShopsPage() {
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {shop.category?.name || '-'}
+                        {shop.categories && shop.categories.length > 0 
+                          ? shop.categories.map(c => c.name).join(', ')
+                          : '-'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {shop.subscription?.package?.name || '-'}

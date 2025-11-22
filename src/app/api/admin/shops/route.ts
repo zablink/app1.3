@@ -61,7 +61,6 @@ export async function GET(request: NextRequest) {
                 },
               },
             }).then(mappings => mappings.map(m => m.category)),
-            null,
             // Get token wallet balance
             prisma.$queryRawUnsafe<any[]>(`
               SELECT balance FROM token_wallets WHERE shop_id = '${shop.id}' LIMIT 1;
@@ -88,7 +87,7 @@ export async function GET(request: NextRequest) {
           return {
             ...shop,
             owner,
-            category,
+            categories,
             tokenWallet,
             subscription,
           };
@@ -97,7 +96,7 @@ export async function GET(request: NextRequest) {
           return {
             ...shop,
             owner: null,
-            category: null,
+            categories: [],
             tokenWallet: { balance: 0 },
             subscription: null,
           };
