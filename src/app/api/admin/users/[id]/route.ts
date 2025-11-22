@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 import { requireAdmin } from '@/lib/auth';
 
 export async function GET(
@@ -12,9 +12,15 @@ export async function GET(
   try {
     const user = await prisma.user.findUnique({
       where: { id: params.id },
-      include: {
-        shop: true,
-        creator: true,
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        emailVerified: true,
+        role: true,
+        image: true,
+        createdAt: true,
+        updatedAt: true,
       },
     });
 
@@ -25,9 +31,7 @@ export async function GET(
       );
     }
 
-    const { password, ...userWithoutPassword } = user as any;
-
-    return NextResponse.json(userWithoutPassword);
+    return NextResponse.json(user);
   } catch (err) {
     console.error('Fetch user error:', err);
     return NextResponse.json(
@@ -48,7 +52,7 @@ export async function PATCH(
     const body = await request.json();
     const { role } = body;
 
-    if (role && !['USER', 'SHOP', 'CREATOR', 'ADMIN'].includes(role)) {
+    if (role && !['USER', 'SHOP', 'CREATOR', 'MCN_MANAGER', 'AD_MANAGER', 'ADMIN'].includes(role)) {
       return NextResponse.json(
         { error: 'Invalid role' },
         { status: 400 }

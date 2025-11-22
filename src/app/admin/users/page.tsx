@@ -111,7 +111,7 @@ export default function AdminUsersPage() {
 
   const loadUserDetails = async (userId: string) => {
     try {
-      const res = await fetch(`/admin/users/${userId}`, {
+      const res = await fetch(`/api/admin/users/${userId}`, {
         cache: 'no-store',
       });
       const data = await res.json();
@@ -127,7 +127,7 @@ export default function AdminUsersPage() {
 
     setIsUpdating(true);
     try {
-      const res = await fetch(`/admin/users/${selectedUser.id}`, {
+      const res = await fetch(`/api/admin/users/${selectedUser.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ role: editRole }),
