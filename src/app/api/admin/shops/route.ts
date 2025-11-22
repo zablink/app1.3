@@ -47,6 +47,8 @@ export async function GET(request: NextRequest) {
     const shopIds = shops.map(s => s.id);
     const ownerIds = shops.map(s => s.ownerId).filter(Boolean) as string[];
 
+    console.log('Fetching related data for', shopIds.length, 'shops');
+
     // Batch fetch all data
     const [ownersData, categoriesData, walletsData, subscriptionsData] = await Promise.all([
       // Get all owners in one query
@@ -65,23 +67,47 @@ export async function GET(request: NextRequest) {
           },
         },
       }),
-      // Get all token wallets in one query
-      prisma.$queryRaw<any[]>`
-        SELECT shop_id, balance 
-        FROM token_wallets 
-        WHERE shop_id IN (${shopIds.map(id => `'${id}'`).join(',')})
-      `.catch(() => []),
-      // Get all active subscriptions in one query
-      prisma.$queryRaw<any[]>`
-        SELECT ss.shop_id, ss.id, ss.package_id, ss.start_date, ss.end_date, ss.status,
-               sp.name as package_name
-        FROM shop_subscriptions ss
-        LEFT JOIN subscription_packages sp ON ss.package_id = sp.id
-        WHERE ss.shop_id IN (${shopIds.map(id => `'${id}'`).join(',')})
-          AND ss.status = 'ACTIVE'
-        ORDER BY ss.created_at DESC
-      `.catch(() => []),
+      // Get all token wallets - use parameterized query
+      shopIds.length > 0
+        ? prisma.$queryRawUnsafe<any[]>(
+            `SELECT shop_id, balance FROM token_wallets WHERE shop_id = ANY($1::text[])`,
+            shopIds
+          ).catch(err => {
+            console.error('Error fetching wallets:', err);
+            return [];
+          })
+        : [],
+      // Get all active subscriptions - use parameterized query
+      shopIds.length > 0
+        ? prisma.$queryRawUnsafe<any[]>(
+            `SELECT ss.shop_id, ss.id, ss.package_id, ss.start_date, ss.end_date, ss.status,
+                    sp.name as package_name
+             FROM shop_subscriptions ss
+             LEFT JOIN subscription_packages sp ON ss.package_id = sp.id
+             WHERE ss.shop_id = ANY($1::text[]) AND ss.status = 'ACTIVE'
+             ORDER BY ss.created_at DESC`,
+            shopIds
+          ).catch(err => {
+            console.error('Error fetching subscriptions:', err);
+            return [];
+          })
+        : [],
     ]);
+
+    console.log('Fetched:', {
+      owners: ownersData.length,
+      categories: categoriesData.length,
+      wallets: walletsData.length,
+      subscriptions: subscriptionsData.length
+    });
+
+    // Debug: log sample data
+    if (walletsData.length > 0) {
+      console.log('Sample wallet:', walletsData[0]);
+    }
+    if (subscriptionsData.length > 0) {
+      console.log('Sample subscription:', subscriptionsData[0]);
+    }
 
     // Create lookup maps for O(1) access
     const ownersMap = new Map(ownersData.map(o => [o.id, o]));
@@ -92,7 +118,7 @@ export async function GET(request: NextRequest) {
       }
       categoriesMap.get(mapping.shopId)!.push(mapping.category);
     });
-    const walletsMap = new Map(walletsData.map((w: any) => [w.shop_id, { balance: w.balance || 0 }]));
+    const walletsMap = new Map(walletsData.map((w: any) => [w.shop_id, { balance: parseInt(w.balance) || 0 }]));
     const subscriptionsMap = new Map<string, any>();
     subscriptionsData.forEach((sub: any) => {
       // Only keep the first (most recent) subscription per shop
@@ -106,6 +132,11 @@ export async function GET(request: NextRequest) {
           package: { name: sub.package_name },
         });
       }
+    });
+
+    console.log('Maps created:', {
+      walletsMapSize: walletsMap.size,
+      subscriptionsMapSize: subscriptionsMap.size
     });
 
     // Map shops with their related data
