@@ -76,12 +76,20 @@ export default function AdminDashboard() {
       iconColor: 'text-yellow-500'
     },
     {
-      title: 'สถิติและรายงาน',
-      description: 'ดูข้อมูลสถิติและรายงานต่างๆ',
+      title: 'Dashboard & Analytics',
+      description: 'ดูข้อมูลสถิติ รายงาน และการวิเคราะห์ต่างๆ',
       icon: BarChart3,
       href: '/admin/dashboard',
       color: 'bg-indigo-500',
       iconColor: 'text-indigo-500'
+    },
+    {
+      title: 'จัดการหมวดหมู่',
+      description: 'จัดการหมวดหมู่ร้านค้า',
+      icon: Palette,
+      href: '/admin/categories',
+      color: 'bg-pink-500',
+      iconColor: 'text-pink-500'
     }
   ];
 
