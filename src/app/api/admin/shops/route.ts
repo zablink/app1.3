@@ -81,7 +81,7 @@ export async function GET(request: NextRequest) {
       shopIds.length > 0
         ? prisma.$queryRawUnsafe<any[]>(
             `SELECT ss.shop_id, ss.id, ss.package_id, ss.start_date, ss.end_date, ss.status,
-                    sp.name as package_name
+                    sp.name as package_name, sp.tier as package_tier
              FROM shop_subscriptions ss
              LEFT JOIN subscription_packages sp ON ss.package_id = sp.id
              WHERE ss.shop_id = ANY($1::text[]) AND ss.status = 'ACTIVE'
@@ -129,7 +129,10 @@ export async function GET(request: NextRequest) {
           status: sub.status,
           startDate: sub.start_date,
           endDate: sub.end_date,
-          package: { name: sub.package_name },
+          package: { 
+            name: sub.package_name,
+            tier: sub.package_tier 
+          },
         });
       }
     });

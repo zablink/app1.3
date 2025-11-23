@@ -41,6 +41,7 @@ interface Shop {
     endDate?: string;
     package?: {
       name: string;
+      tier?: string;
     };
   };
   subscriptions?: any[];
@@ -64,6 +65,39 @@ interface UserOption {
   name?: string;
   email?: string;
 }
+
+// Package tier colors matching home page
+const tierStyles = {
+  PREMIUM: {
+    bg: 'bg-gradient-to-br from-amber-50 to-orange-50',
+    border: 'border-l-4 border-amber-400',
+    badge: 'bg-gradient-to-r from-amber-400 to-orange-500 text-white',
+  },
+  PRO: {
+    bg: 'bg-gradient-to-br from-purple-50 to-pink-50',
+    border: 'border-l-4 border-purple-400',
+    badge: 'bg-gradient-to-r from-purple-500 to-pink-500 text-white',
+  },
+  BASIC: {
+    bg: 'bg-gradient-to-br from-blue-50 to-cyan-50',
+    border: 'border-l-4 border-blue-400',
+    badge: 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white',
+  },
+  FREE: {
+    bg: 'bg-gray-50',
+    border: 'border-l-4 border-gray-300',
+    badge: 'bg-gray-500 text-white',
+  }
+};
+
+// Helper function to get tier from subscription
+const getShopTier = (shop: Shop): keyof typeof tierStyles => {
+  const tier = shop.subscription?.package?.tier;
+  if (tier && tier in tierStyles) {
+    return tier as keyof typeof tierStyles;
+  }
+  return 'FREE';
+};
 
 export default function AdminShopsPage() {
   const { data: session, status } = useSession();
@@ -252,7 +286,10 @@ export default function AdminShopsPage() {
                   status: 'ACTIVE',
                   startDate: new Date().toISOString(),
                   endDate: data.subscription.expiresAt,
-                  package: { name: selectedPackage?.name || 'Unknown' },
+                  package: { 
+                    name: selectedPackage?.name || 'Unknown',
+                    tier: selectedPackage?.tier
+                  },
                 } : shop.subscription,
                 tokenWallet: data.tokenWallet || shop.tokenWallet
               };
@@ -413,8 +450,12 @@ export default function AdminShopsPage() {
                     </td>
                   </tr>
                 ) : (
-                  filteredShops.map((shop) => (
-                    <tr key={shop.id} className="hover:bg-gray-50">
+                  filteredShops.map((shop) => {
+                    const tier = getShopTier(shop);
+                    const styles = tierStyles[tier];
+                    
+                    return (
+                      <tr key={shop.id} className={`hover:bg-gray-100 transition-colors ${styles.bg} ${styles.border}`}>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="flex-shrink-0 h-10 w-10 bg-gray-200 rounded-full flex items-center justify-center">
@@ -445,8 +486,14 @@ export default function AdminShopsPage() {
                           ? shop.categories.map(c => c.name).join(', ')
                           : '-'}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {shop.subscription?.package?.name || '-'}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {shop.subscription?.package?.name ? (
+                          <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${styles.badge}`}>
+                            {shop.subscription.package.name}
+                          </span>
+                        ) : (
+                          <span className="text-sm text-gray-400">-</span>
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-1 text-sm">
@@ -508,7 +555,8 @@ export default function AdminShopsPage() {
                         </div>
                       </td>
                     </tr>
-                  ))
+                    );
+                  })
                 )}
               </tbody>
             </table>
