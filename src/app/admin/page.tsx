@@ -6,6 +6,7 @@ import { useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import AdminBreadcrumb from '@/components/admin/Breadcrumb';
 import {
   Settings,
   Users,
@@ -95,6 +96,7 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <AdminBreadcrumb />
       {/* Header */}
       <header className="bg-white shadow-sm border-b">
         <div className="container mx-auto px-4 py-6">

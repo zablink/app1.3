@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import AdminBreadcrumb from '@/components/admin/Breadcrumb';
 
 export default function AnalyticsSettingsPage() {
   const [settings, setSettings] = useState({
@@ -68,8 +69,14 @@ export default function AnalyticsSettingsPage() {
   }
 
   return (
-    <div className="p-8">
-      <div className="max-w-4xl">
+    <div className="min-h-screen bg-gray-50">
+      <AdminBreadcrumb customItems={[
+        { label: 'แอดมิน', href: '/admin' },
+        { label: 'การตั้งค่า', href: '/admin/settings' },
+        { label: 'Analytics', href: '/admin/settings/analytics' },
+      ]} />
+      <div className="p-8">
+        <div className="max-w-4xl">
         <h1 className="text-3xl font-bold mb-2">Google Analytics Settings</h1>
         <p className="text-gray-600 mb-8">
           จัดการการตั้งค่า Google Analytics และ Google Tag Manager สำหรับเว็บไซต์
@@ -156,6 +163,7 @@ export default function AnalyticsSettingsPage() {
             </button>
           </div>
         </form>
+        </div>
       </div>
     </div>
   );

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import AdminBreadcrumb from '@/components/admin/Breadcrumb';
 
 interface Creator {
   id: string;
@@ -260,9 +261,12 @@ export default function CreatorDetailPage() {
 
   if (loading) {
     return (
-      <div className="container mx-auto p-6">
-        <div className="flex justify-center items-center h-64">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen bg-gray-50">
+        <AdminBreadcrumb />
+        <div className="container mx-auto p-6">
+          <div className="flex justify-center items-center h-64">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          </div>
         </div>
       </div>
     );
@@ -270,22 +274,31 @@ export default function CreatorDetailPage() {
 
   if (!creator) {
     return (
-      <div className="container mx-auto p-6">
-        <div className="text-center">
-          <p className="text-gray-600">ไม่พบข้อมูล Creator</p>
-          <Link href="/admin/creators" className="text-blue-600 hover:underline mt-4 inline-block">
-            กลับไปหน้ารายการ
-          </Link>
+      <div className="min-h-screen bg-gray-50">
+        <AdminBreadcrumb />
+        <div className="container mx-auto p-6">
+          <div className="text-center">
+            <p className="text-gray-600">ไม่พบข้อมูล Creator</p>
+            <Link href="/admin/creators" className="text-blue-600 hover:underline mt-4 inline-block">
+              กลับไปหน้ารายการ
+            </Link>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto p-6">
-      {/* Header */}
-      <div className="mb-6">
-        <Link href="/admin/creators" className="text-blue-600 hover:underline mb-4 inline-block">
+    <div className="min-h-screen bg-gray-50">
+      <AdminBreadcrumb customItems={[
+        { label: 'แอดมิน', href: '/admin' },
+        { label: 'Creators', href: '/admin/creators' },
+        { label: creator.displayName || 'รายละเอียด', href: `/admin/creators/${creatorId}` },
+      ]} />
+      <div className="container mx-auto p-6">
+        {/* Header */}
+        <div className="mb-6">
+          <Link href="/admin/creators" className="text-blue-600 hover:underline mb-4 inline-block">
           ← กลับไปหน้ารายการ
         </Link>
         <div className="flex justify-between items-start">
@@ -842,6 +855,7 @@ export default function CreatorDetailPage() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

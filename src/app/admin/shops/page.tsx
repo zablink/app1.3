@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import AdminBreadcrumb from '@/components/admin/Breadcrumb';
 import {
   Store,
   User,
@@ -290,6 +291,7 @@ export default function AdminShopsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <AdminBreadcrumb />
       {/* Toast Notification */}
       {toast && (
         <div className="fixed top-4 right-4 z-50 animate-fade-in">

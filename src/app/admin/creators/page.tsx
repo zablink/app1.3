@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import AdminBreadcrumb from '@/components/admin/Breadcrumb';
 
 interface Creator {
   id: string;
@@ -107,8 +108,10 @@ export default function AdminCreatorsPage() {
   });
 
   return (
-    <div className="container mx-auto p-6">
-      <div className="flex justify-between items-center mb-6">
+    <div className="min-h-screen bg-gray-50">
+      <AdminBreadcrumb />
+      <div className="container mx-auto p-6">
+        <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">จัดการ Content Creators</h1>
       </div>
 

@@ -5,6 +5,7 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import AdminBreadcrumb from '@/components/admin/Breadcrumb';
 import ImageUploadZone from '@/components/admin/ImageUploadZone';
 
 interface Setting {
@@ -221,6 +222,7 @@ export default function AdminSettingsDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <AdminBreadcrumb />
       {/* Header */}
       <header className="bg-white shadow-sm sticky top-0 z-40">
         <div className="container mx-auto px-4 py-4">
