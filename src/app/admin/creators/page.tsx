@@ -312,6 +312,7 @@ export default function AdminCreatorsPage() {
           </button>
         </div>
       )}
+      </div>
     </div>
   );
 }
