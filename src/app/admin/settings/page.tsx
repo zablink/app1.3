@@ -333,20 +333,31 @@ export default function AdminSettingsDashboard() {
                 </div>
 
                 <div className="space-y-6">
-                  {settings[activeCategory]?.map(setting => (
-                    <SettingField
-                      key={setting.key}
-                      setting={setting}
-                      value={getValue(setting)}
-                      onChange={(value) => handleChange(setting.key, value)}
-                      hasChanged={changes[setting.key] !== undefined}
+                  {activeCategory === 'branding' ? (
+                    <BrandingSettings
+                      settings={settings[activeCategory] || []}
+                      getValue={getValue}
+                      onChange={handleChange}
+                      changes={changes}
                     />
-                  ))}
-                  
-                  {(!settings[activeCategory] || settings[activeCategory].length === 0) && (
-                    <p className="text-gray-500 text-center py-8">
-                      ยังไม่มีการตั้งค่าในหมวดหมู่นี้
-                    </p>
+                  ) : (
+                    <>
+                      {settings[activeCategory]?.map(setting => (
+                        <SettingField
+                          key={setting.key}
+                          setting={setting}
+                          value={getValue(setting)}
+                          onChange={(value) => handleChange(setting.key, value)}
+                          hasChanged={changes[setting.key] !== undefined}
+                        />
+                      ))}
+                      
+                      {(!settings[activeCategory] || settings[activeCategory].length === 0) && (
+                        <p className="text-gray-500 text-center py-8">
+                          ยังไม่มีการตั้งค่าในหมวดหมู่นี้
+                        </p>
+                      )}
+                    </>
                   )}
                 </div>
               </div>
@@ -688,6 +699,213 @@ function BannerForm({ banner, onSave, onCancel }: BannerFormProps) {
           </button>
         </div>
       </form>
+    </div>
+  );
+}
+
+// ============================================
+// Branding Settings Component (with grouped favicons)
+// ============================================
+
+interface BrandingSettingsProps {
+  settings: Setting[];
+  getValue: (setting: Setting) => any;
+  onChange: (key: string, value: any) => void;
+  changes: Record<string, any>;
+}
+
+function BrandingSettings({ settings, getValue, onChange, changes }: BrandingSettingsProps) {
+  // แยก settings ออกเป็นกลุ่ม
+  const faviconSettings = settings.filter(s => 
+    s.key.includes('favicon') || 
+    s.key.includes('apple_touch_icon') || 
+    s.key.includes('icon_') ||
+    s.key.includes('manifest')
+  );
+  
+  const otherSettings = settings.filter(s => 
+    !s.key.includes('favicon') && 
+    !s.key.includes('apple_touch_icon') && 
+    !s.key.includes('icon_') &&
+    !s.key.includes('manifest')
+  );
+
+  return (
+    <div className="space-y-8">
+      {/* Other branding settings */}
+      {otherSettings.map(setting => (
+        <SettingField
+          key={setting.key}
+          setting={setting}
+          value={getValue(setting)}
+          onChange={(value) => onChange(setting.key, value)}
+          hasChanged={changes[setting.key] !== undefined}
+        />
+      ))}
+
+      {/* Favicon Group */}
+      {faviconSettings.length > 0 && (
+        <div className="border-t pt-6">
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+              🎯 Favicons & Icons
+            </h3>
+            <p className="text-sm text-gray-600 mt-1">
+              อัปโหลด favicon หลายขนาดเพื่อรองรับอุปกรณ์และหน้าจอต่างๆ
+            </p>
+          </div>
+
+          <div className="bg-gray-50 rounded-lg p-6 space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {faviconSettings.map(setting => (
+                <FaviconField
+                  key={setting.key}
+                  setting={setting}
+                  value={getValue(setting)}
+                  onChange={(value) => onChange(setting.key, value)}
+                  hasChanged={changes[setting.key] !== undefined}
+                />
+              ))}
+            </div>
+
+            {/* ตัวอย่างขนาดที่แนะนำ */}
+            <div className="mt-6 pt-6 border-t border-gray-200">
+              <h4 className="font-medium text-gray-900 mb-3">📐 ขนาดที่แนะนำ:</h4>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-600">16x16:</span>
+                  <span className="font-mono text-gray-900">Browser Tab</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-600">32x32:</span>
+                  <span className="font-mono text-gray-900">Browser Tab (Retina)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-600">180x180:</span>
+                  <span className="font-mono text-gray-900">Apple Touch Icon</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-600">192x192:</span>
+                  <span className="font-mono text-gray-900">Android/PWA</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-600">512x512:</span>
+                  <span className="font-mono text-gray-900">PWA Splash Screen</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================================
+// Favicon Field Component
+// ============================================
+
+interface FaviconFieldProps {
+  setting: Setting;
+  value: any;
+  onChange: (value: any) => void;
+  hasChanged: boolean;
+}
+
+function FaviconField({ setting, value, onChange, hasChanged }: FaviconFieldProps) {
+  const [uploading, setUploading] = useState(false);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setUploading(true);
+      
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('folder', 'logos');
+
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        onChange(data.url);
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+      alert('เกิดข้อผิดพลาดในการอัปโหลด');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <div className="space-y-2">
+      <label className="flex items-center justify-between">
+        <span className="font-medium text-gray-900 text-sm">
+          {setting.label}
+          {hasChanged && (
+            <span className="ml-2 text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded">
+              แก้ไขแล้ว
+            </span>
+          )}
+        </span>
+      </label>
+      
+      {setting.description && (
+        <p className="text-xs text-gray-600">{setting.description}</p>
+      )}
+
+      <div className="space-y-2">
+        {/* Preview */}
+        {value && (
+          <div className="relative inline-block">
+            <img
+              src={value}
+              alt={setting.label}
+              className="w-16 h-16 rounded border border-gray-300 object-contain bg-white p-1"
+            />
+            <button
+              onClick={() => onChange('')}
+              className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5 hover:bg-red-600"
+              title="ลบรูป"
+            >
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        )}
+
+        {/* Upload button */}
+        <label className="inline-flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-300 text-gray-700 rounded text-sm cursor-pointer hover:bg-gray-50">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+          </svg>
+          {uploading ? 'กำลังอัปโหลด...' : value ? 'เปลี่ยนรูป' : 'อัปโหลด'}
+          <input
+            type="file"
+            accept="image/png,image/svg+xml,image/webp,image/x-icon,image/vnd.microsoft.icon,.ico"
+            onChange={handleImageUpload}
+            disabled={uploading}
+            className="hidden"
+          />
+        </label>
+
+        {/* URL Input (optional) */}
+        <input
+          type="text"
+          value={value || ''}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="หรือใส่ URL"
+          className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+        />
+      </div>
     </div>
   );
 }

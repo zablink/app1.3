@@ -104,9 +104,39 @@ export async function getSiteMetadata() {
       site: settings.twitter_site || '',
     },
     icons: {
-      icon: settings.site_favicon || '/favicon.ico',
-      apple: settings.site_icon_192 || '/apple-touch-icon.png',
+      icon: [
+        {
+          url: settings.site_favicon_16 || settings.site_favicon || '/favicon-16x16.png',
+          sizes: '16x16',
+          type: 'image/png',
+        },
+        {
+          url: settings.site_favicon_32 || settings.site_favicon || '/favicon-32x32.png',
+          sizes: '32x32',
+          type: 'image/png',
+        },
+      ],
+      apple: settings.site_apple_touch_icon || '/apple-touch-icon.png',
+      other: [
+        {
+          rel: 'icon',
+          url: settings.site_favicon || '/favicon.ico',
+        },
+        {
+          rel: 'icon',
+          url: settings.site_icon_192 || '/icon-192x192.png',
+          sizes: '192x192',
+          type: 'image/png',
+        },
+        {
+          rel: 'icon',
+          url: settings.site_icon_512 || '/icon-512x512.png',
+          sizes: '512x512',
+          type: 'image/png',
+        },
+      ],
     },
+    manifest: settings.site_manifest_json || '/site.webmanifest',
     robots: settings.robots_meta || 'index, follow',
   };
 }
