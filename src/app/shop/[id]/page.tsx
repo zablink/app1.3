@@ -368,26 +368,41 @@ export default function ShopDetailPage() {
 
       {/* Gallery Thumbnails */}
       {gallery.length > 1 && (
-        <div className="max-w-7xl mx-auto px-4 -mt-4 mb-4">
-          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-            {gallery.map((img, index) => (
-              <button
-                key={index}
-                onClick={() => setSelectedImage(index)}
-                className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all ${
-                  selectedImage === index ? 'border-blue-500 scale-105' : 'border-transparent opacity-70 hover:opacity-100'
-                }`}
-              >
-                <img
-                  src={img}
-                  alt={`${shop.name} ${index + 1}`}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.currentTarget.src = '/images/placeholder.jpg';
-                  }}
-                />
-              </button>
-            ))}
+        <div className="bg-white border-t border-gray-200">
+          <div className="max-w-7xl mx-auto px-4 py-4">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-sm font-semibold text-gray-700">📸 รูปภาพทั้งหมด</span>
+              <span className="text-xs text-gray-500">({gallery.length} รูป)</span>
+            </div>
+            <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
+              {gallery.map((img, index) => (
+                <button
+                  key={index}
+                  onClick={() => setSelectedImage(index)}
+                  className={`relative aspect-square rounded-lg overflow-hidden transition-all transform hover:scale-105 ${
+                    selectedImage === index 
+                      ? 'ring-3 ring-blue-500 ring-offset-2 shadow-lg scale-105' 
+                      : 'ring-1 ring-gray-200 hover:ring-blue-300 opacity-80 hover:opacity-100'
+                  }`}
+                >
+                  <img
+                    src={img}
+                    alt={`${shop.name} ${index + 1}`}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.src = '/images/placeholder.jpg';
+                    }}
+                  />
+                  {selectedImage === index && (
+                    <div className="absolute inset-0 bg-blue-500/20 flex items-center justify-center">
+                      <svg className="w-6 h-6 text-white drop-shadow-lg" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                  )}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       )}
