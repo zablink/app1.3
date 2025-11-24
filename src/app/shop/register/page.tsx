@@ -257,7 +257,8 @@ export default function ShopRegisterPage() {
         const uploadFormData = new FormData();
         uploadFormData.append("file", featuredImage);
 
-        const uploadRes = await fetch("/api/upload/temp-image", {
+        // Try simple upload first (no image processing)
+        const uploadRes = await fetch("/api/upload/simple-upload", {
           method: "POST",
           body: uploadFormData,
         });
@@ -279,9 +280,8 @@ export default function ShopRegisterPage() {
         console.log("Uploading gallery image...");
         const uploadFormData = new FormData();
         uploadFormData.append("file", galleryFile);
-        uploadFormData.append("isGallery", "true");
 
-        const uploadRes = await fetch("/api/upload/temp-image", {
+        const uploadRes = await fetch("/api/upload/simple-upload", {
           method: "POST",
           body: uploadFormData,
         });
