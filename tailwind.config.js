@@ -11,8 +11,8 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
+        sans: ['var(--font-prompt)', 'sans-serif'],
         prompt: ['var(--font-prompt)', 'sans-serif'],
-        inter: ['var(--font-inter)', 'sans-serif'],
       },
       colors: {
         // สีหลักของ Zablink
