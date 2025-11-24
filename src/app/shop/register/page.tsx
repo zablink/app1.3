@@ -23,7 +23,7 @@ interface Location {
 }
 
 export default function ShopRegisterPage() {
-  const { data: session, status } = useSession();
+  const { data: session, status, update } = useSession();
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -170,15 +170,23 @@ export default function ShopRegisterPage() {
       }
 
       // Update user role to SHOP
-      await fetch("/api/user/update-role", {
+      const roleRes = await fetch("/api/user/update-role", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ role: "SHOP" }),
       });
 
-      // Redirect to shop dashboard
-      router.push("/dashboard/shop");
-      router.refresh();
+      if (roleRes.ok) {
+        // Update session to reflect new role
+        await update();
+        
+        // Wait a bit for session to update
+        setTimeout(() => {
+          router.push("/dashboard/shop");
+        }, 500);
+      } else {
+        throw new Error("Failed to update user role");
+      }
     } catch (err: any) {
       console.error("Submit error:", err);
       setError(err.message || "เกิดข้อผิดพลาดในการสมัคร");
