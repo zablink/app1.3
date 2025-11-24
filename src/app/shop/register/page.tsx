@@ -31,6 +31,7 @@ export default function ShopRegisterPage() {
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [hasCheckedRole, setHasCheckedRole] = useState(false);
   const [error, setError] = useState("");
+  const [userInteracted, setUserInteracted] = useState(false);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -175,7 +176,10 @@ export default function ShopRegisterPage() {
         break;
       
       case 3: // รูปภาพและยืนยัน
-        // Optional: can add image validation here if needed
+        if (!featuredImage && !imagePreview) {
+          setError("กรุณาอัปโหลดรูปภาพหน้าปกร้านค้า");
+          return false;
+        }
         break;
     }
     
@@ -191,6 +195,18 @@ export default function ShopRegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Check if this is a real user interaction (not automated)
+    if (!userInteracted) {
+      setError("กรุณากรอกข้อมูลและกดปุ่มด้วยตัวเอง");
+      return;
+    }
+    
+    // Validate final step before submitting
+    if (!validateStep(3)) {
+      return;
+    }
+    
     setIsSubmitting(true);
     setError("");
 
@@ -371,9 +387,11 @@ export default function ShopRegisterPage() {
                   <input
                     type="text"
                     value={formData.name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, name: e.target.value })
-                    }
+                    onChange={(e) => {
+                      setUserInteracted(true);
+                      setFormData({ ...formData, name: e.target.value });
+                    }}
+                    onFocus={() => setUserInteracted(true)}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="ร้านอาหารดีเด่น"
                     required
@@ -711,6 +729,9 @@ export default function ShopRegisterPage() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
+                  onClick={() => setUserInteracted(true)}
+                  onMouseDown={() => setUserInteracted(true)}
+                  onTouchStart={() => setUserInteracted(true)}
                   className="ml-auto px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSubmitting ? "กำลังสมัคร..." : "ยืนยันการสมัคร"}

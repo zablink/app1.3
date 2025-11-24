@@ -29,6 +29,7 @@ export default function CreatorRegisterPage() {
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [hasCheckedRole, setHasCheckedRole] = useState(false);
   const [error, setError] = useState("");
+  const [userInteracted, setUserInteracted] = useState(false);
 
   const [provinces, setProvinces] = useState<Province[]>([]);
   const [amphures, setAmphures] = useState<Amphure[]>([]);
@@ -212,6 +213,13 @@ export default function CreatorRegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Check if this is a real user interaction (not automated)
+    if (!userInteracted) {
+      setError("กรุณากรอกข้อมูลและกดปุ่มด้วยตัวเอง");
+      return;
+    }
+    
     setIsSubmitting(true);
     setError("");
 
@@ -345,9 +353,11 @@ export default function CreatorRegisterPage() {
                   <input
                     type="text"
                     value={formData.displayName}
-                    onChange={(e) =>
-                      setFormData({ ...formData, displayName: e.target.value })
-                    }
+                    onChange={(e) => {
+                      setUserInteracted(true);
+                      setFormData({ ...formData, displayName: e.target.value });
+                    }}
+                    onFocus={() => setUserInteracted(true)}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                     placeholder="ชื่อที่จะแสดงบนโปรไฟล์"
                     required
@@ -669,6 +679,9 @@ export default function CreatorRegisterPage() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
+                  onClick={() => setUserInteracted(true)}
+                  onMouseDown={() => setUserInteracted(true)}
+                  onTouchStart={() => setUserInteracted(true)}
                   className="ml-auto px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSubmitting ? "กำลังสมัคร..." : "ยืนยันการสมัคร"}
