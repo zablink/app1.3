@@ -214,6 +214,12 @@ export default function CreatorRegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Only allow submission on the last step
+    if (currentStep !== 3) {
+      console.log("Not on final step, preventing submit");
+      return;
+    }
+    
     // Check if this is a real user interaction (not automated)
     if (!userInteracted) {
       setError("กรุณากรอกข้อมูลและกดปุ่มด้วยตัวเอง");
@@ -341,7 +347,12 @@ export default function CreatorRegisterPage() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} onKeyDown={(e) => {
+            // Prevent form submission on Enter key unless on the last step
+            if (e.key === 'Enter' && currentStep < 3) {
+              e.preventDefault();
+            }
+          }}>
             {/* Step 1: Personal Info */}
             {currentStep === 1 && (
               <div className="space-y-6">
