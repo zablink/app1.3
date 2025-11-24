@@ -79,7 +79,17 @@ export default function Navbar() {
 
                   <div className="relative group">
                     <button className="flex items-center gap-2 text-gray-700 hover:text-blue-600">
-                      <User className="w-5 h-5" />
+                      {session.user?.image ? (
+                        <Image
+                          src={session.user.image}
+                          alt={session.user.name || 'User'}
+                          width={20}
+                          height={20}
+                          className="w-5 h-5 rounded-full object-cover"
+                        />
+                      ) : (
+                        <User className="w-5 h-5" />
+                      )}
                       <span className="text-sm">{session.user?.name || 'User'}</span>
                     </button>
 
