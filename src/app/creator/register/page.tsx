@@ -51,9 +51,19 @@ export default function CreatorRegisterPage() {
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/");
+      return;
     }
+    
+    // Check if user already has CREATOR role
+    const userRole = (session?.user as any)?.role;
+    if (status === "authenticated" && userRole === "CREATOR") {
+      // User already registered as creator, redirect to dashboard
+      router.push("/dashboard/creator");
+      return;
+    }
+    
     fetchProvinces();
-  }, [status, router]);
+  }, [status, session, router]);
 
   const fetchProvinces = async () => {
     try {
@@ -157,14 +167,41 @@ export default function CreatorRegisterPage() {
     { number: 3, title: "พื้นที่บริการ" },
   ];
 
-  if (status === "loading" || isRedirecting) {
+  if (status === "loading") {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">
-            {isRedirecting ? "กำลังนำคุณไปยังหน้า Dashboard..." : "กำลังโหลด..."}
-          </p>
+          <p className="text-gray-600">กำลังโหลด...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isRedirecting) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">✅ ลงทะเบียนสำเร็จ!</p>
+          <p className="text-gray-500 text-sm mt-2">กำลังนำคุณไปยังหน้า Dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+          <p className="text-gray-600">กำลังโหลด...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isRedirecting) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">✅ ลงทะเบียนสำเร็จ!</p>
+          <p className="text-gray-500 text-sm mt-2">กำลังนำคุณไปยังหน้า Dashboard...</p>
         </div>
       </div>
     );
