@@ -150,40 +150,73 @@ export default function ShopRegisterPage() {
     setGalleryPreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
+  // Drag and drop handlers
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = (e: React.DragEvent, type: 'featured' | 'gallery') => {
+    e.preventDefault();
+    e.stopPropagation();
+    setUserInteracted(true);
+
+    const files = Array.from(e.dataTransfer.files);
+    const imageFiles = files.filter(file => file.type.startsWith('image/'));
+
+    if (type === 'featured' && imageFiles[0]) {
+      setFeaturedImage(imageFiles[0]);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(imageFiles[0]);
+    } else if (type === 'gallery' && imageFiles.length > 0) {
+      setGalleryImages((prev) => [...prev, ...imageFiles]);
+      imageFiles.forEach((file) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setGalleryPreviews((prev) => [...prev, reader.result as string]);
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+  };
+
   // Validation for each step
-  const validateStep = (step: number): boolean => {
+  const validateStep = (step: number, showError: boolean = true): boolean => {
     switch (step) {
       case 1: // ข้อมูลพื้นฐาน
         if (!formData.name || formData.name.trim().length < 3) {
-          setError("กรุณากรอกชื่อร้านอย่างน้อย 3 ตัวอักษร");
+          if (showError) setError("กรุณากรอกชื่อร้านอย่างน้อย 3 ตัวอักษร");
           return false;
         }
         if (!formData.categoryId) {
-          setError("กรุณาเลือกหมวดหมู่ร้านค้า");
+          if (showError) setError("กรุณาเลือกหมวดหมู่ร้านค้า");
           return false;
         }
         break;
       
       case 2: // ที่อยู่และติดต่อ
         if (!formData.address || formData.address.trim().length < 10) {
-          setError("กรุณากรอกที่อยู่อย่างน้อย 10 ตัวอักษร");
+          if (showError) setError("กรุณากรอกที่อยู่อย่างน้อย 10 ตัวอักษร");
           return false;
         }
         if (!formData.phone || formData.phone.trim().length < 9) {
-          setError("กรุณากรอกเบอร์โทรศัพท์ที่ถูกต้อง");
+          if (showError) setError("กรุณากรอกเบอร์โทรศัพท์ที่ถูกต้อง");
           return false;
         }
         break;
       
       case 3: // รูปภาพและยืนยัน
         if (!featuredImage && !imagePreview) {
-          setError("กรุณาอัปโหลดรูปภาพหน้าปกร้านค้า");
+          if (showError) setError("กรุณาอัปโหลดรูปภาพหน้าปกร้านค้า");
           return false;
         }
         break;
     }
     
-    setError("");
+    if (showError) setError("");
     return true;
   };
 
@@ -220,6 +253,7 @@ export default function ShopRegisterPage() {
       // Upload featured image first if exists
       let imageUrl = "";
       if (featuredImage) {
+        console.log("Uploading featured image...");
         const uploadFormData = new FormData();
         uploadFormData.append("file", featuredImage);
 
@@ -229,17 +263,20 @@ export default function ShopRegisterPage() {
         });
 
         if (!uploadRes.ok) {
-          const errorData = await uploadRes.json();
+          const errorData = await uploadRes.json().catch(() => ({ error: "Upload failed" }));
+          console.error("Featured image upload error:", errorData);
           throw new Error(errorData.error || "Failed to upload featured image");
         }
         
         const uploadData = await uploadRes.json();
         imageUrl = uploadData.url;
+        console.log("Featured image uploaded:", imageUrl);
       }
 
       // Upload gallery images
       const galleryUrls: string[] = [];
       for (const galleryFile of galleryImages) {
+        console.log("Uploading gallery image...");
         const uploadFormData = new FormData();
         uploadFormData.append("file", galleryFile);
         uploadFormData.append("isGallery", "true");
@@ -252,6 +289,9 @@ export default function ShopRegisterPage() {
         if (uploadRes.ok) {
           const uploadData = await uploadRes.json();
           galleryUrls.push(uploadData.url);
+          console.log("Gallery image uploaded:", uploadData.url);
+        } else {
+          console.warn("Failed to upload gallery image, skipping...");
         }
       }
 
@@ -264,17 +304,22 @@ export default function ShopRegisterPage() {
         lng: location.lng,
       };
 
+      console.log("Creating shop with data:", shopData);
+
       const res = await fetch("/api/shops/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(shopData),
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({ error: "Invalid response from server" }));
 
       if (!res.ok) {
+        console.error("Shop registration error:", data);
         throw new Error(data.error || "Failed to register shop");
       }
+
+      console.log("Shop registration successful:", data);
 
       // Show success and redirecting message
       setIsRedirecting(true);
@@ -618,7 +663,11 @@ export default function ShopRegisterPage() {
                         </button>
                       </div>
                     ) : (
-                      <label className="flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer hover:bg-gray-50">
+                      <label 
+                        className="flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer hover:bg-gray-50"
+                        onDragOver={handleDragOver}
+                        onDrop={(e) => handleDrop(e, 'featured')}
+                      >
                         <div className="flex flex-col items-center justify-center pt-5 pb-6">
                           <Upload className="w-12 h-12 text-gray-400 mb-3" />
                           <p className="mb-2 text-sm text-gray-500">
@@ -647,11 +696,15 @@ export default function ShopRegisterPage() {
                   </label>
                   
                   {/* Upload Button */}
-                  <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer hover:bg-gray-50 mb-4">
+                  <label 
+                    className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer hover:bg-gray-50 mb-4"
+                    onDragOver={handleDragOver}
+                    onDrop={(e) => handleDrop(e, 'gallery')}
+                  >
                     <div className="flex flex-col items-center justify-center">
                       <Upload className="w-8 h-8 text-gray-400 mb-2" />
                       <p className="text-sm text-gray-500">
-                        <span className="font-semibold">เลือกรูปภาพเพิ่มเติม</span>
+                        <span className="font-semibold">เลือกรูปภาพเพิ่มเติม</span> หรือลากมาวาง
                       </p>
                       <p className="text-xs text-gray-500">หลายรูปพร้อมกัน</p>
                     </div>
