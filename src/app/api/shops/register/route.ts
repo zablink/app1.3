@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
           show_location_on_map: showLocationOnMap,
           lat: lat || null,
           lng: lng || null,
-          status: 'ACTIVE',
+          status: 'PENDING', // ร้านค้าใหม่จะรอการอนุมัติจาก Admin
         },
       });
 
