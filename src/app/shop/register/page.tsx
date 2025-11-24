@@ -222,8 +222,14 @@ export default function ShopRegisterPage() {
 
   const handleNextStep = () => {
     if (validateStep(currentStep)) {
+      setError(""); // Clear any previous errors
       setCurrentStep(currentStep + 1);
     }
+  };
+
+  const handlePrevStep = () => {
+    setError(""); // Clear any previous errors
+    setCurrentStep(currentStep - 1);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -774,7 +780,7 @@ export default function ShopRegisterPage() {
               {currentStep > 1 && (
                 <button
                   type="button"
-                  onClick={() => setCurrentStep(currentStep - 1)}
+                  onClick={handlePrevStep}
                   className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
                 >
                   ย้อนกลับ
