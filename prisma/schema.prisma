@@ -46,6 +46,7 @@ model Shop {
   grabFoodUrl          String?                  @map("grabfood_url")
   foodPandaUrl         String?                  @map("foodpanda_url")
   shopeeUrl            String?                  @map("shopee_url")
+  isMockup             Boolean                  @default(false) @map("is_mockup")
   analytics            Analytics[]
   adPackage            AdPackage?               @relation(fields: [adPackageId], references: [id])
   categories           ShopCategoryMapping[]

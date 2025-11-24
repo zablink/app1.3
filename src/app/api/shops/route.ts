@@ -97,7 +97,7 @@ export async function GET(request: NextRequest) {
       try {
         const sql = `
           SELECT 
-            s.id, s.name, s.description, s.address, s."createdAt", s.image, s.lat, s.lng,
+            s.id, s.name, s.description, s.address, s."createdAt", s.image, s.lat, s.lng, s.is_mockup as "isMockup",
             lt.name_th as subdistrict,
             la.name_th as district,
             lp.name_th as province,
@@ -194,6 +194,8 @@ export async function GET(request: NextRequest) {
       's.id','s.name','s.description','s.address','s.has_physical_store','s."createdAt"',
       // Include s.image for frontend to render shop images
       's.image',
+      // Include is_mockup flag
+      's.is_mockup as "isMockup"',
       // Include lat, lng for map display
       's.lat', 's.lng',
       // Include location fields

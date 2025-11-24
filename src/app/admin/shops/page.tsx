@@ -14,7 +14,9 @@ import {
   Edit,
   ChevronLeft,
   ChevronRight,
-  X
+  X,
+  Tag,
+  TestTube
 } from 'lucide-react';
 
 interface Shop {
@@ -22,6 +24,7 @@ interface Shop {
   name: string;
   description?: string;
   status: string;
+  isMockup?: boolean;
   owner?: {
     id: string;
     name?: string;
@@ -105,6 +108,7 @@ export default function AdminShopsPage() {
   const [shops, setShops] = useState<Shop[]>([]);
   const [packages, setPackages] = useState<SubscriptionPackage[]>([]);
   const [users, setUsers] = useState<UserOption[]>([]);
+  const [allCategories, setAllCategories] = useState<Array<{ id: string; name: string; icon?: string }>>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
@@ -114,9 +118,11 @@ export default function AdminShopsPage() {
   // Modal states
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [showPackageModal, setShowPackageModal] = useState(false);
+  const [showCategoriesModal, setShowCategoriesModal] = useState(false);
   const [selectedShop, setSelectedShop] = useState<Shop | null>(null);
   const [selectedUserId, setSelectedUserId] = useState('');
   const [selectedPackageId, setSelectedPackageId] = useState('');
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
   const [tokenAmount, setTokenAmount] = useState('0');
   const [subscriptionDays, setSubscriptionDays] = useState('30');
   const [isAssigning, setIsAssigning] = useState(false);
@@ -143,6 +149,7 @@ export default function AdminShopsPage() {
     if (session?.user.role === 'ADMIN') {
       loadPackages();
       loadUsers();
+      loadCategories();
     }
   }, [session]);
 
@@ -209,6 +216,21 @@ export default function AdminShopsPage() {
       }
     } catch (error) {
       console.error('Error loading users:', error);
+    }
+  };
+
+  const loadCategories = async () => {
+    try {
+      const res = await fetch('/api/categories', {
+        cache: 'no-store',
+        headers: { 'Cache-Control': 'no-cache' },
+      });
+      const data = await res.json();
+      if (data.categories) {
+        setAllCategories(data.categories);
+      }
+    } catch (error) {
+      console.error('Error loading categories:', error);
     }
   };
 
@@ -311,6 +333,71 @@ export default function AdminShopsPage() {
       showToast('เกิดข้อผิดพลาด: ' + (error instanceof Error ? error.message : 'Unknown error'), 'error');
     } finally {
       setIsAssigning(false);
+    }
+  };
+
+  const handleUpdateCategories = async () => {
+    if (!selectedShop) return;
+
+    try {
+      const res = await fetch(`/api/admin/shops/${selectedShop.id}/categories`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ categoryIds: selectedCategoryIds }),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        showToast('อัปเดตหมวดหมู่สำเร็จ!', 'success');
+        setShowCategoriesModal(false);
+        
+        // Update shop categories in state
+        setShops(prevShops =>
+          prevShops.map(shop =>
+            shop.id === selectedShop.id
+              ? { ...shop, categories: data.categories }
+              : shop
+          )
+        );
+      } else {
+        showToast(data.error || 'เกิดข้อผิดพลาด', 'error');
+      }
+    } catch (error) {
+      console.error('Error updating categories:', error);
+      showToast('เกิดข้อผิดพลาด', 'error');
+    }
+  };
+
+  const handleToggleMockup = async (shop: Shop) => {
+    const newMockupStatus = !shop.isMockup;
+    
+    try {
+      const res = await fetch(`/api/admin/shops/${shop.id}/mockup`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isMockup: newMockupStatus }),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        showToast(data.message, 'success');
+        
+        // Update shop mockup status in state
+        setShops(prevShops =>
+          prevShops.map(s =>
+            s.id === shop.id
+              ? { ...s, isMockup: newMockupStatus }
+              : s
+          )
+        );
+      } else {
+        showToast(data.error || 'เกิดข้อผิดพลาด', 'error');
+      }
+    } catch (error) {
+      console.error('Error toggling mockup:', error);
+      showToast('เกิดข้อผิดพลาด', 'error');
     }
   };
 
@@ -462,8 +549,16 @@ export default function AdminShopsPage() {
                             <Store className="w-6 h-6 text-gray-500" />
                           </div>
                           <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">
-                              {shop.name}
+                            <div className="flex items-center gap-2">
+                              <div className="text-sm font-medium text-gray-900">
+                                {shop.name}
+                              </div>
+                              {shop.isMockup && (
+                                <span className="px-2 py-0.5 text-xs font-bold bg-orange-500 text-white rounded-full flex items-center gap-1">
+                                  <TestTube className="w-3 h-3" />
+                                  DEMO
+                                </span>
+                              )}
                             </div>
                             <div className="text-sm text-gray-500">
                               {shop.description?.substring(0, 40)}...
@@ -534,6 +629,17 @@ export default function AdminShopsPage() {
                           <button
                             onClick={() => {
                               setSelectedShop(shop);
+                              setSelectedCategoryIds(shop.categories?.map(c => c.id) || []);
+                              setShowCategoriesModal(true);
+                            }}
+                            className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg"
+                            title="จัดการหมวดหมู่"
+                          >
+                            <Tag className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => {
+                              setSelectedShop(shop);
                               // Pre-fill with current subscription data if exists
                               if (shop.subscription) {
                                 setSelectedPackageId(shop.subscription.packageId || '');
@@ -551,6 +657,17 @@ export default function AdminShopsPage() {
                             title="มอบหมาย Package"
                           >
                             <Package className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleToggleMockup(shop)}
+                            className={`p-2 rounded-lg ${
+                              shop.isMockup 
+                                ? 'text-orange-600 bg-orange-50 hover:bg-orange-100' 
+                                : 'text-gray-400 hover:bg-gray-50'
+                            }`}
+                            title={shop.isMockup ? 'ยกเลิกเครื่องหมายร้านตัวอย่าง' : 'ทำเครื่องหมายเป็นร้านตัวอย่าง'}
+                          >
+                            <TestTube className="w-4 h-4" />
                           </button>
                         </div>
                       </td>
@@ -766,6 +883,82 @@ export default function AdminShopsPage() {
                   ) : (
                     'มอบหมาย'
                   )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Categories Modal */}
+      {showCategoriesModal && selectedShop && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+            <div className="flex items-center justify-between p-6 border-b">
+              <h3 className="text-lg font-semibold text-gray-900">
+                จัดการหมวดหมู่
+              </h3>
+              <button
+                onClick={() => setShowCategoriesModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6">
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  ร้านค้า
+                </label>
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <div className="font-medium">{selectedShop.name}</div>
+                  {selectedShop.categories && selectedShop.categories.length > 0 ? (
+                    <div className="text-sm text-gray-600 mt-1">
+                      หมวดหมู่ปัจจุบัน: {selectedShop.categories.map(c => c.name).join(', ')}
+                    </div>
+                  ) : (
+                    <div className="text-sm text-gray-500 mt-1">ยังไม่มีหมวดหมู่</div>
+                  )}
+                </div>
+              </div>
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  เลือกหมวดหมู่
+                </label>
+                <div className="border rounded-lg p-3 max-h-64 overflow-y-auto space-y-2">
+                  {allCategories.map((category) => (
+                    <label key={category.id} className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={selectedCategoryIds.includes(category.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedCategoryIds([...selectedCategoryIds, category.id]);
+                          } else {
+                            setSelectedCategoryIds(selectedCategoryIds.filter(id => id !== category.id));
+                          }
+                        }}
+                        className="w-4 h-4 text-purple-600 rounded focus:ring-purple-500"
+                      />
+                      <span className="text-sm">
+                        {category.icon} {category.name}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowCategoriesModal(false)}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                >
+                  ยกเลิก
+                </button>
+                <button
+                  onClick={handleUpdateCategories}
+                  className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                >
+                  บันทึก
                 </button>
               </div>
             </div>

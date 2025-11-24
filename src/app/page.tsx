@@ -16,6 +16,7 @@ interface Shop {
   phone?: string;
   website?: string;
   distance?: number | null;
+  isMockup?: boolean;
   activeSubscription?: any;
   subscriptionTier?: 'FREE' | 'BASIC' | 'PRO' | 'PREMIUM' | null;
 }
@@ -185,9 +186,17 @@ export default function HomePage() {
   // Render shop card component
   const ShopCard = ({ shop, tierColor }: { shop: Shop; tierColor?: string }) => (
     <div
-      className={`bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:scale-105 ${tierColor ? `ring-2 ${tierColor}` : ''}`}
+      className={`bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:scale-105 ${tierColor ? `ring-2 ${tierColor}` : ''} relative`}
       onClick={() => router.push(`/shop/${shop.id}`)}
     >
+      {shop.isMockup && (
+        <div className="absolute top-2 left-2 z-10 px-2 py-1 text-xs font-bold bg-orange-500 text-white rounded-full shadow-md flex items-center gap-1">
+          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M7 2a2 2 0 00-2 2v12a2 2 0 002 2h6a2 2 0 002-2V4a2 2 0 00-2-2H7zm3 14a1 1 0 100-2 1 1 0 000 2z" />
+          </svg>
+          DEMO
+        </div>
+      )}
       <div className="w-full h-48 bg-gray-200 rounded-t-lg overflow-hidden">
         <img
           src={shopImage(shop)}

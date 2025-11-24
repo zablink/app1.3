@@ -34,6 +34,7 @@ export async function GET(request: NextRequest) {
           description: true,
           status: true,
           ownerId: true,
+          isMockup: true,
           createdAt: true,
         },
         orderBy: { createdAt: 'desc' },
