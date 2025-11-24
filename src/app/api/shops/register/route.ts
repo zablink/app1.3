@@ -68,18 +68,43 @@ export async function POST(request: NextRequest) {
       });
 
       // Add shop links if provided
-      const links: any = {};
-      if (phone) links.phone = phone;
-      if (email) links.email = email;
-      if (website) links.website = website;
-      if (lineId) links.line_id = lineId;
+      const linksToCreate = [];
+      
+      if (phone) {
+        linksToCreate.push({
+          shop_id: shop.id,
+          type: 'phone',
+          url: phone,
+        });
+      }
+      
+      if (email) {
+        linksToCreate.push({
+          shop_id: shop.id,
+          type: 'email',
+          url: email,
+        });
+      }
+      
+      if (website) {
+        linksToCreate.push({
+          shop_id: shop.id,
+          type: 'website',
+          url: website,
+        });
+      }
+      
+      if (lineId) {
+        linksToCreate.push({
+          shop_id: shop.id,
+          type: 'line',
+          url: lineId,
+        });
+      }
 
-      if (Object.keys(links).length > 0) {
-        await tx.shop_links.create({
-          data: {
-            shop_id: shop.id,
-            ...links,
-          },
+      if (linksToCreate.length > 0) {
+        await tx.shop_links.createMany({
+          data: linksToCreate,
         });
       }
 
