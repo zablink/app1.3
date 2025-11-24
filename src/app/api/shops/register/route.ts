@@ -43,13 +43,7 @@ export async function POST(request: NextRequest) {
 
     // Create shop with transaction
     const result = await prisma.$transaction(async (tx) => {
-      // Update user role to SHOP first
-      await tx.user.update({
-        where: { id: session.user.id },
-        data: { role: 'SHOP' }
-      });
-
-      // Create shop
+      // Create shop first
       const shop = await tx.shop.create({
         data: {
           ownerId: session.user.id,
@@ -124,6 +118,12 @@ export async function POST(request: NextRequest) {
           })),
         });
       }
+
+      // Update user role to SHOP only after everything is created successfully
+      await tx.user.update({
+        where: { id: session.user.id },
+        data: { role: 'SHOP' }
+      });
 
       return shop;
     });

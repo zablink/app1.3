@@ -57,20 +57,40 @@ export default function CreatorRegisterPage() {
 
   // Check user role only once when authenticated
   useEffect(() => {
-    // Only check when we have a valid session
-    if (status === "authenticated" && session?.user && !hasCheckedRole) {
-      const userRole = (session.user as any)?.role;
-      console.log("🔍 Checking user role:", userRole, "hasCheckedRole:", hasCheckedRole);
-      setHasCheckedRole(true);
-      
-      if (userRole === "CREATOR") {
-        console.log("⚠️ User already has CREATOR role, redirecting to dashboard");
-        router.push("/dashboard/creator");
-      } else {
-        console.log("✅ User can register as CREATOR, current role:", userRole);
+    const checkCreatorStatus = async () => {
+      // Only check when we have a valid session
+      if (status === "authenticated" && session?.user && !hasCheckedRole) {
+        const userRole = (session.user as any)?.role;
+        console.log("🔍 Checking user role:", userRole, "hasCheckedRole:", hasCheckedRole);
+        setHasCheckedRole(true);
+        
+        if (userRole === "CREATOR") {
+          console.log("⚠️ User has CREATOR role, checking if creator exists...");
+          // Check if creator actually exists in database
+          try {
+            const response = await fetch('/api/creators/my-creator');
+            if (response.ok) {
+              const data = await response.json();
+              if (data.creator) {
+                console.log("✅ Creator exists, redirecting to dashboard");
+                router.push("/dashboard/creator");
+              } else {
+                console.log("⚠️ Creator doesn't exist, allowing registration to continue");
+              }
+            } else {
+              console.log("⚠️ Creator doesn't exist, allowing registration to continue");
+            }
+          } catch (error) {
+            console.log("⚠️ Error checking creator, allowing registration to continue");
+          }
+        } else {
+          console.log("✅ User can register as CREATOR, current role:", userRole);
+        }
       }
-    }
-  }, [status, hasCheckedRole, router]);
+    };
+    
+    checkCreatorStatus();
+  }, [status, hasCheckedRole, router, session?.user]);
 
   // Fetch provinces
   useEffect(() => {

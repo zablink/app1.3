@@ -95,14 +95,8 @@ export async function POST(request: NextRequest) {
 
     // Create creator profile and update user role in transaction
     const creator = await prisma.$transaction(async (tx) => {
-      // Update user role to CREATOR
-      await tx.user.update({
-        where: { id: userId },
-        data: { role: 'CREATOR' }
-      });
-
-      // Create creator profile
-      return await tx.creators.create({
+      // Create creator profile first
+      const newCreator = await tx.creators.create({
         data: {
           id: `creator_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
           userId,
@@ -118,6 +112,14 @@ export async function POST(request: NextRequest) {
           updatedAt: new Date(),
         },
       });
+
+      // Update user role to CREATOR only after creator profile is created successfully
+      await tx.user.update({
+        where: { id: userId },
+        data: { role: 'CREATOR' }
+      });
+
+      return newCreator;
     });
 
     // TODO: If you want to store multiple coverage areas,

@@ -65,20 +65,40 @@ export default function ShopRegisterPage() {
 
   // Check user role only once when authenticated
   useEffect(() => {
-    // Only check when we have a valid session
-    if (status === "authenticated" && session?.user && !hasCheckedRole) {
-      const userRole = (session.user as any)?.role;
-      console.log("🔍 Checking user role:", userRole, "hasCheckedRole:", hasCheckedRole);
-      setHasCheckedRole(true);
-      
-      if (userRole === "SHOP") {
-        console.log("⚠️ User already has SHOP role, redirecting to dashboard");
-        router.push("/dashboard/shop");
-      } else {
-        console.log("✅ User can register as SHOP, current role:", userRole);
+    const checkShopStatus = async () => {
+      // Only check when we have a valid session
+      if (status === "authenticated" && session?.user && !hasCheckedRole) {
+        const userRole = (session.user as any)?.role;
+        console.log("🔍 Checking user role:", userRole, "hasCheckedRole:", hasCheckedRole);
+        setHasCheckedRole(true);
+        
+        if (userRole === "SHOP") {
+          console.log("⚠️ User has SHOP role, checking if shop exists...");
+          // Check if shop actually exists in database
+          try {
+            const response = await fetch('/api/shops/my-shop');
+            if (response.ok) {
+              const data = await response.json();
+              if (data.shop) {
+                console.log("✅ Shop exists, redirecting to dashboard");
+                router.push("/dashboard/shop");
+              } else {
+                console.log("⚠️ Shop doesn't exist, allowing registration to continue");
+              }
+            } else {
+              console.log("⚠️ Shop doesn't exist, allowing registration to continue");
+            }
+          } catch (error) {
+            console.log("⚠️ Error checking shop, allowing registration to continue");
+          }
+        } else {
+          console.log("✅ User can register as SHOP, current role:", userRole);
+        }
       }
-    }
-  }, [status, hasCheckedRole, router]);
+    };
+    
+    checkShopStatus();
+  }, [status, hasCheckedRole, router, session?.user]);
 
   // Fetch categories
   useEffect(() => {
