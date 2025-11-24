@@ -28,6 +28,7 @@ export default function ShopRegisterPage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
   const [error, setError] = useState("");
 
   const [formData, setFormData] = useState({
@@ -169,27 +170,21 @@ export default function ShopRegisterPage() {
         throw new Error(data.error || "Failed to register shop");
       }
 
-      // Update user role to SHOP
-      const roleRes = await fetch("/api/user/update-role", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ role: "SHOP" }),
-      });
-
-      if (roleRes.ok) {
-        // Update session to reflect new role
-        await update();
-        
-        // Wait a bit for session to update
-        setTimeout(() => {
-          router.push("/dashboard/shop");
-        }, 500);
-      } else {
-        throw new Error("Failed to update user role");
-      }
+      // Show success and redirecting message
+      setIsRedirecting(true);
+      setError("");
+      
+      // Update session to reflect new role
+      await update();
+      
+      // Wait a bit for session to update then redirect
+      setTimeout(() => {
+        router.push("/dashboard/shop");
+      }, 500);
     } catch (err: any) {
       console.error("Submit error:", err);
       setError(err.message || "เกิดข้อผิดพลาดในการสมัคร");
+      setIsRedirecting(false);
     } finally {
       setIsSubmitting(false);
     }
@@ -201,10 +196,15 @@ export default function ShopRegisterPage() {
     { number: 3, title: "รูปภาพและยืนยัน" },
   ];
 
-  if (status === "loading") {
+  if (status === "loading" || isRedirecting) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">
+            {isRedirecting ? "กำลังนำคุณไปยังหน้า Dashboard..." : "กำลังโหลด..."}
+          </p>
+        </div>
       </div>
     );
   }

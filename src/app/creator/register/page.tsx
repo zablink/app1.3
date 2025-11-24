@@ -22,10 +22,11 @@ interface Tambon {
 }
 
 export default function CreatorRegisterPage() {
-  const { data: session, status } = useSession();
+  const { data: session, status, update } = useSession();
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
   const [error, setError] = useState("");
 
   const [provinces, setProvinces] = useState<Province[]>([]);
@@ -131,18 +132,20 @@ export default function CreatorRegisterPage() {
         throw new Error(data.error || "Failed to register");
       }
 
-      // Update user role to CREATOR
-      await fetch("/api/user/update-role", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ role: "CREATOR" }),
-      });
-
-      // Redirect to creator dashboard
-      router.push("/dashboard/creator");
-      router.refresh();
+      // Show success and redirecting message
+      setIsRedirecting(true);
+      setError("");
+      
+      // Update session to reflect new role
+      await update();
+      
+      // Wait a bit for session to update then redirect
+      setTimeout(() => {
+        router.push("/dashboard/creator");
+      }, 500);
     } catch (err: any) {
       setError(err.message || "เกิดข้อผิดพลาดในการสมัคร");
+      setIsRedirecting(false);
     } finally {
       setIsSubmitting(false);
     }
@@ -154,10 +157,15 @@ export default function CreatorRegisterPage() {
     { number: 3, title: "พื้นที่บริการ" },
   ];
 
-  if (status === "loading") {
+  if (status === "loading" || isRedirecting) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">
+            {isRedirecting ? "กำลังนำคุณไปยังหน้า Dashboard..." : "กำลังโหลด..."}
+          </p>
+        </div>
       </div>
     );
   }

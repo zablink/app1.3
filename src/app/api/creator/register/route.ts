@@ -93,22 +93,31 @@ export async function POST(request: NextRequest) {
     // and additional areas in a separate relation if needed
     const primaryArea = coverageAreas[0];
 
-    // Create creator profile
-    const creator = await prisma.creators.create({
-      data: {
-        id: `creator_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        userId,
-        displayName,
-        bio,
-        phone,
-        coverageLevel: primaryArea.level,
-        hasExperience,
-        priceRangeMin: hasExperience && priceRangeMin ? parseInt(priceRangeMin) : null,
-        priceRangeMax: hasExperience && priceRangeMax ? parseInt(priceRangeMax) : null,
-        applicationStatus: "PENDING",
-        appliedAt: new Date(),
-        updatedAt: new Date(),
-      },
+    // Create creator profile and update user role in transaction
+    const creator = await prisma.$transaction(async (tx) => {
+      // Update user role to CREATOR
+      await tx.user.update({
+        where: { id: userId },
+        data: { role: 'CREATOR' }
+      });
+
+      // Create creator profile
+      return await tx.creators.create({
+        data: {
+          id: `creator_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          userId,
+          displayName,
+          bio,
+          phone,
+          coverageLevel: primaryArea.level,
+          hasExperience,
+          priceRangeMin: hasExperience && priceRangeMin ? parseInt(priceRangeMin) : null,
+          priceRangeMax: hasExperience && priceRangeMax ? parseInt(priceRangeMax) : null,
+          applicationStatus: "PENDING",
+          appliedAt: new Date(),
+          updatedAt: new Date(),
+        },
+      });
     });
 
     // TODO: If you want to store multiple coverage areas,
