@@ -32,6 +32,8 @@ export default function ShopRegisterPage() {
   const [hasCheckedRole, setHasCheckedRole] = useState(false);
   const [error, setError] = useState("");
   const [userInteracted, setUserInteracted] = useState(false);
+  const [isDraggingFeatured, setIsDraggingFeatured] = useState(false);
+  const [isDraggingGallery, setIsDraggingGallery] = useState(false);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -151,15 +153,37 @@ export default function ShopRegisterPage() {
   };
 
   // Drag and drop handlers
-  const handleDragOver = (e: React.DragEvent) => {
+  const handleDragOver = (e: React.DragEvent, type: 'featured' | 'gallery') => {
     e.preventDefault();
     e.stopPropagation();
+    if (type === 'featured') {
+      setIsDraggingFeatured(true);
+    } else {
+      setIsDraggingGallery(true);
+    }
+  };
+
+  const handleDragLeave = (e: React.DragEvent, type: 'featured' | 'gallery') => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (type === 'featured') {
+      setIsDraggingFeatured(false);
+    } else {
+      setIsDraggingGallery(false);
+    }
   };
 
   const handleDrop = (e: React.DragEvent, type: 'featured' | 'gallery') => {
     e.preventDefault();
     e.stopPropagation();
     setUserInteracted(true);
+    
+    // Reset dragging state
+    if (type === 'featured') {
+      setIsDraggingFeatured(false);
+    } else {
+      setIsDraggingGallery(false);
+    }
 
     const files = Array.from(e.dataTransfer.files);
     const imageFiles = files.filter(file => file.type.startsWith('image/'));
@@ -314,10 +338,10 @@ export default function ShopRegisterPage() {
       // Update session to reflect new role
       await update();
       
-      // Wait a bit for session to update then redirect
+      // Wait longer for session to fully update before redirect
       setTimeout(() => {
         router.push("/dashboard/shop");
-      }, 500);
+      }, 2000);
     } catch (err: any) {
       console.error("Submit error:", err);
       setError(err.message || "เกิดข้อผิดพลาดในการสมัคร");
@@ -650,8 +674,13 @@ export default function ShopRegisterPage() {
                       </div>
                     ) : (
                       <label 
-                        className="flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer hover:bg-gray-50"
-                        onDragOver={handleDragOver}
+                        className={`flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-lg cursor-pointer transition-all duration-200 ${
+                          isDraggingFeatured 
+                            ? 'border-blue-500 bg-blue-50 border-4' 
+                            : 'border-gray-300 hover:bg-gray-50'
+                        }`}
+                        onDragOver={(e) => handleDragOver(e, 'featured')}
+                        onDragLeave={(e) => handleDragLeave(e, 'featured')}
                         onDrop={(e) => handleDrop(e, 'featured')}
                       >
                         <div className="flex flex-col items-center justify-center pt-5 pb-6">
@@ -683,16 +712,23 @@ export default function ShopRegisterPage() {
                   
                   {/* Upload Button */}
                   <label 
-                    className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer hover:bg-gray-50 mb-4"
-                    onDragOver={handleDragOver}
+                    className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer mb-4 transition-all duration-200 ${
+                      isDraggingGallery 
+                        ? 'border-green-500 bg-green-50 border-4' 
+                        : 'border-gray-300 hover:bg-gray-50'
+                    }`}
+                    onDragOver={(e) => handleDragOver(e, 'gallery')}
+                    onDragLeave={(e) => handleDragLeave(e, 'gallery')}
                     onDrop={(e) => handleDrop(e, 'gallery')}
                   >
                     <div className="flex flex-col items-center justify-center">
-                      <Upload className="w-8 h-8 text-gray-400 mb-2" />
-                      <p className="text-sm text-gray-500">
-                        <span className="font-semibold">เลือกรูปภาพเพิ่มเติม</span> หรือลากมาวาง
+                      <Upload className={`w-8 h-8 mb-2 ${isDraggingGallery ? 'text-green-500' : 'text-gray-400'}`} />
+                      <p className={`text-sm ${isDraggingGallery ? 'text-green-700 font-semibold' : 'text-gray-500'}`}>
+                        <span className="font-semibold">
+                          {isDraggingGallery ? 'วางรูปที่นี่' : 'เลือกรูปภาพเพิ่มเติม'}
+                        </span> {!isDraggingGallery && 'หรือลากมาวาง'}
                       </p>
-                      <p className="text-xs text-gray-500">หลายรูปพร้อมกัน</p>
+                      {!isDraggingGallery && <p className="text-xs text-gray-500">หลายรูปพร้อมกัน</p>}
                     </div>
                     <input
                       type="file"

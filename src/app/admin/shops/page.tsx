@@ -16,7 +16,9 @@ import {
   ChevronRight,
   X,
   Tag,
-  TestTube
+  TestTube,
+  CheckCircle,
+  XCircle
 } from 'lucide-react';
 
 interface Shop {
@@ -369,6 +371,69 @@ export default function AdminShopsPage() {
     }
   };
 
+  const handleApproveShop = async (shopId: string) => {
+    try {
+      const res = await fetch(`/api/admin/shops/${shopId}/approve`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        showToast('อนุมัติร้านค้าสำเร็จ!', 'success');
+        
+        // Update shop status in state
+        setShops(prevShops =>
+          prevShops.map(s =>
+            s.id === shopId
+              ? { ...s, status: 'APPROVED' }
+              : s
+          )
+        );
+      } else {
+        showToast('เกิดข้อผิดพลาด', 'error');
+      }
+    } catch (error) {
+      console.error('Error approving shop:', error);
+      showToast('เกิดข้อผิดพลาด', 'error');
+    }
+  };
+
+  const handleDeclineShop = async (shopId: string) => {
+    if (!confirm('คุณแน่ใจหรือไม่ว่าต้องการปฏิเสธร้านค้านี้?')) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/admin/shops/${shopId}/decline`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: 'Declined by admin' }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        showToast('ปฏิเสธร้านค้าสำเร็จ', 'success');
+        
+        // Update shop status in state
+        setShops(prevShops =>
+          prevShops.map(s =>
+            s.id === shopId
+              ? { ...s, status: 'REJECTED' }
+              : s
+          )
+        );
+      } else {
+        showToast('เกิดข้อผิดพลาด', 'error');
+      }
+    } catch (error) {
+      console.error('Error declining shop:', error);
+      showToast('เกิดข้อผิดพลาด', 'error');
+    }
+  };
+
   const handleToggleMockup = async (shop: Shop) => {
     const newMockupStatus = !shop.isMockup;
     
@@ -615,6 +680,25 @@ export default function AdminShopsPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         <div className="flex items-center gap-2">
+                          {/* Approve/Decline buttons - show only for PENDING status */}
+                          {shop.status === 'PENDING' && (
+                            <>
+                              <button
+                                onClick={() => handleApproveShop(shop.id)}
+                                className="p-2 text-green-600 hover:bg-green-50 rounded-lg"
+                                title="อนุมัติร้านค้า"
+                              >
+                                <CheckCircle className="w-5 h-5" />
+                              </button>
+                              <button
+                                onClick={() => handleDeclineShop(shop.id)}
+                                className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+                                title="ปฏิเสธร้านค้า"
+                              >
+                                <XCircle className="w-5 h-5" />
+                              </button>
+                            </>
+                          )}
                           <button
                             onClick={() => {
                               setSelectedShop(shop);
