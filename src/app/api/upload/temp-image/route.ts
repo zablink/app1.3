@@ -68,11 +68,11 @@ export async function POST(request: NextRequest) {
 
     // Upload both versions
     const uploads = await Promise.all([
-      supabase.storage.from('shops').upload(mainFileName, compressedImage, {
+      supabase.storage.from('shop-images').upload(mainFileName, compressedImage, {
         contentType: 'image/jpeg',
         cacheControl: '3600',
       }),
-      supabase.storage.from('shops').upload(thumbnailFileName, thumbnail, {
+      supabase.storage.from('shop-images').upload(thumbnailFileName, thumbnail, {
         contentType: 'image/jpeg',
         cacheControl: '3600',
       }),
@@ -84,8 +84,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Get public URLs
-    const { data: mainUrl } = supabase.storage.from('shops').getPublicUrl(mainFileName);
-    const { data: thumbUrl } = supabase.storage.from('shops').getPublicUrl(thumbnailFileName);
+    const { data: mainUrl } = supabase.storage.from('shop-images').getPublicUrl(mainFileName);
+    const { data: thumbUrl } = supabase.storage.from('shop-images').getPublicUrl(thumbnailFileName);
 
     return NextResponse.json({
       success: true,
