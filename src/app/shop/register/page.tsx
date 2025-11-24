@@ -65,15 +65,20 @@ export default function ShopRegisterPage() {
 
   // Check user role only once when authenticated
   useEffect(() => {
-    if (status === "authenticated" && !hasCheckedRole) {
-      const userRole = (session?.user as any)?.role;
+    // Only check when we have a valid session
+    if (status === "authenticated" && session?.user && !hasCheckedRole) {
+      const userRole = (session.user as any)?.role;
+      console.log("🔍 Checking user role:", userRole, "hasCheckedRole:", hasCheckedRole);
       setHasCheckedRole(true);
       
       if (userRole === "SHOP") {
+        console.log("⚠️ User already has SHOP role, redirecting to dashboard");
         router.push("/dashboard/shop");
+      } else {
+        console.log("✅ User can register as SHOP, current role:", userRole);
       }
     }
-  }, [status, hasCheckedRole, session?.user, router]);
+  }, [status, hasCheckedRole, router]);
 
   // Fetch categories
   useEffect(() => {

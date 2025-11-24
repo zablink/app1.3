@@ -57,15 +57,20 @@ export default function CreatorRegisterPage() {
 
   // Check user role only once when authenticated
   useEffect(() => {
-    if (status === "authenticated" && !hasCheckedRole) {
-      const userRole = (session?.user as any)?.role;
+    // Only check when we have a valid session
+    if (status === "authenticated" && session?.user && !hasCheckedRole) {
+      const userRole = (session.user as any)?.role;
+      console.log("🔍 Checking user role:", userRole, "hasCheckedRole:", hasCheckedRole);
       setHasCheckedRole(true);
       
       if (userRole === "CREATOR") {
+        console.log("⚠️ User already has CREATOR role, redirecting to dashboard");
         router.push("/dashboard/creator");
+      } else {
+        console.log("✅ User can register as CREATOR, current role:", userRole);
       }
     }
-  }, [status, hasCheckedRole, session?.user, router]);
+  }, [status, hasCheckedRole, router]);
 
   // Fetch provinces
   useEffect(() => {
