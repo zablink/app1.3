@@ -158,6 +158,58 @@ export default function CreatorRegisterPage() {
     }
   };
 
+  // Validation for each step
+  const validateStep = (step: number): boolean => {
+    switch (step) {
+      case 1: // ข้อมูลส่วนตัว
+        if (!formData.displayName || formData.displayName.trim().length < 3) {
+          setError("กรุณากรอกชื่อที่ใช้แสดงอย่างน้อย 3 ตัวอักษร");
+          return false;
+        }
+        if (!formData.bio || formData.bio.trim().length < 20) {
+          setError("กรุณากรอกประวัติส่วนตัวอย่างน้อย 20 ตัวอักษร");
+          return false;
+        }
+        if (!formData.phone || formData.phone.trim().length < 9) {
+          setError("กรุณากรอกเบอร์โทรศัพท์ที่ถูกต้อง");
+          return false;
+        }
+        break;
+      
+      case 2: // โซเชียลมีเดีย
+        // At least one social media should be provided
+        if (!formData.tiktokUrl && !formData.youtubeUrl && !formData.facebookUrl && !formData.instagramUrl) {
+          setError("กรุณากรอกลิงก์โซเชียลมีเดียอย่างน้อย 1 ช่องทาง");
+          return false;
+        }
+        break;
+      
+      case 3: // พื้นที่บริการ
+        if (!formData.provinceId) {
+          setError("กรุณาเลือกจังหวัด");
+          return false;
+        }
+        if (!formData.amphureId) {
+          setError("กรุณาเลือกอำเภอ");
+          return false;
+        }
+        if (!formData.tambonId) {
+          setError("กรุณาเลือกตำบล");
+          return false;
+        }
+        break;
+    }
+    
+    setError("");
+    return true;
+  };
+
+  const handleNextStep = () => {
+    if (validateStep(currentStep)) {
+      setCurrentStep(currentStep + 1);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -608,7 +660,7 @@ export default function CreatorRegisterPage() {
               {currentStep < 3 ? (
                 <button
                   type="button"
-                  onClick={() => setCurrentStep(currentStep + 1)}
+                  onClick={handleNextStep}
                   className="ml-auto px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition"
                 >
                   ถัดไป

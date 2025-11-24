@@ -149,6 +149,46 @@ export default function ShopRegisterPage() {
     setGalleryPreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
+  // Validation for each step
+  const validateStep = (step: number): boolean => {
+    switch (step) {
+      case 1: // ข้อมูลพื้นฐาน
+        if (!formData.name || formData.name.trim().length < 3) {
+          setError("กรุณากรอกชื่อร้านอย่างน้อย 3 ตัวอักษร");
+          return false;
+        }
+        if (!formData.categoryId) {
+          setError("กรุณาเลือกหมวดหมู่ร้านค้า");
+          return false;
+        }
+        break;
+      
+      case 2: // ที่อยู่และติดต่อ
+        if (!formData.address || formData.address.trim().length < 10) {
+          setError("กรุณากรอกที่อยู่อย่างน้อย 10 ตัวอักษร");
+          return false;
+        }
+        if (!formData.phone || formData.phone.trim().length < 9) {
+          setError("กรุณากรอกเบอร์โทรศัพท์ที่ถูกต้อง");
+          return false;
+        }
+        break;
+      
+      case 3: // รูปภาพและยืนยัน
+        // Optional: can add image validation here if needed
+        break;
+    }
+    
+    setError("");
+    return true;
+  };
+
+  const handleNextStep = () => {
+    if (validateStep(currentStep)) {
+      setCurrentStep(currentStep + 1);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -662,7 +702,7 @@ export default function ShopRegisterPage() {
               {currentStep < 3 ? (
                 <button
                   type="button"
-                  onClick={() => setCurrentStep(currentStep + 1)}
+                  onClick={handleNextStep}
                   className="ml-auto px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
                 >
                   ถัดไป
