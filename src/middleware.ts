@@ -7,6 +7,11 @@ export default withAuth(
     const token = req.nextauth.token;
     const path = req.nextUrl.pathname;
 
+    // Allow registration pages for authenticated users (any role)
+    if (path === "/shop/register" || path === "/creator/register") {
+      return NextResponse.next();
+    }
+
     // Admin routes
     if (path.startsWith("/admin")) {
       if (token?.role !== "ADMIN") {
@@ -43,5 +48,7 @@ export const config = {
     "/admin/:path*",
     "/profile/:path*",
     "/shop/edit/:path*",
+    "/shop/register",
+    "/creator/register",
   ],
 };
