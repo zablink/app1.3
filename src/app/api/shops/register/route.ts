@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create shop with transaction
+    // Create shop with transaction (increased timeout to 30 seconds)
     const result = await prisma.$transaction(async (tx) => {
       // Create shop first
       const shop = await tx.shop.create({
@@ -126,6 +126,9 @@ export async function POST(request: NextRequest) {
       });
 
       return shop;
+    }, {
+      maxWait: 30000, // Maximum time to wait for transaction to start (30s)
+      timeout: 30000,  // Maximum time for transaction to complete (30s)
     });
 
     return NextResponse.json({

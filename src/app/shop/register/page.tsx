@@ -256,49 +256,29 @@ export default function ShopRegisterPage() {
     setError("");
 
     try {
-      // Upload featured image first if exists
+      // Convert images to base64 directly (no API call)
       let imageUrl = "";
       if (featuredImage) {
-        console.log("Uploading featured image...");
-        const uploadFormData = new FormData();
-        uploadFormData.append("file", featuredImage);
-
-        // Use base64 upload (temporary solution)
-        const uploadRes = await fetch("/api/upload/base64", {
-          method: "POST",
-          body: uploadFormData,
+        console.log("Converting featured image to base64...");
+        imageUrl = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.readAsDataURL(featuredImage);
         });
-
-        if (!uploadRes.ok) {
-          const errorData = await uploadRes.json().catch(() => ({ error: "Upload failed" }));
-          console.error("Featured image upload error:", errorData);
-          throw new Error(errorData.error || "Failed to upload featured image");
-        }
-        
-        const uploadData = await uploadRes.json();
-        imageUrl = uploadData.url;
-        console.log("Featured image uploaded (base64)");
+        console.log("Featured image converted");
       }
 
-      // Upload gallery images
+      // Convert gallery images to base64
       const galleryUrls: string[] = [];
       for (const galleryFile of galleryImages) {
-        console.log("Uploading gallery image...");
-        const uploadFormData = new FormData();
-        uploadFormData.append("file", galleryFile);
-
-        const uploadRes = await fetch("/api/upload/base64", {
-          method: "POST",
-          body: uploadFormData,
+        console.log("Converting gallery image to base64...");
+        const base64 = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.readAsDataURL(galleryFile);
         });
-
-        if (uploadRes.ok) {
-          const uploadData = await uploadRes.json();
-          galleryUrls.push(uploadData.url);
-          console.log("Gallery image uploaded (base64)");
-        } else {
-          console.warn("Failed to upload gallery image, skipping...");
-        }
+        galleryUrls.push(base64);
+        console.log("Gallery image converted");
       }
 
       // Create shop
@@ -310,7 +290,7 @@ export default function ShopRegisterPage() {
         lng: location.lng,
       };
 
-      console.log("Creating shop with data:", shopData);
+      console.log("Creating shop with data...");
 
       const res = await fetch("/api/shops/register", {
         method: "POST",
