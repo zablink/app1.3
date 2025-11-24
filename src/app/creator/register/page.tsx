@@ -50,29 +50,29 @@ export default function CreatorRegisterPage() {
   });
 
   useEffect(() => {
-    if (status === "loading") return;
-    
     if (status === "unauthenticated") {
       router.push("/");
-      return;
     }
-    
-    // Check if user already has CREATOR role (only once)
+  }, [status, router]);
+
+  // Check user role only once when authenticated
+  useEffect(() => {
     if (status === "authenticated" && !hasCheckedRole) {
       const userRole = (session?.user as any)?.role;
       setHasCheckedRole(true);
       
       if (userRole === "CREATOR") {
-        // User already registered as creator, redirect to dashboard
         router.push("/dashboard/creator");
-        return;
       }
     }
-    
-    if (provinces.length === 0) {
+  }, [status, hasCheckedRole, session?.user, router]);
+
+  // Fetch provinces
+  useEffect(() => {
+    if (status === "authenticated" && provinces.length === 0) {
       fetchProvinces();
     }
-  }, [status, session, router, hasCheckedRole, provinces.length]);
+  }, [status, provinces.length]);
 
   const fetchProvinces = async () => {
     try {
