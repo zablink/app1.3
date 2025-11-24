@@ -112,29 +112,25 @@ export default function ShopDetailPage() {
 
   // Gallery memoized
   const gallery = useMemo(() => {
-    // Combine main image and gallery images
     const images: string[] = [];
     
-    // Add gallery images first (they're already sorted by featured/date from API)
+    // Add gallery images only (exclude main image from gallery thumbnails)
     if (shop?.gallery && shop.gallery.length > 0) {
       images.push(...shop.gallery.map(img => img.url));
     }
     
-    // Add main image if it exists and not already in gallery
-    if (shop?.image && !images.includes(shop.image)) {
-      images.unshift(shop.image);
-    }
-    
-    // Fallback to placeholder if no images
-    if (images.length === 0) {
-      images.push('/images/placeholder.jpg');
-    }
-    
     return images;
-  }, [shop?.image, shop?.gallery]);
+  }, [shop?.gallery]);
+
+  // Hero image (separate from gallery)
+  const heroImage = useMemo(() => {
+    return shop?.image || '/images/placeholder.jpg';
+  }, [shop?.image]);
   
   // Gallery state
   const [selectedImage, setSelectedImage] = useState(0);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
 
   // Determine if map should be shown
   const shouldShowMap = useMemo(() => {
@@ -201,6 +197,24 @@ export default function ShopDetailPage() {
     setReviews([review, ...reviews]);
     setNewReview({ userName: "", rating: 5, comment: "" });
   };
+
+  // Keyboard navigation for lightbox
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!lightboxOpen) return;
+      
+      if (e.key === 'Escape') {
+        setLightboxOpen(false);
+      } else if (e.key === 'ArrowLeft') {
+        setLightboxIndex((prev) => (prev === 0 ? gallery.length - 1 : prev - 1));
+      } else if (e.key === 'ArrowRight') {
+        setLightboxIndex((prev) => (prev === gallery.length - 1 ? 0 : prev + 1));
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [lightboxOpen, gallery.length]);
 
   // Loading state
   if (loading) {
@@ -272,6 +286,108 @@ export default function ShopDetailPage() {
 
   return (
     <div>
+      {/* Lightbox Modal */}
+      {lightboxOpen && gallery.length > 0 && (
+        <div 
+          className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center"
+          onClick={() => setLightboxOpen(false)}
+        >
+          <button
+            onClick={() => setLightboxOpen(false)}
+            className="absolute top-4 right-4 text-white hover:text-gray-300 z-10"
+          >
+            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+
+          {/* Image Counter */}
+          <div className="absolute top-4 left-4 text-white text-lg font-semibold z-10 bg-black/50 px-4 py-2 rounded-lg backdrop-blur-sm">
+            {lightboxIndex + 1} / {gallery.length}
+          </div>
+
+          {/* Previous Button */}
+          {gallery.length > 1 && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setLightboxIndex((prev) => (prev === 0 ? gallery.length - 1 : prev - 1));
+              }}
+              className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 text-white p-4 rounded-full backdrop-blur-sm transition-all z-10"
+            >
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+          )}
+
+          {/* Main Image */}
+          <div className="max-w-7xl max-h-[90vh] mx-auto px-4" onClick={(e) => e.stopPropagation()}>
+            <img
+              src={gallery[lightboxIndex]}
+              alt={`${shop?.name} ${lightboxIndex + 1}`}
+              className="max-w-full max-h-[90vh] object-contain rounded-lg"
+              onError={(e) => {
+                e.currentTarget.src = '/images/placeholder.jpg';
+              }}
+            />
+          </div>
+
+          {/* Next Button */}
+          {gallery.length > 1 && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setLightboxIndex((prev) => (prev === gallery.length - 1 ? 0 : prev + 1));
+              }}
+              className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 text-white p-4 rounded-full backdrop-blur-sm transition-all z-10"
+            >
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          )}
+
+          {/* Thumbnails */}
+          {gallery.length > 1 && (
+            <div className="absolute bottom-4 left-0 right-0">
+              <div className="max-w-4xl mx-auto px-4">
+                <div className="flex gap-2 overflow-x-auto pb-2 justify-center">
+                  {gallery.map((img, index) => (
+                    <button
+                      key={index}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setLightboxIndex(index);
+                      }}
+                      className={`flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden transition-all ${
+                        lightboxIndex === index 
+                          ? 'ring-3 ring-white scale-110' 
+                          : 'ring-1 ring-white/30 opacity-60 hover:opacity-100'
+                      }`}
+                    >
+                      <img
+                        src={img}
+                        alt={`Thumbnail ${index + 1}`}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.src = '/images/placeholder.jpg';
+                        }}
+                      />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Instructions */}
+          <div className="absolute bottom-24 left-0 right-0 text-center text-white/60 text-sm">
+            กด ESC หรือคลิกพื้นหลังเพื่อปิด
+          </div>
+        </div>
+      )}
+
       {/* Breadcrumb */}
       <div className="max-w-7xl mx-auto px-4 py-4">
         <div className="flex items-center gap-2 text-sm text-gray-600">
@@ -286,7 +402,7 @@ export default function ShopDetailPage() {
       {/* Hero Image */}
       <div className="relative h-[400px] md:h-[500px] w-full bg-gradient-to-br from-gray-800 to-gray-900 overflow-hidden">
         <img
-          src={gallery[selectedImage]}
+          src={heroImage}
           alt={shop.name}
           className="w-full h-full object-cover"
           onError={(e) => {
@@ -294,36 +410,6 @@ export default function ShopDetailPage() {
           }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
-        
-        {/* Gallery Navigation */}
-        {gallery.length > 1 && (
-          <>
-            {/* Previous Button */}
-            <button
-              onClick={() => setSelectedImage((prev) => (prev === 0 ? gallery.length - 1 : prev - 1))}
-              className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-3 rounded-full backdrop-blur-sm transition-all"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            
-            {/* Next Button */}
-            <button
-              onClick={() => setSelectedImage((prev) => (prev === gallery.length - 1 ? 0 : prev + 1))}
-              className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-3 rounded-full backdrop-blur-sm transition-all"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-            
-            {/* Image Counter */}
-            <div className="absolute top-4 right-4 bg-black/50 text-white px-3 py-1 rounded-full backdrop-blur-sm text-sm">
-              {selectedImage + 1} / {gallery.length}
-            </div>
-          </>
-        )}
         
         {/* Shop Name Overlay */}
         <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8 text-white">
@@ -367,39 +453,57 @@ export default function ShopDetailPage() {
       </div>
 
       {/* Gallery Thumbnails */}
-      {gallery.length > 1 && (
+      {gallery.length > 0 && (
         <div className="bg-white border-t border-gray-200">
-          <div className="max-w-7xl mx-auto px-4 py-4">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-sm font-semibold text-gray-700">📸 รูปภาพทั้งหมด</span>
-              <span className="text-xs text-gray-500">({gallery.length} รูป)</span>
+          <div className="max-w-7xl mx-auto px-4 py-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <span className="text-lg font-bold text-gray-800">📸 แกลเลอรี่รูปภาพ</span>
+                <span className="text-sm text-gray-500">({gallery.length} รูป)</span>
+              </div>
+              {gallery.length > 0 && (
+                <button
+                  onClick={() => {
+                    setLightboxIndex(0);
+                    setLightboxOpen(true);
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  ดูทั้งหมด
+                </button>
+              )}
             </div>
-            <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">
               {gallery.map((img, index) => (
                 <button
                   key={index}
-                  onClick={() => setSelectedImage(index)}
-                  className={`relative aspect-square rounded-lg overflow-hidden transition-all transform hover:scale-105 ${
-                    selectedImage === index 
-                      ? 'ring-3 ring-blue-500 ring-offset-2 shadow-lg scale-105' 
-                      : 'ring-1 ring-gray-200 hover:ring-blue-300 opacity-80 hover:opacity-100'
-                  }`}
+                  onClick={() => {
+                    setLightboxIndex(index);
+                    setLightboxOpen(true);
+                  }}
+                  className="relative aspect-square rounded-lg overflow-hidden group transition-all transform hover:scale-105 hover:shadow-xl ring-1 ring-gray-200 hover:ring-blue-400"
                 >
                   <img
                     src={img}
                     alt={`${shop.name} ${index + 1}`}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover transition-transform group-hover:scale-110"
                     onError={(e) => {
                       e.currentTarget.src = '/images/placeholder.jpg';
                     }}
                   />
-                  {selectedImage === index && (
-                    <div className="absolute inset-0 bg-blue-500/20 flex items-center justify-center">
-                      <svg className="w-6 h-6 text-white drop-shadow-lg" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
-                    </div>
-                  )}
+                  {/* Hover Overlay */}
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all flex items-center justify-center">
+                    <svg className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                    </svg>
+                  </div>
+                  {/* Image Number Badge */}
+                  <div className="absolute top-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded-full backdrop-blur-sm">
+                    {index + 1}
+                  </div>
                 </button>
               ))}
             </div>
