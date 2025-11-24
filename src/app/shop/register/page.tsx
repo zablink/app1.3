@@ -263,8 +263,8 @@ export default function ShopRegisterPage() {
         const uploadFormData = new FormData();
         uploadFormData.append("file", featuredImage);
 
-        // Try simple upload first (no image processing)
-        const uploadRes = await fetch("/api/upload/simple-upload", {
+        // Use base64 upload (temporary solution)
+        const uploadRes = await fetch("/api/upload/base64", {
           method: "POST",
           body: uploadFormData,
         });
@@ -277,7 +277,7 @@ export default function ShopRegisterPage() {
         
         const uploadData = await uploadRes.json();
         imageUrl = uploadData.url;
-        console.log("Featured image uploaded:", imageUrl);
+        console.log("Featured image uploaded (base64)");
       }
 
       // Upload gallery images
@@ -287,7 +287,7 @@ export default function ShopRegisterPage() {
         const uploadFormData = new FormData();
         uploadFormData.append("file", galleryFile);
 
-        const uploadRes = await fetch("/api/upload/simple-upload", {
+        const uploadRes = await fetch("/api/upload/base64", {
           method: "POST",
           body: uploadFormData,
         });
@@ -295,7 +295,7 @@ export default function ShopRegisterPage() {
         if (uploadRes.ok) {
           const uploadData = await uploadRes.json();
           galleryUrls.push(uploadData.url);
-          console.log("Gallery image uploaded:", uploadData.url);
+          console.log("Gallery image uploaded (base64)");
         } else {
           console.warn("Failed to upload gallery image, skipping...");
         }
