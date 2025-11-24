@@ -51,6 +51,8 @@ async function tableHasColumn(tableName: string, columnName: string) {
 }
 
 export async function GET(request: NextRequest) {
+  const startTime = Date.now();
+  
   try {
     const sp = request.nextUrl.searchParams;
     const latStr = sp.get('lat');
@@ -60,6 +62,8 @@ export async function GET(request: NextRequest) {
     // categoryId removed - now using many-to-many categories
     const sortBy = (sp.get('sortBy') || 'createdAt') as 'distance' | 'name' | 'createdAt';
     const radiiMeters = [2 * KM, 5 * KM, 20 * KM, 50 * KM];
+    
+    console.log(`[api/shops] Request started - lat: ${latStr}, lng: ${lngStr}, limit: ${limit}, offset: ${offset}`);
     
     // Validate and parse lat/lng
     let lat: string | null = null;
@@ -95,31 +99,14 @@ export async function GET(request: NextRequest) {
       const whereClause = whereParts.length > 0 ? `WHERE ${whereParts.join(' AND ')}` : '';
       
       try {
+        // Optimized query using LEFT JOIN with DISTINCT ON for better performance
         const sql = `
-          SELECT 
+          SELECT DISTINCT ON (s.id)
             s.id, s.name, s.description, s.address, s."createdAt", s.image, s.lat, s.lng, s.is_mockup as "isMockup",
             lt.name_th as subdistrict,
             la.name_th as district,
             lp.name_th as province,
-            COALESCE(
-              (
-                SELECT sp.tier
-                FROM shop_subscriptions ss
-                JOIN subscription_packages sp ON ss.package_id = sp.id
-                WHERE ss.shop_id = s.id
-                  AND ss.status = 'ACTIVE'
-                  AND ss.end_date > NOW()
-                ORDER BY 
-                  CASE sp.tier
-                    WHEN 'PREMIUM' THEN 1
-                    WHEN 'PRO' THEN 2
-                    WHEN 'BASIC' THEN 3
-                    ELSE 4
-                  END
-                LIMIT 1
-              ),
-              'FREE'
-            ) as "subscriptionTier",
+            COALESCE(sp.tier, 'FREE') as "subscriptionTier",
             (
               SELECT JSON_AGG(JSON_BUILD_OBJECT('id', sc.id, 'name', sc.name, 'slug', sc.slug, 'icon', sc.icon))
               FROM shop_category_mapping scm
@@ -130,16 +117,28 @@ export async function GET(request: NextRequest) {
           LEFT JOIN loc_tambons lt ON s.tambon_id = lt.id
           LEFT JOIN loc_amphures la ON s.amphure_id = la.id
           LEFT JOIN loc_provinces lp ON s.province_id = lp.id
+          LEFT JOIN shop_subscriptions ss ON ss.shop_id = s.id 
+            AND ss.status = 'ACTIVE' 
+            AND ss.end_date > NOW()
+          LEFT JOIN subscription_packages sp ON ss.package_id = sp.id
           ${whereClause}
-          ORDER BY s."createdAt" DESC
+          ORDER BY s.id,
+            CASE sp.tier
+              WHEN 'PREMIUM' THEN 1
+              WHEN 'PRO' THEN 2
+              WHEN 'BASIC' THEN 3
+              ELSE 4
+            END,
+            s."createdAt" DESC
           OFFSET $${params.length + 1}
           LIMIT $${params.length + 2};
         `;
         params.push(offset);
         params.push(limit);
         const rows = await prisma.$queryRawUnsafe(sql, ...params);
-        console.log('[api/shops] random rows:', Array.isArray(rows) ? rows.length : 'not array', 'offset:', offset);
-        return NextResponse.json({ success: true, shops: Array.isArray(rows) ? rows : [], hasLocation: false });
+        const elapsed = Date.now() - startTime;
+        console.log(`[api/shops] random rows: ${Array.isArray(rows) ? rows.length : 'not array'}, offset: ${offset}, time: ${elapsed}ms`);
+        return NextResponse.json({ success: true, shops: Array.isArray(rows) ? rows : [], hasLocation: false, queryTime: elapsed });
       } catch (sqlError) {
         console.error('[api/shops] SQL error:', sqlError);
         // Fallback: try without subscriptionTier
@@ -166,8 +165,9 @@ export async function GET(request: NextRequest) {
         const fallbackParams = params.slice(0, -1); // Remove the last param (limit) that was already added
         fallbackParams.push(limit); // Add limit again
         const rows = await prisma.$queryRawUnsafe(simpleSql, ...fallbackParams);
-        console.log('[api/shops] fallback random rows:', Array.isArray(rows) ? rows.length : 0);
-        return NextResponse.json({ success: true, shops: Array.isArray(rows) ? rows : [], hasLocation: false });
+        const elapsed = Date.now() - startTime;
+        console.log(`[api/shops] fallback random rows: ${Array.isArray(rows) ? rows.length : 0}, time: ${elapsed}ms`);
+        return NextResponse.json({ success: true, shops: Array.isArray(rows) ? rows : [], hasLocation: false, queryTime: elapsed });
       }
     }
 
@@ -189,7 +189,7 @@ export async function GET(request: NextRequest) {
 
     const pointExprParams = [longitude, latitude];
 
-    // Build SELECT columns
+    // Build SELECT columns with optimized subscription tier query
     const selectCols = [
       's.id','s.name','s.description','s.address','s.has_physical_store','s."createdAt"',
       // Include s.image for frontend to render shop images
@@ -202,26 +202,8 @@ export async function GET(request: NextRequest) {
       'lt.name_th as subdistrict',
       'la.name_th as district', 
       'lp.name_th as province',
-      // Include subscription tier (optimized with COALESCE)
-      `COALESCE(
-        (
-          SELECT sp.tier
-          FROM shop_subscriptions ss
-          JOIN subscription_packages sp ON ss.package_id = sp.id
-          WHERE ss.shop_id = s.id
-            AND ss.status = 'ACTIVE'
-            AND ss.end_date > NOW()
-          ORDER BY 
-            CASE sp.tier
-              WHEN 'PREMIUM' THEN 1
-              WHEN 'PRO' THEN 2
-              WHEN 'BASIC' THEN 3
-              ELSE 4
-            END
-          LIMIT 1
-        ),
-        'FREE'
-      ) as "subscriptionTier"`,
+      // Use LEFT JOIN result instead of subquery for better performance
+      `COALESCE(sp.tier, 'FREE') as "subscriptionTier"`,
       // Include categories as JSON array
       `(
         SELECT JSON_AGG(JSON_BUILD_OBJECT('id', sc.id, 'name', sc.name, 'slug', sc.slug, 'icon', sc.icon))
@@ -255,17 +237,29 @@ export async function GET(request: NextRequest) {
       params.push(limit);
 
       const sql = `
-        SELECT ${selectList}
+        SELECT DISTINCT ON (s.id) ${selectList}
         FROM "Shop" s
         LEFT JOIN loc_tambons lt ON s.tambon_id = lt.id
         LEFT JOIN loc_amphures la ON s.amphure_id = la.id
         LEFT JOIN loc_provinces lp ON s.province_id = lp.id
+        LEFT JOIN shop_subscriptions ss ON ss.shop_id = s.id 
+          AND ss.status = 'ACTIVE' 
+          AND ss.end_date > NOW()
+        LEFT JOIN subscription_packages sp ON ss.package_id = sp.id
         ${whereParts.length > 0 ? `WHERE ${whereParts.join(' AND ')}` : ''}
-        ORDER BY ${ (sortBy === 'distance' && hasLocationCol) ? 'distance ASC NULLS LAST' : (sortBy === 'name' ? 's.name ASC' : 's."createdAt" DESC') }
+        ORDER BY s.id,
+          CASE sp.tier
+            WHEN 'PREMIUM' THEN 1
+            WHEN 'PRO' THEN 2
+            WHEN 'BASIC' THEN 3
+            ELSE 4
+          END,
+          ${ (sortBy === 'distance' && hasLocationCol) ? 'distance ASC NULLS LAST' : (sortBy === 'name' ? 's.name ASC' : 's."createdAt" DESC') }
         LIMIT $${params.length};
       `;
       const shopsRes = await prisma.$queryRawUnsafe(sql, ...params);
-      console.log('[api/shops] area query rows:', shopsRes.length, { chosenLevel, areaId });
+      const elapsed = Date.now() - startTime;
+      console.log(`[api/shops] area query rows: ${shopsRes.length}, chosenLevel: ${chosenLevel}, areaId: ${areaId}, time: ${elapsed}ms`);
       if (shopsRes && shopsRes.length > 0) {
         return NextResponse.json({
           success: true,
@@ -273,6 +267,7 @@ export async function GET(request: NextRequest) {
           hasLocation: hasLocationCol,
           area: { level: chosenLevel, id: areaId },
           userLocation: { lat: latitude, lng: longitude },
+          queryTime: elapsed,
         });
       }
     }
@@ -286,23 +281,36 @@ export async function GET(request: NextRequest) {
         whereClauseParts.push(`ST_DWithin(s.location::geography, ST_SetSRID(ST_MakePoint($1,$2),4326)::geography, $3)`);
         // categoryId filter removed
         const sql = `
-          SELECT ${selectList}
+          SELECT DISTINCT ON (s.id) ${selectList}
           FROM "Shop" s
           LEFT JOIN loc_tambons lt ON s.tambon_id = lt.id
           LEFT JOIN loc_amphures la ON s.amphure_id = la.id
           LEFT JOIN loc_provinces lp ON s.province_id = lp.id
+          LEFT JOIN shop_subscriptions ss ON ss.shop_id = s.id 
+            AND ss.status = 'ACTIVE' 
+            AND ss.end_date > NOW()
+          LEFT JOIN subscription_packages sp ON ss.package_id = sp.id
           WHERE ${whereClauseParts.join(' AND ')}
-          ORDER BY distance ASC
+          ORDER BY s.id,
+            CASE sp.tier
+              WHEN 'PREMIUM' THEN 1
+              WHEN 'PRO' THEN 2
+              WHEN 'BASIC' THEN 3
+              ELSE 4
+            END,
+            distance ASC
           LIMIT $${params.length};
         `;
         const rows = await prisma.$queryRawUnsafe(sql, ...params);
-        console.log('[api/shops] distance r=', r, 'rows=', rows.length);
+        const elapsed = Date.now() - startTime;
+        console.log(`[api/shops] distance r=${r}m, rows=${rows.length}, time=${elapsed}ms`);
         if (rows && rows.length > 0) {
           return NextResponse.json({
             success: true,
             shops: rows.map((r: any) => ({ ...r, distance: r.distance != null ? parseFloat(Number(r.distance).toFixed(2)) : null })),
             hasLocation: true,
             userLocation: { lat: latitude, lng: longitude },
+            queryTime: elapsed,
           });
         }
       }
@@ -315,23 +323,36 @@ export async function GET(request: NextRequest) {
     // categoryId filter removed
     paramsFinal.push(limit);
     const sqlFinal = `
-      SELECT ${selectList.replace(/CASE WHEN s.location.*?END as distance/, 'NULL as distance')}
+      SELECT DISTINCT ON (s.id) ${selectList.replace(/CASE WHEN s.location.*?END as distance/, 'NULL as distance')}
       FROM "Shop" s
       LEFT JOIN loc_tambons lt ON s.tambon_id = lt.id
       LEFT JOIN loc_amphures la ON s.amphure_id = la.id
       LEFT JOIN loc_provinces lp ON s.province_id = lp.id
+      LEFT JOIN shop_subscriptions ss ON ss.shop_id = s.id 
+        AND ss.status = 'ACTIVE' 
+        AND ss.end_date > NOW()
+      LEFT JOIN subscription_packages sp ON ss.package_id = sp.id
       ${whereFinal.length > 0 ? `WHERE ${whereFinal.join(' AND ')}` : ''}
-      ORDER BY RANDOM()
+      ORDER BY s.id,
+        CASE sp.tier
+          WHEN 'PREMIUM' THEN 1
+          WHEN 'PRO' THEN 2
+          WHEN 'BASIC' THEN 3
+          ELSE 4
+        END,
+        RANDOM()
       LIMIT $${paramsFinal.length};
     `;
     const fallbackRows = await prisma.$queryRawUnsafe(sqlFinal, ...paramsFinal);
-    console.log('[api/shops] fallback rows:', fallbackRows.length);
-    return NextResponse.json({ success: true, shops: fallbackRows, hasLocation: false });
+    const elapsed = Date.now() - startTime;
+    console.log(`[api/shops] fallback rows: ${fallbackRows.length}, time: ${elapsed}ms`);
+    return NextResponse.json({ success: true, shops: fallbackRows, hasLocation: false, queryTime: elapsed });
 
   } catch (error) {
-    console.error('Error fetching shops:', error);
+    const elapsed = Date.now() - startTime;
+    console.error(`[api/shops] Error after ${elapsed}ms:`, error);
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch shops', message: error instanceof Error ? error.message : 'Unknown' },
+      { success: false, error: 'Failed to fetch shops', message: error instanceof Error ? error.message : 'Unknown', queryTime: elapsed },
       { status: 500 }
     );
   }
