@@ -29,6 +29,7 @@ export default function ShopRegisterPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
+  const [hasCheckedRole, setHasCheckedRole] = useState(false);
   const [error, setError] = useState("");
 
   const [formData, setFormData] = useState({
@@ -57,21 +58,29 @@ export default function ShopRegisterPage() {
   const [uploadedGalleryUrls, setUploadedGalleryUrls] = useState<string[]>([]);
 
   useEffect(() => {
+    if (status === "loading") return;
+    
     if (status === "unauthenticated") {
       router.push("/");
       return;
     }
     
-    // Check if user already has SHOP role
-    const userRole = (session?.user as any)?.role;
-    if (status === "authenticated" && userRole === "SHOP") {
-      // User already registered as shop, redirect to dashboard
-      router.push("/dashboard/shop");
-      return;
+    // Check if user already has SHOP role (only once)
+    if (status === "authenticated" && !hasCheckedRole) {
+      const userRole = (session?.user as any)?.role;
+      setHasCheckedRole(true);
+      
+      if (userRole === "SHOP") {
+        // User already registered as shop, redirect to dashboard
+        router.push("/dashboard/shop");
+        return;
+      }
     }
     
-    fetchCategories();
-  }, [status, session, router]);
+    if (categories.length === 0) {
+      fetchCategories();
+    }
+  }, [status, session, router, hasCheckedRole, categories.length]);
 
   const fetchCategories = async () => {
     try {

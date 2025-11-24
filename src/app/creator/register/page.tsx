@@ -27,6 +27,7 @@ export default function CreatorRegisterPage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
+  const [hasCheckedRole, setHasCheckedRole] = useState(false);
   const [error, setError] = useState("");
 
   const [provinces, setProvinces] = useState<Province[]>([]);
@@ -49,21 +50,29 @@ export default function CreatorRegisterPage() {
   });
 
   useEffect(() => {
+    if (status === "loading") return;
+    
     if (status === "unauthenticated") {
       router.push("/");
       return;
     }
     
-    // Check if user already has CREATOR role
-    const userRole = (session?.user as any)?.role;
-    if (status === "authenticated" && userRole === "CREATOR") {
-      // User already registered as creator, redirect to dashboard
-      router.push("/dashboard/creator");
-      return;
+    // Check if user already has CREATOR role (only once)
+    if (status === "authenticated" && !hasCheckedRole) {
+      const userRole = (session?.user as any)?.role;
+      setHasCheckedRole(true);
+      
+      if (userRole === "CREATOR") {
+        // User already registered as creator, redirect to dashboard
+        router.push("/dashboard/creator");
+        return;
+      }
     }
     
-    fetchProvinces();
-  }, [status, session, router]);
+    if (provinces.length === 0) {
+      fetchProvinces();
+    }
+  }, [status, session, router, hasCheckedRole, provinces.length]);
 
   const fetchProvinces = async () => {
     try {
