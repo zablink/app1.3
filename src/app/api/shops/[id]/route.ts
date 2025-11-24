@@ -24,6 +24,12 @@ export async function GET(
           include: {
             category: true
           }
+        },
+        shop_gallery: {
+          orderBy: [
+            { is_featured: 'desc' },
+            { uploaded_at: 'desc' }
+          ]
         }
       }
     });
@@ -116,12 +122,21 @@ export async function GET(
       icon: sc.category.icon
     })) || [];
 
+    // Transform gallery images
+    const galleryImages = shop.shop_gallery?.map((img: any) => ({
+      id: img.id,
+      url: img.image_url,
+      isFeatured: img.is_featured,
+      uploadedAt: img.uploaded_at
+    })) || [];
+
     return NextResponse.json({
       id: shop.id,
       name: shop.name,
       description: shop.description,
       address: shop.address,
       image: shop.image,
+      gallery: galleryImages,
       lat: shop.lat,
       lng: shop.lng,
       phone: null, // Not in schema, will need to add if needed

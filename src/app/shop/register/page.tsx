@@ -50,6 +50,10 @@ export default function ShopRegisterPage() {
 
   const [featuredImage, setFeaturedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>("");
+  const [galleryImages, setGalleryImages] = useState<File[]>([]);
+  const [galleryPreviews, setGalleryPreviews] = useState<string[]>([]);
+  const [uploadedImageUrl, setUploadedImageUrl] = useState<string>("");
+  const [uploadedGalleryUrls, setUploadedGalleryUrls] = useState<string[]>([]);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -80,32 +84,75 @@ export default function ShopRegisterPage() {
     }
   };
 
+  const handleGalleryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length > 0) {
+      setGalleryImages((prev) => [...prev, ...files]);
+      
+      files.forEach((file) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setGalleryPreviews((prev) => [...prev, reader.result as string]);
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+  };
+
+  const removeGalleryImage = (index: number) => {
+    setGalleryImages((prev) => prev.filter((_, i) => i !== index));
+    setGalleryPreviews((prev) => prev.filter((_, i) => i !== index));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setError("");
 
     try {
-      // Upload image first if exists
+      // Upload featured image first if exists
       let imageUrl = "";
       if (featuredImage) {
         const uploadFormData = new FormData();
         uploadFormData.append("file", featuredImage);
 
-        const uploadRes = await fetch("/api/shop/upload-image", {
+        const uploadRes = await fetch("/api/upload/temp-image", {
           method: "POST",
           body: uploadFormData,
         });
 
-        if (!uploadRes.ok) throw new Error("Failed to upload image");
+        if (!uploadRes.ok) {
+          const errorData = await uploadRes.json();
+          throw new Error(errorData.error || "Failed to upload featured image");
+        }
+        
         const uploadData = await uploadRes.json();
         imageUrl = uploadData.url;
+      }
+
+      // Upload gallery images
+      const galleryUrls: string[] = [];
+      for (const galleryFile of galleryImages) {
+        const uploadFormData = new FormData();
+        uploadFormData.append("file", galleryFile);
+        uploadFormData.append("isGallery", "true");
+
+        const uploadRes = await fetch("/api/upload/temp-image", {
+          method: "POST",
+          body: uploadFormData,
+        });
+
+        if (uploadRes.ok) {
+          const uploadData = await uploadRes.json();
+          galleryUrls.push(uploadData.url);
+        }
       }
 
       // Create shop
       const shopData = {
         ...formData,
         image: imageUrl,
+        galleryImages: galleryUrls,
         lat: location.lat,
         lng: location.lng,
       };
@@ -133,6 +180,7 @@ export default function ShopRegisterPage() {
       router.push("/dashboard/shop");
       router.refresh();
     } catch (err: any) {
+      console.error("Submit error:", err);
       setError(err.message || "เกิดข้อผิดพลาดในการสมัคร");
     } finally {
       setIsSubmitting(false);
@@ -443,7 +491,7 @@ export default function ShopRegisterPage() {
                         <div className="flex flex-col items-center justify-center pt-5 pb-6">
                           <Upload className="w-12 h-12 text-gray-400 mb-3" />
                           <p className="mb-2 text-sm text-gray-500">
-                            <span className="font-semibold">คลิกเพื่ออัพโหลด</span>
+                            <span className="font-semibold">คลิกเพื่อเลือกไฟล์</span> หรือลากไฟล์มาวางที่นี่
                           </p>
                           <p className="text-xs text-gray-500">
                             PNG, JPG หรือ WEBP (สูงสุด 5MB)
@@ -458,6 +506,54 @@ export default function ShopRegisterPage() {
                       </label>
                     )}
                   </div>
+                </div>
+
+                {/* Gallery Images */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <Upload className="inline mr-1" size={16} />
+                    รูปภาพแกลเลอรี่ (เพิ่มได้หลายรูป)
+                  </label>
+                  
+                  {/* Upload Button */}
+                  <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer hover:bg-gray-50 mb-4">
+                    <div className="flex flex-col items-center justify-center">
+                      <Upload className="w-8 h-8 text-gray-400 mb-2" />
+                      <p className="text-sm text-gray-500">
+                        <span className="font-semibold">เลือกรูปภาพเพิ่มเติม</span>
+                      </p>
+                      <p className="text-xs text-gray-500">หลายรูปพร้อมกัน</p>
+                    </div>
+                    <input
+                      type="file"
+                      className="hidden"
+                      accept="image/*"
+                      multiple
+                      onChange={handleGalleryChange}
+                    />
+                  </label>
+
+                  {/* Gallery Previews */}
+                  {galleryPreviews.length > 0 && (
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      {galleryPreviews.map((preview, index) => (
+                        <div key={index} className="relative group">
+                          <img
+                            src={preview}
+                            alt={`Gallery ${index + 1}`}
+                            className="w-full h-32 object-cover rounded-lg"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeGalleryImage(index)}
+                            className="absolute top-1 right-1 p-1.5 bg-red-500 text-white rounded-full hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {/* Summary */}
@@ -479,6 +575,10 @@ export default function ShopRegisterPage() {
                       <span className="font-medium">
                         {formData.hasPhysicalStore ? "ใช่" : "ไม่"}
                       </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">รูปภาพแกลเลอรี่:</span>
+                      <span className="font-medium">{galleryImages.length} รูป</span>
                     </div>
                   </div>
                 </div>

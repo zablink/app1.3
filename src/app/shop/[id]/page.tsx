@@ -17,6 +17,12 @@ type Shop = {
     icon?: string | null;
   }>;
   image: string | null;
+  gallery?: Array<{
+    id: string;
+    url: string;
+    isFeatured: boolean;
+    uploadedAt: string;
+  }>;
   lat: number | null;
   lng: number | null;
   subdistrict: string | null;
@@ -106,8 +112,26 @@ export default function ShopDetailPage() {
 
   // Gallery memoized
   const gallery = useMemo(() => {
-    return [shop?.image || '/images/placeholder.jpg'];
-  }, [shop?.image]);
+    // Combine main image and gallery images
+    const images: string[] = [];
+    
+    // Add gallery images first (they're already sorted by featured/date from API)
+    if (shop?.gallery && shop.gallery.length > 0) {
+      images.push(...shop.gallery.map(img => img.url));
+    }
+    
+    // Add main image if it exists and not already in gallery
+    if (shop?.image && !images.includes(shop.image)) {
+      images.unshift(shop.image);
+    }
+    
+    // Fallback to placeholder if no images
+    if (images.length === 0) {
+      images.push('/images/placeholder.jpg');
+    }
+    
+    return images;
+  }, [shop?.image, shop?.gallery]);
   
   // Gallery state
   const [selectedImage, setSelectedImage] = useState(0);
@@ -271,6 +295,36 @@ export default function ShopDetailPage() {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
         
+        {/* Gallery Navigation */}
+        {gallery.length > 1 && (
+          <>
+            {/* Previous Button */}
+            <button
+              onClick={() => setSelectedImage((prev) => (prev === 0 ? gallery.length - 1 : prev - 1))}
+              className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-3 rounded-full backdrop-blur-sm transition-all"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            
+            {/* Next Button */}
+            <button
+              onClick={() => setSelectedImage((prev) => (prev === gallery.length - 1 ? 0 : prev + 1))}
+              className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-3 rounded-full backdrop-blur-sm transition-all"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+            
+            {/* Image Counter */}
+            <div className="absolute top-4 right-4 bg-black/50 text-white px-3 py-1 rounded-full backdrop-blur-sm text-sm">
+              {selectedImage + 1} / {gallery.length}
+            </div>
+          </>
+        )}
+        
         {/* Shop Name Overlay */}
         <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8 text-white">
           <div className="max-w-7xl mx-auto">
@@ -311,6 +365,32 @@ export default function ShopDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Gallery Thumbnails */}
+      {gallery.length > 1 && (
+        <div className="max-w-7xl mx-auto px-4 -mt-4 mb-4">
+          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+            {gallery.map((img, index) => (
+              <button
+                key={index}
+                onClick={() => setSelectedImage(index)}
+                className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all ${
+                  selectedImage === index ? 'border-blue-500 scale-105' : 'border-transparent opacity-70 hover:opacity-100'
+                }`}
+              >
+                <img
+                  src={img}
+                  alt={`${shop.name} ${index + 1}`}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.src = '/images/placeholder.jpg';
+                  }}
+                />
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 py-8">
