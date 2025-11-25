@@ -31,7 +31,7 @@ export async function GET(
           ss.status as subscription_status,
           ss.start_date,
           ss.end_date
-        FROM shops s
+        FROM "Shop" s
         INNER JOIN shop_category_mapping scm ON scm.shop_id = s.id
         LEFT JOIN shop_subscriptions ss ON s.id = ss.shop_id
         LEFT JOIN subscription_packages sp ON ss.package_id = sp.id
@@ -52,7 +52,7 @@ export async function GET(
         ls.subscription_tier,
         ls.subscription_status,
         ls.end_date
-      FROM shops s
+      FROM "Shop" s
       INNER JOIN shop_category_mapping scm ON scm.shop_id = s.id
       LEFT JOIN latest_subscriptions ls ON s.id = ls.shop_id
       LEFT JOIN provinces p ON s.province_id = p.id
