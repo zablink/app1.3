@@ -222,9 +222,6 @@ export default function AdminCategoriesPage() {
                   คำอธิบาย
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  จำนวนร้าน
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   จัดการ
                 </th>
               </tr>
@@ -247,11 +244,6 @@ export default function AdminCategoriesPage() {
                     <div className="text-sm text-gray-500 max-w-xs truncate">
                       {category.description || '-'}
                     </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-center">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                      {category._count?.shops || 0}
-                    </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
                     <div className="flex gap-2">
@@ -408,14 +400,9 @@ export default function AdminCategoriesPage() {
               <h3 className="text-lg font-bold text-gray-900 mb-2">
                 ยืนยันการลบ
               </h3>
-              <p className="text-gray-600 mb-1">
+              <p className="text-gray-600 mb-4">
                 คุณแน่ใจหรือไม่ว่าต้องการลบหมวดหมู่ <strong>{deleteConfirm.name}</strong>?
               </p>
-              {deleteConfirm._count && deleteConfirm._count.shops > 0 && (
-                <p className="text-red-600 text-sm mb-4">
-                  ⚠️ มีร้านค้า {deleteConfirm._count.shops} รายในหมวดหมู่นี้
-                </p>
-              )}
               <div className="flex gap-3 mt-6">
                 <button
                   onClick={() => setDeleteConfirm(null)}

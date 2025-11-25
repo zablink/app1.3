@@ -6,37 +6,18 @@ import { prisma } from '@/lib/prisma';
 
 export async function GET() {
   try {
-    console.log('📊 Fetching categories...');
-    
     const categories = await prisma.shopCategory.findMany({
       orderBy: {
         name: 'asc',
       },
     });
-    
-    console.log('✅ Found categories:', categories.length);
-    
-    // Manually count shops for each category
-    const categoriesWithCount = await Promise.all(
-      categories.map(async (category) => {
-        const shopCount = await prisma.shopCategoryMapping.count({
-          where: { categoryId: category.id },
-        });
-        return {
-          ...category,
-          _count: { shops: shopCount },
-        };
-      })
-    );
-    
-    console.log('✅ Categories with count ready');
 
     return NextResponse.json({
       success: true,
-      categories: categoriesWithCount,
+      categories,
     });
   } catch (error) {
-    console.error('💥 Error fetching categories:', error);
+    console.error('Error fetching categories:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to fetch categories' },
       { status: 500 }
