@@ -21,43 +21,60 @@ export async function GET(
       );
     }
 
-    // Get shops in this category with their subscription info
-    const shopMappings = await prisma.shopCategoryMapping.findMany({
-      where: {
-        categoryId: category.id,
-      },
-      include: {
-        shop: {
-          include: {
-            shop_subscriptions: {
-              where: {
-                status: 'ACTIVE',
-                end_date: {
-                  gt: new Date(),
-                },
-              },
-              include: {
-                subscription_package: true,
-              },
-              orderBy: {
-                subscription_package: {
-                  tier: 'asc', // PREMIUM first
-                },
-              },
-              take: 1,
-            },
-            province: true,
-            amphure: true,
-            tambon: true,
-          },
-        },
-      },
-    });
+    // Get shops in this category using raw SQL to get latest subscription
+    const shopsWithSubscription = await prisma.$queryRaw<any[]>`
+      WITH latest_subscriptions AS (
+        SELECT DISTINCT ON (s.id)
+          s.id as shop_id,
+          ss.id as subscription_id,
+          sp.tier as subscription_tier,
+          ss.status as subscription_status,
+          ss.start_date,
+          ss.end_date
+        FROM shops s
+        INNER JOIN shop_category_mapping scm ON scm.shop_id = s.id
+        LEFT JOIN shop_subscriptions ss ON s.id = ss.shop_id
+        LEFT JOIN subscription_packages sp ON ss.package_id = sp.id
+        WHERE scm.category_id = ${category.id}
+          AND s.status = 'APPROVED'
+        ORDER BY s.id, ss.start_date DESC NULLS LAST, ss.created_at DESC NULLS LAST
+      )
+      SELECT 
+        s.id,
+        s.name,
+        s.description,
+        s.image,
+        s.address,
+        s.lat,
+        s.lng,
+        p.name_th as province,
+        a.name_th as district,
+        ls.subscription_tier,
+        ls.subscription_status,
+        ls.end_date
+      FROM shops s
+      INNER JOIN shop_category_mapping scm ON scm.shop_id = s.id
+      LEFT JOIN latest_subscriptions ls ON s.id = ls.shop_id
+      LEFT JOIN provinces p ON s.province_id = p.id
+      LEFT JOIN amphures a ON s.amphure_id = a.id
+      WHERE scm.category_id = ${category.id}
+        AND s.status = 'APPROVED'
+      ORDER BY 
+        CASE 
+          WHEN ls.subscription_tier = 'PREMIUM' THEN 1
+          WHEN ls.subscription_tier = 'PRO' THEN 2
+          WHEN ls.subscription_tier = 'BASIC' THEN 3
+          ELSE 4
+        END,
+        s.created_at DESC;
+    `;
 
-    // Transform to shop list with subscription tier
-    const shops = shopMappings.map((mapping) => {
-      const shop = mapping.shop;
-      const subscription = shop.shop_subscriptions[0];
+    // Transform to shop list
+    const shops = shopsWithSubscription.map((shop) => {
+      // Determine if subscription is active
+      const isActive = shop.subscription_status === 'ACTIVE' && 
+                      shop.end_date && 
+                      new Date(shop.end_date) > new Date();
       
       return {
         id: shop.id,
@@ -65,11 +82,11 @@ export async function GET(
         description: shop.description,
         image: shop.image,
         address: shop.address,
-        province: shop.province?.name_th || null,
-        district: shop.amphure?.name_th || null,
+        province: shop.province || null,
+        district: shop.district || null,
         lat: shop.lat,
         lng: shop.lng,
-        subscriptionTier: subscription?.subscription_package.tier || 'FREE',
+        subscriptionTier: isActive ? shop.subscription_tier : 'FREE',
       };
     });
 
