@@ -88,12 +88,13 @@ export default function BookmarkMapView({
       const centerLat = userLocation?.lat || shopsWithCoords[0].lat!;
       const centerLng = userLocation?.lng || shopsWithCoords[0].lng!;
 
-      const map = L.map("bookmark-map").setView([centerLat, centerLng], 12);
+      const map = L.map("bookmark-map").setView([centerLat, centerLng], 14);
 
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         attribution:
           '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
         maxZoom: 19,
+        minZoom: 10,
       }).addTo(map);
 
       mapRef.current = map;
