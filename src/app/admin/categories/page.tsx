@@ -17,89 +17,258 @@ type Category = {
 };
 
 const EMOJI_OPTIONS = [
-  { emoji: '🍔', keywords: 'burger hamburger อาหาร food' },
-  { emoji: '🍕', keywords: 'pizza พิซซ่า อาหาร food' },
-  { emoji: '🍗', keywords: 'chicken ไก่ทอด อาหาร food' },
-  { emoji: '🍖', keywords: 'meat steak เนื้อ อาหาร food' },
-  { emoji: '🌭', keywords: 'hotdog ฮอตดอก อาหาร food' },
-  { emoji: '🥪', keywords: 'sandwich แซนวิช อาหาร food' },
-  { emoji: '🌮', keywords: 'taco ทาโก้ อาหาร food' },
-  { emoji: '🌯', keywords: 'burrito อาหาร food' },
-  { emoji: '🥙', keywords: 'kebab อาหาร food' },
-  { emoji: '🥗', keywords: 'salad สลัด อาหาร food' },
-  { emoji: '🍝', keywords: 'pasta สปาเกตตี้ อาหาร food' },
-  { emoji: '🍜', keywords: 'noodle ramen ก่วยเตี๋ยว บะหมี่ อาหาร food' },
-  { emoji: '🍲', keywords: 'soup pot ซุป อาหาร food' },
-  { emoji: '🍛', keywords: 'curry แกง อาหาร food' },
-  { emoji: '🍣', keywords: 'sushi ซูชิ อาหาร food' },
-  { emoji: '🍱', keywords: 'bento เบนโตะ อาหาร food' },
-  { emoji: '🥟', keywords: 'dumpling เกี๊ยว อาหาร food' },
-  { emoji: '🍢', keywords: 'oden อาหาร food' },
-  { emoji: '🍡', keywords: 'dango ของหวาน dessert' },
-  { emoji: '🍧', keywords: 'shaved ice น้ำแข็งใส ของหวาน dessert' },
-  { emoji: '🍨', keywords: 'ice cream ไอศกรีม ของหวาน dessert' },
-  { emoji: '🍦', keywords: 'soft serve ไอศกรีม ของหวาน dessert' },
-  { emoji: '🥧', keywords: 'pie พาย ของหวาน dessert' },
-  { emoji: '🧁', keywords: 'cupcake คัพเค้ก ของหวาน dessert' },
-  { emoji: '🍰', keywords: 'cake เค้ก ของหวาน dessert' },
-  { emoji: '🎂', keywords: 'birthday cake เค้ก ของหวาน dessert' },
-  { emoji: '🍮', keywords: 'pudding พุดดิ้ง ของหวาน dessert' },
-  { emoji: '🍭', keywords: 'lollipop อมยิ้ม ของหวาน dessert' },
-  { emoji: '🍬', keywords: 'candy ลูกอม ของหวาน dessert' },
-  { emoji: '🍫', keywords: 'chocolate ช็อกโกแลต ของหวาน dessert' },
-  { emoji: '🍿', keywords: 'popcorn ป๊อปคอร์น snack ขนม' },
-  { emoji: '🍩', keywords: 'donut โดนัท ของหวาน dessert' },
-  { emoji: '🍪', keywords: 'cookie คุกกี้ ของหวาน dessert' },
-  { emoji: '🌰', keywords: 'chestnut snack ขนม' },
-  { emoji: '🥜', keywords: 'peanut ถ่วว snack ขนม' },
-  { emoji: '🍯', keywords: 'honey น้ำผึ้ง' },
-  { emoji: '🥛', keywords: 'milk นม เครื่องดื่ม drink' },
-  { emoji: '🍼', keywords: 'baby bottle นม เครื่องดื่ม drink' },
-  { emoji: '☕', keywords: 'coffee กาแฟ เครื่องดื่ม drink cafe' },
-  { emoji: '🍵', keywords: 'tea ชา เครื่องดื่ม drink' },
-  { emoji: '🧃', keywords: 'juice น้ำผลไม้ เครื่องดื่ม drink' },
-  { emoji: '🥤', keywords: 'soda soft drink น้ำอัดลม เครื่องดื่ม drink' },
-  { emoji: '🍶', keywords: 'sake เครื่องดื่ม drink alcohol' },
-  { emoji: '🍺', keywords: 'beer เบียร์ เครื่องดื่ม drink alcohol' },
-  { emoji: '🍻', keywords: 'beers cheers เบียร์ เครื่องดื่ม drink alcohol' },
-  { emoji: '🥂', keywords: 'champagne wine เครื่องดื่ม drink alcohol' },
-  { emoji: '🍷', keywords: 'wine ไวน์ เครื่องดื่ม drink alcohol' },
-  { emoji: '🥃', keywords: 'whiskey เครื่องดื่ม drink alcohol' },
-  { emoji: '🍸', keywords: 'cocktail ค็อกเทล เครื่องดื่ม drink alcohol' },
-  { emoji: '🍹', keywords: 'tropical drink ค็อกเทล เครื่องดื่ม drink alcohol' },
-  { emoji: '🍾', keywords: 'champagne เครื่องดื่ม drink alcohol' },
-  { emoji: '🧉', keywords: 'mate tea เครื่องดื่ม drink' },
-  { emoji: '🧊', keywords: 'ice น้ำแข็ง เครื่องดื่ม drink' },
-  { emoji: '🥢', keywords: 'chopsticks ตะเกียบ' },
-  { emoji: '🍴', keywords: 'fork knife ส้อม มีด' },
-  { emoji: '🥄', keywords: 'spoon ช้อน' },
-  { emoji: '🔪', keywords: 'knife มีด' },
-  { emoji: '🏺', keywords: 'vase แจกัน' },
-  { emoji: '🎨', keywords: 'art ศิลปะ palette' },
-  { emoji: '👗', keywords: 'dress เสื้อผ้า fashion clothing' },
-  { emoji: '📚', keywords: 'books หนังสือ education' },
-  { emoji: '🏠', keywords: 'home house บ้าน' },
-  { emoji: '🔧', keywords: 'tool wrench ซ่อม maintenance' },
-  { emoji: '💻', keywords: 'computer laptop คอมพิวเตอร์ tech technology' },
-  { emoji: '🎮', keywords: 'game gaming เกม' },
-  { emoji: '🏋️', keywords: 'gym fitness exercise ออกกำลังกาย' },
-  { emoji: '🌺', keywords: 'flower ดอกไม้ beauty' },
-  { emoji: '🐾', keywords: 'pet สัตว์เลี้ยง animal' },
-  { emoji: '🚗', keywords: 'car รถยนต์ vehicle' },
-  { emoji: '✈️', keywords: 'plane travel เที่ยว transport' },
-  { emoji: '🏨', keywords: 'hotel โรงแรม accommodation' },
-  { emoji: '💼', keywords: 'business briefcase ธุรกิจ' },
-  { emoji: '📦', keywords: 'package box delivery ส่งของ' },
-  { emoji: '🎵', keywords: 'music เพลง' },
-  { emoji: '🎬', keywords: 'movie film cinema หนัง' },
-  { emoji: '📷', keywords: 'camera photo กล้อง' },
-  { emoji: '💍', keywords: 'ring diamond แหวน jewelry' },
-  { emoji: '⚽', keywords: 'soccer football กีฬา sport' },
-  { emoji: '🏊', keywords: 'swim swimming ว่ายน้ำ sport' },
-  { emoji: '🎯', keywords: 'target goal' },
-  { emoji: '🌟', keywords: 'star ดาว' },
-  { emoji: '💊', keywords: 'pill medicine ยา health' },
-  { emoji: '🔬', keywords: 'microscope science วิทยาศาสตร์' }
+  { emoji: '🍔', keywords: 'burger hamburger อาหาร food fast' },
+  { emoji: '🍕', keywords: 'pizza พิซซ่า อาหาร food italian' },
+  { emoji: '🍗', keywords: 'chicken ไก่ทอด อาหาร food fried' },
+  { emoji: '🍖', keywords: 'meat steak เนื้อ อาหาร food bbq' },
+  { emoji: '🌭', keywords: 'hotdog ฮอตดอก อาหาร food fast' },
+  { emoji: '🥪', keywords: 'sandwich แซนวิช อาหาร food bread' },
+  { emoji: '🌮', keywords: 'taco ทาโก้ อาหาร food mexican' },
+  { emoji: '🌯', keywords: 'burrito อาหาร food mexican wrap' },
+  { emoji: '🥙', keywords: 'kebab อาหาร food pita' },
+  { emoji: '🥗', keywords: 'salad สลัด อาหาร food healthy vegetable' },
+  { emoji: '🍝', keywords: 'pasta สปาเกตตี้ อาหาร food italian noodle' },
+  { emoji: '🍜', keywords: 'noodle ramen ก่วยเตี๋ยว บะหมี่ อาหาร food asian soup' },
+  { emoji: '🍲', keywords: 'soup pot ซุป อาหาร food stew' },
+  { emoji: '🍛', keywords: 'curry แกง อาหาร food rice indian' },
+  { emoji: '🍣', keywords: 'sushi ซูชิ อาหาร food japanese fish' },
+  { emoji: '🍱', keywords: 'bento เบนโตะ อาหาร food japanese box lunch' },
+  { emoji: '🥟', keywords: 'dumpling เกี๊ยว อาหาร food chinese' },
+  { emoji: '🍢', keywords: 'oden อาหาร food japanese skewer' },
+  { emoji: '🍡', keywords: 'dango ของหวาน dessert sweet japanese' },
+  { emoji: '🍧', keywords: 'shaved ice น้ำแข็งใส ของหวาน dessert sweet frozen' },
+  { emoji: '🍨', keywords: 'ice cream ไอศกรีม ของหวาน dessert sweet frozen' },
+  { emoji: '🍦', keywords: 'soft serve ไอศกรีม ของหวาน dessert sweet frozen cone' },
+  { emoji: '🥧', keywords: 'pie พาย ของหวาน dessert sweet baked' },
+  { emoji: '🧁', keywords: 'cupcake คัพเค้ก ของหวาน dessert sweet cake' },
+  { emoji: '🍰', keywords: 'cake เค้ก ของหวาน dessert sweet slice' },
+  { emoji: '🎂', keywords: 'birthday cake เค้ก ของหวาน dessert sweet celebration' },
+  { emoji: '🍮', keywords: 'pudding พุดดิ้ง ของหวาน dessert sweet custard' },
+  { emoji: '🍭', keywords: 'lollipop อมยิ้ม ของหวาน dessert sweet candy' },
+  { emoji: '🍬', keywords: 'candy ลูกอม ของหวาน dessert sweet' },
+  { emoji: '🍫', keywords: 'chocolate ช็อกโกแลต ของหวาน dessert sweet' },
+  { emoji: '🍿', keywords: 'popcorn ป๊อปคอร์น snack ขนม movie' },
+  { emoji: '🍩', keywords: 'donut โดนัท ของหวาน dessert sweet bakery' },
+  { emoji: '🍪', keywords: 'cookie คุกกี้ ของหวาน dessert sweet baked' },
+  { emoji: '🌰', keywords: 'chestnut snack ขนม nut' },
+  { emoji: '🥜', keywords: 'peanut ถั่ว snack ขนม nut' },
+  { emoji: '🍯', keywords: 'honey น้ำผึ้ง sweet' },
+  { emoji: '🥛', keywords: 'milk นม เครื่องดื่ม drink dairy' },
+  { emoji: '🍼', keywords: 'baby bottle นม เครื่องดื่ม drink milk' },
+  { emoji: '☕', keywords: 'coffee กาแฟ เครื่องดื่ม drink cafe hot' },
+  { emoji: '🍵', keywords: 'tea ชา เครื่องดื่ม drink hot green' },
+  { emoji: '🧃', keywords: 'juice น้ำผลไม้ เครื่องดื่ม drink fruit box' },
+  { emoji: '🥤', keywords: 'soda soft drink น้ำอัดลม เครื่องดื่ม drink cup' },
+  { emoji: '🍶', keywords: 'sake เครื่องดื่ม drink alcohol japanese' },
+  { emoji: '🍺', keywords: 'beer เบียร์ เครื่องดื่ม drink alcohol mug' },
+  { emoji: '🍻', keywords: 'beers cheers เบียร์ เครื่องดื่ม drink alcohol celebration' },
+  { emoji: '🥂', keywords: 'champagne wine เครื่องดื่ม drink alcohol celebration toast' },
+  { emoji: '🍷', keywords: 'wine ไวน์ เครื่องดื่ม drink alcohol red glass' },
+  { emoji: '🥃', keywords: 'whiskey เครื่องดื่ม drink alcohol tumbler' },
+  { emoji: '🍸', keywords: 'cocktail ค็อกเทล เครื่องดื่ม drink alcohol martini' },
+  { emoji: '🍹', keywords: 'tropical drink ค็อกเทล เครื่องดื่ม drink alcohol beach' },
+  { emoji: '🍾', keywords: 'champagne เครื่องดื่ม drink alcohol celebration bottle' },
+  { emoji: '🧉', keywords: 'mate tea เครื่องดื่ม drink yerba' },
+  { emoji: '🧊', keywords: 'ice น้ำแข็ง เครื่องดื่ม drink cold cube' },
+  { emoji: '🥢', keywords: 'chopsticks ตะเกียบ utensil asian' },
+  { emoji: '🍴', keywords: 'fork knife ส้อม มีด utensil cutlery' },
+  { emoji: '🥄', keywords: 'spoon ช้อน utensil' },
+  { emoji: '🔪', keywords: 'knife มีด utensil kitchen' },
+  { emoji: '🏺', keywords: 'vase แจกัน jar pottery' },
+  { emoji: '🎨', keywords: 'art ศิลปะ palette paint creative design' },
+  { emoji: '👗', keywords: 'dress เสื้อผ้า fashion clothing woman' },
+  { emoji: '👕', keywords: 'tshirt เสื้อผ้า fashion clothing shirt' },
+  { emoji: '👔', keywords: 'tie เนคไท fashion clothing business' },
+  { emoji: '👞', keywords: 'shoe รองเท้า fashion clothing footwear' },
+  { emoji: '👟', keywords: 'sneaker รองเท้า fashion clothing sport' },
+  { emoji: '👠', keywords: 'heels รองเท้า fashion clothing woman' },
+  { emoji: '👜', keywords: 'bag กระเป๋า fashion accessory handbag' },
+  { emoji: '🎒', keywords: 'backpack กระเป๋า bag school' },
+  { emoji: '👓', keywords: 'glasses แว่นตา accessory vision' },
+  { emoji: '🕶️', keywords: 'sunglasses แว่นตา accessory cool' },
+  { emoji: '💄', keywords: 'lipstick makeup beauty cosmetic' },
+  { emoji: '💅', keywords: 'nail polish beauty cosmetic manicure' },
+  { emoji: '💇', keywords: 'haircut salon beauty hair' },
+  { emoji: '💆', keywords: 'massage spa beauty relax' },
+  { emoji: '📚', keywords: 'books หนังสือ education study library' },
+  { emoji: '📖', keywords: 'book หนังสือ education read study' },
+  { emoji: '✏️', keywords: 'pencil ดินสอ education write school' },
+  { emoji: '✒️', keywords: 'pen ปากกา education write office' },
+  { emoji: '🖊️', keywords: 'pen ปากกา education write office' },
+  { emoji: '📝', keywords: 'memo note write document' },
+  { emoji: '🏠', keywords: 'home house บ้าน building residence' },
+  { emoji: '🏢', keywords: 'office building ตึก business' },
+  { emoji: '🏬', keywords: 'department store ห้าง shopping mall' },
+  { emoji: '🏪', keywords: 'convenience store ร้าน shop 24 hours' },
+  { emoji: '🏭', keywords: 'factory โรงงาน industry' },
+  { emoji: '🏗️', keywords: 'construction ก่อสร้าง building work' },
+  { emoji: '🔧', keywords: 'tool wrench ซ่อม maintenance fix' },
+  { emoji: '🔨', keywords: 'hammer ค้อน tool construction' },
+  { emoji: '⚒️', keywords: 'hammer pick tool mining' },
+  { emoji: '🛠️', keywords: 'tools อุปกรณ์ fix maintenance' },
+  { emoji: '⚙️', keywords: 'gear ฟันเฟือง settings mechanical' },
+  { emoji: '💻', keywords: 'computer laptop คอมพิวเตอร์ tech technology work' },
+  { emoji: '🖥️', keywords: 'desktop computer คอมพิวเตอร์ tech technology' },
+  { emoji: '⌨️', keywords: 'keyboard คีย์บอร์ด computer tech' },
+  { emoji: '🖱️', keywords: 'mouse เมาส์ computer tech' },
+  { emoji: '📱', keywords: 'phone mobile โทรศัพท์ smartphone tech' },
+  { emoji: '☎️', keywords: 'telephone โทรศัพท์ phone call' },
+  { emoji: '📞', keywords: 'phone receiver โทรศัพท์ call' },
+  { emoji: '📟', keywords: 'pager beeper tech' },
+  { emoji: '📠', keywords: 'fax machine office' },
+  { emoji: '📺', keywords: 'tv television ทีวี entertainment' },
+  { emoji: '📻', keywords: 'radio วิทยุ music entertainment' },
+  { emoji: '🎙️', keywords: 'microphone mic podcast studio' },
+  { emoji: '🎚️', keywords: 'level slider control audio' },
+  { emoji: '🎛️', keywords: 'control knobs mixing audio' },
+  { emoji: '🎮', keywords: 'game gaming เกม video controller' },
+  { emoji: '🕹️', keywords: 'joystick game gaming arcade' },
+  { emoji: '🎰', keywords: 'slot machine casino gambling' },
+  { emoji: '🎲', keywords: 'dice game gambling random' },
+  { emoji: '🎯', keywords: 'target goal aim bullseye' },
+  { emoji: '🎳', keywords: 'bowling sport game' },
+  { emoji: '🏋️', keywords: 'gym fitness exercise ออกกำลังกาย weight lifting' },
+  { emoji: '🤸', keywords: 'gymnastics exercise sport flexible' },
+  { emoji: '⛹️', keywords: 'basketball sport ball game' },
+  { emoji: '🏃', keywords: 'running วิ่ง exercise sport' },
+  { emoji: '🚴', keywords: 'cycling bike sport exercise' },
+  { emoji: '🏊', keywords: 'swim swimming ว่ายน้ำ sport water' },
+  { emoji: '🏄', keywords: 'surfing sport water beach' },
+  { emoji: '⚽', keywords: 'soccer football กีฬา sport ball' },
+  { emoji: '🏀', keywords: 'basketball sport ball game' },
+  { emoji: '🏈', keywords: 'american football sport ball' },
+  { emoji: '⚾', keywords: 'baseball sport ball game' },
+  { emoji: '🎾', keywords: 'tennis sport ball game' },
+  { emoji: '🏐', keywords: 'volleyball sport ball game' },
+  { emoji: '🌺', keywords: 'flower ดอกไม้ beauty nature plant' },
+  { emoji: '🌸', keywords: 'cherry blossom flower ดอกไม้ nature spring' },
+  { emoji: '🌼', keywords: 'blossom flower ดอกไม้ nature' },
+  { emoji: '🌻', keywords: 'sunflower ดอกไม้ nature plant' },
+  { emoji: '🌹', keywords: 'rose flower ดอกไม้ love romance' },
+  { emoji: '🥀', keywords: 'wilted flower ดอกไม้ sad' },
+  { emoji: '🌷', keywords: 'tulip flower ดอกไม้ nature' },
+  { emoji: '🌱', keywords: 'seedling plant ต้นไม้ nature grow' },
+  { emoji: '🌿', keywords: 'herb plant ต้นไม้ nature leaf' },
+  { emoji: '🍀', keywords: 'clover lucky nature plant' },
+  { emoji: '🌵', keywords: 'cactus plant nature desert' },
+  { emoji: '🌳', keywords: 'tree ต้นไม้ nature plant' },
+  { emoji: '🌲', keywords: 'evergreen tree ต้นไม้ nature plant' },
+  { emoji: '🐶', keywords: 'dog สุนัข pet animal puppy' },
+  { emoji: '🐱', keywords: 'cat แมว pet animal kitten' },
+  { emoji: '🐭', keywords: 'mouse หนู animal rodent' },
+  { emoji: '🐹', keywords: 'hamster สัตว์เลี้ยง animal pet' },
+  { emoji: '🐰', keywords: 'rabbit กระต่าย animal pet' },
+  { emoji: '🦊', keywords: 'fox animal wild' },
+  { emoji: '🐻', keywords: 'bear หมี animal wild' },
+  { emoji: '🐼', keywords: 'panda animal cute' },
+  { emoji: '🐨', keywords: 'koala animal australia' },
+  { emoji: '🐯', keywords: 'tiger เสือ animal wild' },
+  { emoji: '🦁', keywords: 'lion สิงโต animal wild' },
+  { emoji: '🐮', keywords: 'cow วัว animal farm' },
+  { emoji: '🐷', keywords: 'pig หมู animal farm' },
+  { emoji: '🐸', keywords: 'frog กบ animal amphibian' },
+  { emoji: '🐵', keywords: 'monkey ลิง animal' },
+  { emoji: '🐔', keywords: 'chicken ไก่ animal bird farm' },
+  { emoji: '🐧', keywords: 'penguin animal bird' },
+  { emoji: '🐦', keywords: 'bird นก animal fly' },
+  { emoji: '🦅', keywords: 'eagle นก animal bird' },
+  { emoji: '🦆', keywords: 'duck เป็ด animal bird' },
+  { emoji: '🐾', keywords: 'pet สัตว์เลี้ยง animal paw print' },
+  { emoji: '🐕', keywords: 'dog สุนัข pet animal' },
+  { emoji: '🐈', keywords: 'cat แมว pet animal' },
+  { emoji: '🚗', keywords: 'car รถยนต์ vehicle transport auto' },
+  { emoji: '🚕', keywords: 'taxi รถแท็กซี่ vehicle transport' },
+  { emoji: '🚙', keywords: 'suv รถยนต์ vehicle transport' },
+  { emoji: '🚌', keywords: 'bus รถบัส vehicle transport public' },
+  { emoji: '🚎', keywords: 'trolleybus vehicle transport' },
+  { emoji: '🏎️', keywords: 'race car รถแข่ง vehicle fast sport' },
+  { emoji: '🚓', keywords: 'police car รถตำรวจ vehicle emergency' },
+  { emoji: '🚑', keywords: 'ambulance รถพยาบาล vehicle emergency medical' },
+  { emoji: '🚒', keywords: 'fire truck รถดับเพลิง vehicle emergency' },
+  { emoji: '🚐', keywords: 'van รถตู้ vehicle transport' },
+  { emoji: '🚚', keywords: 'truck รถบรรทุก vehicle transport delivery' },
+  { emoji: '✈️', keywords: 'plane airplane เครื่องบิน travel เที่ยว transport flight' },
+  { emoji: '🚁', keywords: 'helicopter เฮลิคอปเตอร์ transport flight' },
+  { emoji: '🚂', keywords: 'train รถไฟ transport travel' },
+  { emoji: '🚆', keywords: 'train รถไฟ transport travel metro' },
+  { emoji: '🚇', keywords: 'metro รถไฟฟ้า transport subway' },
+  { emoji: '🚈', keywords: 'light rail รถไฟฟ้า transport' },
+  { emoji: '🚊', keywords: 'tram รถราง transport' },
+  { emoji: '🚝', keywords: 'monorail รถไฟ transport' },
+  { emoji: '🚞', keywords: 'mountain railway รถไฟ transport' },
+  { emoji: '🚋', keywords: 'tram car รถราง transport' },
+  { emoji: '🚃', keywords: 'railway car รถไฟ transport' },
+  { emoji: '🚢', keywords: 'ship เรือ transport water boat' },
+  { emoji: '⛴️', keywords: 'ferry เรือ transport water' },
+  { emoji: '🛳️', keywords: 'cruise ship เรือ transport water travel' },
+  { emoji: '⛵', keywords: 'sailboat เรือ transport water sail' },
+  { emoji: '🚤', keywords: 'speedboat เรือ transport water fast' },
+  { emoji: '🛥️', keywords: 'motor boat เรือ transport water' },
+  { emoji: '🏨', keywords: 'hotel โรงแรม accommodation travel building' },
+  { emoji: '🏩', keywords: 'love hotel โรงแรม accommodation' },
+  { emoji: '🏪', keywords: 'convenience store ร้าน shop 24' },
+  { emoji: '🏫', keywords: 'school โรงเรียน education building' },
+  { emoji: '🏬', keywords: 'department store ห้าง shopping mall building' },
+  { emoji: '🏦', keywords: 'bank ธนาคาร money building' },
+  { emoji: '🏥', keywords: 'hospital โรงพยาบาล medical building health' },
+  { emoji: '💼', keywords: 'business briefcase ธุรกิจ work office' },
+  { emoji: '💰', keywords: 'money bag เงิน business finance' },
+  { emoji: '💵', keywords: 'dollar money เงิน finance currency' },
+  { emoji: '💴', keywords: 'yen money เงิน finance currency' },
+  { emoji: '💶', keywords: 'euro money เงิน finance currency' },
+  { emoji: '💷', keywords: 'pound money เงิน finance currency' },
+  { emoji: '💳', keywords: 'credit card บัตร payment finance' },
+  { emoji: '💎', keywords: 'diamond gem jewelry expensive' },
+  { emoji: '📦', keywords: 'package box delivery ส่งของ shipping parcel' },
+  { emoji: '📫', keywords: 'mailbox ตู้จดหมาย post mail' },
+  { emoji: '📪', keywords: 'mailbox ตู้จดหมาย post mail' },
+  { emoji: '📬', keywords: 'mailbox ตู้จดหมาย post mail' },
+  { emoji: '📭', keywords: 'mailbox ตู้จดหมาย post mail' },
+  { emoji: '📮', keywords: 'postbox ตู้ไปรษณีย์ mail' },
+  { emoji: '🎵', keywords: 'music เพลง note sound audio' },
+  { emoji: '🎶', keywords: 'music notes เพลง sound audio' },
+  { emoji: '🎤', keywords: 'microphone mic music karaoke sing' },
+  { emoji: '🎧', keywords: 'headphone music audio sound' },
+  { emoji: '🎼', keywords: 'musical score music notes' },
+  { emoji: '🎹', keywords: 'piano keyboard music instrument' },
+  { emoji: '🥁', keywords: 'drum music instrument percussion' },
+  { emoji: '🎸', keywords: 'guitar music instrument rock' },
+  { emoji: '🎺', keywords: 'trumpet music instrument brass' },
+  { emoji: '🎷', keywords: 'saxophone music instrument jazz' },
+  { emoji: '🎻', keywords: 'violin music instrument classical' },
+  { emoji: '🎬', keywords: 'movie film cinema หนัง clapper entertainment' },
+  { emoji: '🎥', keywords: 'movie camera film video cinema' },
+  { emoji: '📹', keywords: 'video camera film record' },
+  { emoji: '📷', keywords: 'camera photo กล้อง picture photography' },
+  { emoji: '📸', keywords: 'camera flash photo picture' },
+  { emoji: '🖼️', keywords: 'picture frame art photo' },
+  { emoji: '🎨', keywords: 'art palette paint creative design' },
+  { emoji: '🖌️', keywords: 'paintbrush art paint creative' },
+  { emoji: '🖍️', keywords: 'crayon art draw creative' },
+  { emoji: '💍', keywords: 'ring diamond แหวน jewelry wedding engagement' },
+  { emoji: '💎', keywords: 'gem diamond jewelry precious' },
+  { emoji: '📿', keywords: 'beads prayer religious jewelry' },
+  { emoji: '👑', keywords: 'crown king queen royal' },
+  { emoji: '⭐', keywords: 'star ดาว favorite rating' },
+  { emoji: '🌟', keywords: 'star ดาว shining sparkle glowing' },
+  { emoji: '✨', keywords: 'sparkles shine glitter magic' },
+  { emoji: '⚡', keywords: 'lightning bolt electric power fast' },
+  { emoji: '🔥', keywords: 'fire hot flame burn' },
+  { emoji: '💧', keywords: 'water drop liquid' },
+  { emoji: '🌊', keywords: 'wave water ocean sea' },
+  { emoji: '❄️', keywords: 'snowflake cold winter ice' },
+  { emoji: '☃️', keywords: 'snowman winter cold' },
+  { emoji: '⛄', keywords: 'snowman winter cold christmas' },
+  { emoji: '💊', keywords: 'pill medicine ยา health pharmacy drug' },
+  { emoji: '💉', keywords: 'syringe injection vaccine medical health' },
+  { emoji: '🩺', keywords: 'stethoscope medical doctor health' },
+  { emoji: '🩹', keywords: 'bandage medical health first aid' },
+  { emoji: '🩼', keywords: 'crutch medical health injury' },
+  { emoji: '🔬', keywords: 'microscope science วิทยาศาสตร์ lab research' },
+  { emoji: '🔭', keywords: 'telescope astronomy science space' },
+  { emoji: '🧪', keywords: 'test tube science chemistry lab' },
+  { emoji: '🧬', keywords: 'dna science biology genetics' },
+  { emoji: '🧫', keywords: 'petri dish science lab biology' }
 ];
 
 export default function AdminCategoriesPage() {
@@ -113,8 +282,6 @@ export default function AdminCategoriesPage() {
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [emojiSearch, setEmojiSearch] = useState('');
-  const [searchResults, setSearchResults] = useState<typeof EMOJI_OPTIONS>([]);
-  const [isSearching, setIsSearching] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     slug: '',
@@ -136,7 +303,6 @@ export default function AdminCategoriesPage() {
         description: editingCategory.description || ''
       });
       setEmojiSearch(''); // Reset search when opening form
-      setSearchResults([]); // Reset search results
     } else if (showAddForm) {
       setFormData({
         name: '',
@@ -145,48 +311,16 @@ export default function AdminCategoriesPage() {
         description: ''
       });
       setEmojiSearch(''); // Reset search when opening form
-      setSearchResults([]); // Reset search results
     }
   }, [editingCategory, showAddForm]);
 
-  // Search emojis from emoji API
-  useEffect(() => {
-    const searchEmojis = async () => {
-      if (!emojiSearch || emojiSearch.length < 2) {
-        setSearchResults([]);
-        setIsSearching(false);
-        return;
-      }
-
-      setIsSearching(true);
-      try {
-        // Using emoji-api.com for searching emojis
-        const response = await fetch(
-          `https://emoji-api.com/emojis?search=${encodeURIComponent(emojiSearch)}&access_key=c64906c2db72e10919bcd32073c94f8cfef29ff5`
-        );
-        
-        if (response.ok) {
-          const data = await response.json();
-          // Convert API response to our format
-          const results = data.slice(0, 50).map((item: any) => ({
-            emoji: item.character,
-            keywords: `${item.unicodeName} ${item.slug} ${item.group} ${item.subGroup}`
-          }));
-          setSearchResults(results);
-        } else {
-          setSearchResults([]);
-        }
-      } catch (error) {
-        console.error('Error searching emojis:', error);
-        setSearchResults([]);
-      } finally {
-        setIsSearching(false);
-      }
-    };
-
-    const debounce = setTimeout(searchEmojis, 300);
-    return () => clearTimeout(debounce);
-  }, [emojiSearch]);
+  // Search emojis from local expanded database
+  const filteredEmojis = emojiSearch.length >= 2
+    ? EMOJI_OPTIONS.filter(item =>
+        item.keywords.toLowerCase().includes(emojiSearch.toLowerCase()) ||
+        item.emoji.includes(emojiSearch)
+      )
+    : EMOJI_OPTIONS;
 
   async function fetchCategories() {
     console.log('🔍 Starting to fetch categories...');
@@ -480,31 +614,22 @@ export default function AdminCategoriesPage() {
                     <div className="flex items-center gap-4 mb-3">
                       <div className="text-5xl">{formData.icon}</div>
                       <div className="flex-1">
-                        <div className="relative">
-                          <input
-                            type="text"
-                            value={emojiSearch}
-                            onChange={(e) => setEmojiSearch(e.target.value)}
-                            placeholder="ค้นหา emoji... เช่น food, coffee, heart"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                          />
-                          {isSearching && (
-                            <div className="absolute right-3 top-2.5">
-                              <svg className="animate-spin h-4 w-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                              </svg>
-                            </div>
-                          )}
-                        </div>
+                        <input
+                          type="text"
+                          value={emojiSearch}
+                          onChange={(e) => setEmojiSearch(e.target.value)}
+                          placeholder="ค้นหา... เช่น food, coffee, กาแฟ, อาหาร"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                        />
                         <p className="text-xs text-gray-500 mt-1">
-                          {emojiSearch ? `ผลการค้นหา ${searchResults.length} รายการ` : 'พิมพ์อย่างน้อย 2 ตัวอักษรเพื่อค้นหา'}
+                          {emojiSearch.length >= 2 
+                            ? `พบ ${filteredEmojis.length} รายการ` 
+                            : `มี ${EMOJI_OPTIONS.length} ไอคอนให้เลือก (พิมพ์อย่างน้อย 2 ตัวอักษรเพื่อค้นหา)`}
                         </p>
                       </div>
                     </div>
                     <div className="grid grid-cols-10 gap-2 p-4 bg-gray-50 rounded-lg max-h-48 overflow-y-auto">
-                      {(emojiSearch && searchResults.length > 0 ? searchResults : EMOJI_OPTIONS)
-                        .map((item) => (
+                      {filteredEmojis.map((item) => (
                         <button
                           key={item.emoji}
                           type="button"
@@ -518,8 +643,8 @@ export default function AdminCategoriesPage() {
                         </button>
                       ))}
                     </div>
-                    {emojiSearch && searchResults.length === 0 && !isSearching && (
-                      <p className="text-sm text-gray-500 mt-2 text-center">ไม่พบ emoji ที่ค้นหา ลองใช้คำค้นภาษาอังกฤษ</p>
+                    {emojiSearch.length >= 2 && filteredEmojis.length === 0 && (
+                      <p className="text-sm text-gray-500 mt-2 text-center">ไม่พบไอคอนที่ค้นหา ลองใช้คำค้นอื่น</p>
                     )}
                   </div>
 
