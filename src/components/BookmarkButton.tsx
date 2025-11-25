@@ -71,25 +71,6 @@ export default function BookmarkButton({
             ${isAnimating ? 'animate-bounce-scale' : ''}
           `}
         />
-        <style jsx>{`
-          @keyframes bounce-scale {
-            0%, 100% {
-              transform: scale(1) rotate(0deg);
-            }
-            25% {
-              transform: scale(1.3) rotate(-10deg);
-            }
-            50% {
-              transform: scale(0.9) rotate(10deg);
-            }
-            75% {
-              transform: scale(1.2) rotate(-5deg);
-            }
-          }
-          :global(.animate-bounce-scale) {
-            animation: bounce-scale 0.6s ease-in-out;
-          }
-        `}</style>
       </button>
 
       {/* Toast Notification */}
@@ -101,7 +82,24 @@ export default function BookmarkButton({
           </div>
         </div>
       )}
+
+      {/* Combined Styles */}
       <style jsx>{`
+        @keyframes bounce-scale {
+          0%, 100% {
+            transform: scale(1) rotate(0deg);
+          }
+          25% {
+            transform: scale(1.3) rotate(-10deg);
+          }
+          50% {
+            transform: scale(0.9) rotate(10deg);
+          }
+          75% {
+            transform: scale(1.2) rotate(-5deg);
+          }
+        }
+        
         @keyframes fade-in-down {
           from {
             opacity: 0;
@@ -112,6 +110,11 @@ export default function BookmarkButton({
             transform: translate(-50%, 0);
           }
         }
+        
+        :global(.animate-bounce-scale) {
+          animation: bounce-scale 0.6s ease-in-out;
+        }
+        
         :global(.animate-fade-in-down) {
           animation: fade-in-down 0.3s ease-out;
         }
