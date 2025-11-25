@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
     const {
       name,
       description,
-      categoryId,
+      categoryIds,
       address,
       phone,
       email,
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
     } = body;
 
     // Validate required fields
-    if (!name || !categoryId || !address || !phone) {
+    if (!name || !categoryIds || categoryIds.length === 0 || !address || !phone) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
@@ -63,12 +63,12 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      // Add category mapping
-      await tx.shopCategoryMapping.create({
-        data: {
+      // Add category mappings (multiple categories)
+      await tx.shopCategoryMapping.createMany({
+        data: categoryIds.map((categoryId: string) => ({
           shopId: shop.id,
           categoryId,
-        },
+        })),
       });
 
       // Add shop links if provided

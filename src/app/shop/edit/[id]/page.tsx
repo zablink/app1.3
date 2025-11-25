@@ -33,7 +33,7 @@ export default function ShopEditPage({ params }: { params: { id: string } }) {
   const [formData, setFormData] = useState({
     name: "",
     description: "",
-    categoryId: "",
+    categoryIds: [] as string[],
     address: "",
     hasPhysicalStore: true,
     showLocationOnMap: false,
@@ -85,7 +85,7 @@ export default function ShopEditPage({ params }: { params: { id: string } }) {
       setFormData({
         name: shop.name || "",
         description: shop.description || "",
-        categoryId: shop.categoryId || "",
+        categoryIds: shop.categories?.map((c: any) => c.categoryId || c.id) || [],
         address: shop.address || "",
         hasPhysicalStore: shop.has_physical_store || true,
         showLocationOnMap: shop.show_location_on_map || false,
@@ -210,21 +210,51 @@ export default function ShopEditPage({ params }: { params: { id: string } }) {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                ประเภทร้านค้า *
+                หมวดหมู่ร้านค้า * (เลือกได้หลายหมวด)
               </label>
-              <select
-                value={formData.categoryId}
-                onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                required
-              >
-                <option value="">เลือกประเภท</option>
-                {categories.map((cat) => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.name}
-                  </option>
-                ))}
-              </select>
+              <div className="border border-gray-300 rounded-lg p-4 max-h-64 overflow-y-auto bg-gray-50">
+                {categories.length === 0 ? (
+                  <p className="text-gray-500 text-sm">กำลังโหลดหมวดหมู่...</p>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {categories.map((cat) => (
+                      <label
+                        key={cat.id}
+                        className="flex items-center gap-2 p-3 bg-white rounded-lg hover:bg-blue-50 cursor-pointer border border-gray-200 transition"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={formData.categoryIds.includes(cat.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setFormData({
+                                ...formData,
+                                categoryIds: [...formData.categoryIds, cat.id],
+                              });
+                            } else {
+                              setFormData({
+                                ...formData,
+                                categoryIds: formData.categoryIds.filter(
+                                  (id) => id !== cat.id
+                                ),
+                              });
+                            }
+                          }}
+                          className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                        />
+                        <span className="text-sm font-medium text-gray-700">
+                          {cat.name}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+              {formData.categoryIds.length > 0 && (
+                <p className="text-sm text-green-600 mt-2">
+                  ✓ เลือกแล้ว {formData.categoryIds.length} หมวด
+                </p>
+              )}
             </div>
 
             <div>

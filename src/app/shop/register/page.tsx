@@ -38,7 +38,7 @@ export default function ShopRegisterPage() {
   const [formData, setFormData] = useState({
     name: "",
     description: "",
-    categoryId: "",
+    categoryIds: [] as string[],
     address: "",
     phone: "",
     email: "",
@@ -219,8 +219,8 @@ export default function ShopRegisterPage() {
           if (showError) setError("กรุณากรอกชื่อร้านอย่างน้อย 3 ตัวอักษร");
           return false;
         }
-        if (!formData.categoryId) {
-          if (showError) setError("กรุณาเลือกหมวดหมู่ร้านค้า");
+        if (formData.categoryIds.length === 0) {
+          if (showError) setError("กรุณาเลือกหมวดหมู่ร้านค้าอย่างน้อย 1 หมวด");
           return false;
         }
         break;
@@ -470,23 +470,52 @@ export default function ShopRegisterPage() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    ประเภทร้านค้า *
+                    หมวดหมู่ร้านค้า * (เลือกได้หลายหมวด)
                   </label>
-                  <select
-                    value={formData.categoryId}
-                    onChange={(e) =>
-                      setFormData({ ...formData, categoryId: e.target.value })
-                    }
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    required
-                  >
-                    <option value="">เลือกประเภท</option>
-                    {categories.map((cat) => (
-                      <option key={cat.id} value={cat.id}>
-                        {cat.name}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="border border-gray-300 rounded-lg p-4 max-h-64 overflow-y-auto bg-gray-50">
+                    {categories.length === 0 ? (
+                      <p className="text-gray-500 text-sm">กำลังโหลดหมวดหมู่...</p>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {categories.map((cat) => (
+                          <label
+                            key={cat.id}
+                            className="flex items-center gap-2 p-3 bg-white rounded-lg hover:bg-blue-50 cursor-pointer border border-gray-200 transition"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={formData.categoryIds.includes(cat.id)}
+                              onChange={(e) => {
+                                setUserInteracted(true);
+                                if (e.target.checked) {
+                                  setFormData({
+                                    ...formData,
+                                    categoryIds: [...formData.categoryIds, cat.id],
+                                  });
+                                } else {
+                                  setFormData({
+                                    ...formData,
+                                    categoryIds: formData.categoryIds.filter(
+                                      (id) => id !== cat.id
+                                    ),
+                                  });
+                                }
+                              }}
+                              className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                            />
+                            <span className="text-sm font-medium text-gray-700">
+                              {cat.name}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  {formData.categoryIds.length > 0 && (
+                    <p className="text-sm text-green-600 mt-2">
+                      ✓ เลือกแล้ว {formData.categoryIds.length} หมวด
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -860,9 +889,12 @@ export default function ShopRegisterPage() {
                       <span className="font-medium">{formData.name}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">ประเภท:</span>
-                      <span className="font-medium">
-                        {categories.find((c) => c.id === formData.categoryId)?.name}
+                      <span className="text-gray-600">หมวดหมู่:</span>
+                      <span className="font-medium text-right">
+                        {formData.categoryIds
+                          .map((id) => categories.find((c) => c.id === id)?.name)
+                          .filter(Boolean)
+                          .join(", ") || "-"}
                       </span>
                     </div>
                     <div className="flex justify-between">

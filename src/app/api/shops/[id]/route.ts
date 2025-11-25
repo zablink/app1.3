@@ -1,5 +1,7 @@
 // src/app/api/shops/[id]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
 export async function GET(
@@ -161,6 +163,104 @@ export async function GET(
     return NextResponse.json(
       { 
         error: 'Failed to fetch shop details',
+        message: error instanceof Error ? error.message : 'Unknown error'
+      },
+      { status: 500 }
+    );
+  }
+}
+
+// PUT - Update shop
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const session = await getServerSession(authOptions);
+    const shopId = params.id;
+
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    // Check shop ownership
+    const shop = await prisma.shop.findUnique({
+      where: { id: shopId }
+    });
+
+    if (!shop) {
+      return NextResponse.json(
+        { error: 'Shop not found' },
+        { status: 404 }
+      );
+    }
+
+    if (shop.ownerId !== session.user.id && session.user.role !== 'ADMIN') {
+      return NextResponse.json(
+        { error: 'Forbidden' },
+        { status: 403 }
+      );
+    }
+
+    const body = await request.json();
+    const {
+      name,
+      description,
+      categoryIds,
+      address,
+      hasPhysicalStore,
+      showLocationOnMap,
+      lat,
+      lng,
+    } = body;
+
+    // Update shop with transaction
+    await prisma.$transaction(async (tx) => {
+      // Update basic shop info
+      await tx.shop.update({
+        where: { id: shopId },
+        data: {
+          name,
+          description,
+          address,
+          has_physical_store: hasPhysicalStore,
+          show_location_on_map: showLocationOnMap,
+          lat: lat || null,
+          lng: lng || null,
+        },
+      });
+
+      // Update categories - delete all existing and create new ones
+      if (categoryIds && Array.isArray(categoryIds)) {
+        // Delete existing category mappings
+        await tx.shopCategoryMapping.deleteMany({
+          where: { shopId },
+        });
+
+        // Create new category mappings
+        if (categoryIds.length > 0) {
+          await tx.shopCategoryMapping.createMany({
+            data: categoryIds.map((categoryId: string) => ({
+              shopId,
+              categoryId,
+            })),
+          });
+        }
+      }
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: 'Shop updated successfully',
+    });
+  } catch (error) {
+    console.error('Error updating shop:', error);
+    return NextResponse.json(
+      {
+        error: 'Failed to update shop',
         message: error instanceof Error ? error.message : 'Unknown error'
       },
       { status: 500 }
