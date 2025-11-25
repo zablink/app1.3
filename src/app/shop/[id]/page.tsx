@@ -39,6 +39,7 @@ type Shop = {
   shopeeUrl?: string | null;
   has_physical_store?: boolean;
   show_location_on_map?: boolean;
+  isMockup?: boolean;
 };
 
 type Review = {
@@ -411,9 +412,30 @@ export default function ShopDetailPage() {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
         
+        {/* Demo Badge - Top Right */}
+        {shop.isMockup && (
+          <div className="absolute top-4 right-4 bg-gradient-to-r from-orange-500 to-red-500 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-2 animate-pulse">
+            <span className="text-xl">🎨</span>
+            <span className="font-bold text-sm md:text-base">ร้านตัวอย่าง (DEMO)</span>
+          </div>
+        )}
+        
         {/* Shop Name Overlay */}
         <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8 text-white">
           <div className="max-w-7xl mx-auto">
+            {/* Demo Warning Banner */}
+            {shop.isMockup && (
+              <div className="mb-4 bg-orange-500/90 backdrop-blur-sm border-2 border-orange-300 rounded-lg p-4 flex items-start gap-3">
+                <span className="text-2xl flex-shrink-0">⚠️</span>
+                <div className="flex-1">
+                  <p className="font-bold text-lg mb-1">ร้านตัวอย่างเท่านั้น</p>
+                  <p className="text-sm text-orange-100">
+                    นี่คือร้านตัวอย่างสำหรับทดสอบระบบเท่านั้น ข้อมูลที่แสดงอาจไม่ตรงกับความเป็นจริง
+                  </p>
+                </div>
+              </div>
+            )}
+            
             <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-3">

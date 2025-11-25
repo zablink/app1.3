@@ -7,7 +7,7 @@ import Image from 'next/image';
 import { useSession, signOut } from 'next-auth/react';
 import { useLocation } from '@/contexts/LocationContext';
 import { useSiteSettings } from '@/hooks/useSiteSettings';
-import { MapPin, Menu, X, User, LogOut, Store, BarChart3 } from 'lucide-react';
+import { MapPin, Menu, X, User, LogOut, Store, LayoutDashboard, Grid3x3, Info, DollarSign, Search } from 'lucide-react';
 import LocationModal from '@/components/location/LocationModal';
 
 export default function Navbar() {
@@ -44,39 +44,76 @@ export default function Navbar() {
 
             {/* Desktop Menu */}
             <div className="hidden md:flex items-center gap-6">
-              {/* Location Display */}
-              <button
-                onClick={() => setShowLocationModal(true)}
-                className="flex items-center gap-2 text-sm text-gray-700 hover:text-blue-600 transition-colors"
-              >
-                <MapPin className="w-4 h-4" />
-                <span>
+              {/* Location Icon with Tooltip */}
+              <div className="relative group">
+                <button
+                  onClick={() => setShowLocationModal(true)}
+                  className="flex items-center justify-center w-10 h-10 text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                  title="เลือกพื้นที่"
+                >
+                  <MapPin className="w-5 h-5" />
+                </button>
+                
+                {/* Tooltip Bubble */}
+                <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-50 pointer-events-none">
                   {location ? (
-                    <>
+                    <span>
                       {location.tambonName && `${location.tambonName}, `}
                       {location.amphureName}
-                    </>
+                    </span>
                   ) : (
-                    'เลือกพื้นที่'
+                    <span>เลือกพื้นที่</span>
                   )}
-                </span>
-              </button>
+                  <div className="absolute left-1/2 -translate-x-1/2 -top-1 w-2 h-2 bg-gray-900 rotate-45"></div>
+                </div>
+              </div>
+
+              {/* Dashboard Icon with Tooltip */}
+              {session && (
+                <div className="relative group">
+                  <Link
+                    href="/dashboard"
+                    className="flex items-center justify-center w-10 h-10 text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                    title="Dashboard"
+                  >
+                    <LayoutDashboard className="w-5 h-5" />
+                  </Link>
+                  
+                  {/* Tooltip */}
+                  <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-50 pointer-events-none">
+                    <span>Dashboard</span>
+                    <div className="absolute left-1/2 -translate-x-1/2 -top-1 w-2 h-2 bg-gray-900 rotate-45"></div>
+                  </div>
+                </div>
+              )}
 
               {/* Navigation Links */}
-              <Link href="/" className="text-gray-700 hover:text-blue-600">
+              <Link href="/" className="text-gray-700 hover:text-blue-600 transition-colors">
                 หน้าแรก
               </Link>
               
-              <Link href="/search" className="text-gray-700 hover:text-blue-600">
-                ค้นหา
+              <Link href="/categories" className="text-gray-700 hover:text-blue-600 transition-colors flex items-center gap-1">
+                <Grid3x3 className="w-4 h-4" />
+                <span>หมวดหมู่</span>
+              </Link>
+              
+              <Link href="/search" className="text-gray-700 hover:text-blue-600 transition-colors flex items-center gap-1">
+                <Search className="w-4 h-4" />
+                <span>ค้นหา</span>
+              </Link>
+
+              <Link href="/pricing" className="text-gray-700 hover:text-blue-600 transition-colors flex items-center gap-1">
+                <DollarSign className="w-4 h-4" />
+                <span>แพ็คเกจ</span>
+              </Link>
+
+              <Link href="/about" className="text-gray-700 hover:text-blue-600 transition-colors flex items-center gap-1">
+                <Info className="w-4 h-4" />
+                <span>เกี่ยวกับเรา</span>
               </Link>
 
               {session ? (
                 <>
-                  <Link href="/dashboard" className="text-gray-700 hover:text-blue-600">
-                    <BarChart3 className="w-5 h-5" />
-                  </Link>
-
                   <div className="relative group">
                     <button className="flex items-center gap-2 text-gray-700 hover:text-blue-600">
                       {session.user?.image ? (
@@ -217,21 +254,50 @@ export default function Navbar() {
                 </Link>
 
                 <Link
-                  href="/search"
-                  className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
+                  href="/categories"
+                  className="block px-4 py-2 text-gray-700 hover:bg-gray-50 flex items-center gap-2"
                   onClick={() => setShowMobileMenu(false)}
                 >
-                  ค้นหา
+                  <Grid3x3 className="w-4 h-4" />
+                  <span>หมวดหมู่</span>
+                </Link>
+
+                <Link
+                  href="/search"
+                  className="block px-4 py-2 text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                  onClick={() => setShowMobileMenu(false)}
+                >
+                  <Search className="w-4 h-4" />
+                  <span>ค้นหา</span>
+                </Link>
+
+                <Link
+                  href="/pricing"
+                  className="block px-4 py-2 text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                  onClick={() => setShowMobileMenu(false)}
+                >
+                  <DollarSign className="w-4 h-4" />
+                  <span>แพ็คเกจ</span>
+                </Link>
+
+                <Link
+                  href="/about"
+                  className="block px-4 py-2 text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                  onClick={() => setShowMobileMenu(false)}
+                >
+                  <Info className="w-4 h-4" />
+                  <span>เกี่ยวกับเรา</span>
                 </Link>
 
                 {session ? (
                   <>
                     <Link
                       href="/dashboard"
-                      className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
+                      className="block px-4 py-2 text-gray-700 hover:bg-gray-50 flex items-center gap-2"
                       onClick={() => setShowMobileMenu(false)}
                     >
-                      Dashboard
+                      <LayoutDashboard className="w-4 h-4" />
+                      <span>Dashboard</span>
                     </Link>
 
                     <Link
