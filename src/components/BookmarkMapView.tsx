@@ -51,20 +51,64 @@ export default function BookmarkMapView({
   userLocation,
 }: BookmarkMapViewProps) {
   const mapRef = useRef<L.Map | null>(null);
+  const mapContainerRef = useRef<HTMLDivElement>(null);
   const markersRef = useRef<L.Marker[]>([]);
   const userMarkerRef = useRef<L.Marker | null>(null);
   const [selectedShop, setSelectedShop] = useState<Shop | null>(null);
   const [shopsWithDistance, setShopsWithDistance] = useState<
     (Shop & { distance?: number })[]
   >([]);
+  const [mapInitialized, setMapInitialized] = useState(false);
 
   // กรองร้านที่มีพิกัด
   const shopsWithCoords = bookmarks.filter(
     (shop) => shop.lat !== null && shop.lng !== null
   );
 
+  // สร้างแผนที่แค่ครั้งเดียว
   useEffect(() => {
-    if (shopsWithCoords.length === 0) return;
+    if (mapInitialized || !shopsWithCoords.length) return;
+
+    const centerLat = userLocation?.lat || shopsWithCoords[0].lat!;
+    const centerLng = userLocation?.lng || shopsWithCoords[0].lng!;
+
+    const map = L.map("bookmark-map", {
+      center: [centerLat, centerLng],
+      zoom: 14,
+      zoomControl: true,
+      scrollWheelZoom: true,
+      doubleClickZoom: true,
+      touchZoom: true,
+      dragging: true,
+      tap: true,
+    });
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      maxZoom: 19,
+      minZoom: 10,
+    }).addTo(map);
+
+    mapRef.current = map;
+    setMapInitialized(true);
+
+    return () => {
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+        setMapInitialized(false);
+      }
+    };
+  }, []);
+
+  // อัพเดต markers เมื่อข้อมูลเปลี่ยน
+  useEffect(() => {
+    if (!mapRef.current || !mapInitialized || shopsWithCoords.length === 0) return;
+
+  // อัพเดต markers เมื่อข้อมูลเปลี่ยน
+  useEffect(() => {
+    if (!mapRef.current || !mapInitialized || shopsWithCoords.length === 0) return;
 
     // คำนวณระยะทางถ้ามี user location
     const shopsData = shopsWithCoords.map((shop) => {
@@ -81,33 +125,6 @@ export default function BookmarkMapView({
     });
 
     setShopsWithDistance(shopsData);
-
-    // สร้างแผนที่
-    if (!mapRef.current) {
-      // ใช้ตำแหน่งผู้ใช้เป็นศูนย์กลาง หรือร้านแรก
-      const centerLat = userLocation?.lat || shopsWithCoords[0].lat!;
-      const centerLng = userLocation?.lng || shopsWithCoords[0].lng!;
-
-      const map = L.map("bookmark-map", {
-        center: [centerLat, centerLng],
-        zoom: 14,
-        zoomControl: true,
-        scrollWheelZoom: true,
-        doubleClickZoom: true,
-        touchZoom: true,
-        dragging: true,
-        tap: true,
-      });
-
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution:
-          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-        maxZoom: 19,
-        minZoom: 10,
-      }).addTo(map);
-
-      mapRef.current = map;
-    }
 
     // ลบ markers เก่าทั้งหมด
     markersRef.current.forEach((marker) => marker.remove());
@@ -199,19 +216,21 @@ export default function BookmarkMapView({
 
       userMarkerRef.current = userMarker;
 
-      // ปรับ bounds ให้เห็นทั้งตำแหน่งผู้ใช้และร้านทั้งหมด
-      const bounds = L.latLngBounds([
-        [userLocation.lat, userLocation.lng],
-        ...shopsData.map((s) => [s.lat!, s.lng!] as [number, number]),
-      ]);
-      mapRef.current.fitBounds(bounds, { padding: [50, 50] });
+      // ปรับ bounds ให้เห็นทั้งตำแหน่งผู้ใช้และร้านทั้งหมด (ทำครั้งเดียวตอนโหลด)
+      if (shopsData.length > 0) {
+        const bounds = L.latLngBounds([
+          [userLocation.lat, userLocation.lng],
+          ...shopsData.map((s) => [s.lat!, s.lng!] as [number, number]),
+        ]);
+        mapRef.current.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
+      }
     }
 
     return () => {
       markersRef.current.forEach((marker) => marker.remove());
       if (userMarkerRef.current) userMarkerRef.current.remove();
     };
-  }, [shopsWithCoords, userLocation]);
+  }, [shopsWithCoords, userLocation, mapInitialized]);
 
   const handleNavigate = (shop: Shop) => {
     if (shop.lat && shop.lng) {
