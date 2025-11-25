@@ -44,6 +44,31 @@ export default function Navbar() {
 
             {/* Desktop Menu */}
             <div className="hidden md:flex items-center gap-6">
+              {/* Navigation Links */}
+              <Link href="/" className="text-gray-700 hover:text-blue-600 transition-colors">
+                หน้าแรก
+              </Link>
+              
+              <Link href="/categories" className="text-gray-700 hover:text-blue-600 transition-colors flex items-center gap-1">
+                <Grid3x3 className="w-4 h-4" />
+                <span>หมวดหมู่</span>
+              </Link>
+              
+              <Link href="/search" className="text-gray-700 hover:text-blue-600 transition-colors flex items-center gap-1">
+                <Search className="w-4 h-4" />
+                <span>ค้นหา</span>
+              </Link>
+
+              <Link href="/pricing" className="text-gray-700 hover:text-blue-600 transition-colors flex items-center gap-1">
+                <span>฿</span>
+                <span>แพ็คเกจ</span>
+              </Link>
+
+              <Link href="/about" className="text-gray-700 hover:text-blue-600 transition-colors flex items-center gap-1">
+                <Info className="w-4 h-4" />
+                <span>เกี่ยวกับเรา</span>
+              </Link>
+
               {/* Location Icon with Tooltip */}
               <div className="relative group">
                 <button
@@ -86,31 +111,6 @@ export default function Navbar() {
                   </div>
                 </div>
               )}
-
-              {/* Navigation Links */}
-              <Link href="/" className="text-gray-700 hover:text-blue-600 transition-colors">
-                หน้าแรก
-              </Link>
-              
-              <Link href="/categories" className="text-gray-700 hover:text-blue-600 transition-colors flex items-center gap-1">
-                <Grid3x3 className="w-4 h-4" />
-                <span>หมวดหมู่</span>
-              </Link>
-              
-              <Link href="/search" className="text-gray-700 hover:text-blue-600 transition-colors flex items-center gap-1">
-                <Search className="w-4 h-4" />
-                <span>ค้นหา</span>
-              </Link>
-
-              <Link href="/pricing" className="text-gray-700 hover:text-blue-600 transition-colors flex items-center gap-1">
-                <DollarSign className="w-4 h-4" />
-                <span>แพ็คเกจ</span>
-              </Link>
-
-              <Link href="/about" className="text-gray-700 hover:text-blue-600 transition-colors flex items-center gap-1">
-                <Info className="w-4 h-4" />
-                <span>เกี่ยวกับเรา</span>
-              </Link>
 
               {session ? (
                 <>
@@ -232,19 +232,6 @@ export default function Navbar() {
           {showMobileMenu && (
             <div className="md:hidden py-4 border-t">
               <div className="space-y-2">
-                <button
-                  onClick={() => {
-                    setShowLocationModal(true);
-                    setShowMobileMenu(false);
-                  }}
-                  className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                >
-                  <MapPin className="w-4 h-4" />
-                  <span className="text-sm">
-                    {location ? `${location.tambonName}, ${location.amphureName}` : 'เลือกพื้นที่'}
-                  </span>
-                </button>
-
                 <Link
                   href="/"
                   className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
@@ -276,7 +263,7 @@ export default function Navbar() {
                   className="block px-4 py-2 text-gray-700 hover:bg-gray-50 flex items-center gap-2"
                   onClick={() => setShowMobileMenu(false)}
                 >
-                  <DollarSign className="w-4 h-4" />
+                  <span>฿</span>
                   <span>แพ็คเกจ</span>
                 </Link>
 
@@ -288,6 +275,19 @@ export default function Navbar() {
                   <Info className="w-4 h-4" />
                   <span>เกี่ยวกับเรา</span>
                 </Link>
+
+                <button
+                  onClick={() => {
+                    setShowLocationModal(true);
+                    setShowMobileMenu(false);
+                  }}
+                  className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                >
+                  <MapPin className="w-4 h-4" />
+                  <span className="text-sm">
+                    {location ? `${location.tambonName}, ${location.amphureName}` : 'เลือกพื้นที่'}
+                  </span>
+                </button>
 
                 {session ? (
                   <>
