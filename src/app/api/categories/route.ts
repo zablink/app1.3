@@ -5,8 +5,9 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
 export async function GET() {
+  console.log('🚀 GET /api/categories called');
   try {
-    console.log('Start GET categories');
+    console.log('📊 Start GET categories');
     const categories = await prisma.shopCategory.findMany({
       select: {
         id: true,
@@ -18,13 +19,15 @@ export async function GET() {
         name: 'asc',
       },
     });
+    
+    console.log('✅ Found categories:', categories.length);
 
     return NextResponse.json({
       success: true,
       categories,
     });
   } catch (error) {
-    console.error('Error fetching categories:', error);
+    console.error('💥 Error fetching categories:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to fetch categories' },
       { status: 500 }
