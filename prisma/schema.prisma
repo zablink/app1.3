@@ -8,17 +8,18 @@ datasource db {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  email         String?   @unique
+  id            String         @id @default(cuid())
+  email         String?        @unique
   emailVerified DateTime?
   name          String?
-  createdAt     DateTime  @default(now())
+  createdAt     DateTime       @default(now())
   image         String?
   password      String?
-  role          Role      @default(USER)
-  updatedAt     DateTime  @updatedAt
+  role          Role           @default(USER)
+  updatedAt     DateTime       @updatedAt
   accounts      Account[]
   sessions      Session[]
+  bookmarks     UserBookmark[]
 
   @@map("users")
 }
@@ -60,6 +61,7 @@ model Shop {
   shop_stats           shop_stats[]
   shop_subscriptions   ShopSubscription[]
   token_wallets        TokenWallet?
+  bookmarkedBy         UserBookmark[]
 
   @@index([amphure_id], map: "idx_shop_amphure_id")
   @@index([location], map: "idx_shop_location_gix", type: Gist)
@@ -944,6 +946,24 @@ model verification_tokens {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+model UserBookmark {
+  id           String   @id @default(cuid())
+  userId       String   @map("user_id")
+  shopId       String   @map("shop_id")
+  notes        String?  // บันทึกส่วนตัว เช่น "อยากมาลองเมนูนี้"
+  tags         String[] // tags สำหรับจัดหมวดหมู่ เช่น ["favorite", "must_try"]
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shop         Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, shopId])
+  @@index([userId])
+  @@index([shopId])
+  @@index([createdAt])
+  @@map("user_bookmarks")
 }
 
 model withdrawals {

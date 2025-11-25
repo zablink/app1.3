@@ -6,7 +6,18 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { Heart, MapPin, Star, Trash2, ExternalLink } from "lucide-react";
+import { Heart, MapPin, Star, Trash2, ExternalLink, Map, List } from "lucide-react";
+import dynamic from "next/dynamic";
+
+const BookmarkMapView = dynamic(() => import("@/components/BookmarkMapView"), {
+  ssr: false,
+  loading: () => (
+    <div className="bg-white rounded-lg shadow-sm p-8 text-center">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+      <p className="mt-4 text-gray-600">กำลังโหลดแผนที่...</p>
+    </div>
+  ),
+});
 
 interface BookmarkedShop {
   id: string;
@@ -16,7 +27,11 @@ interface BookmarkedShop {
   rating: number;
   reviewCount: number;
   address: string;
+  lat: number | null;
+  lng: number | null;
   bookmarkedAt: string;
+  notes?: string;
+  tags?: string[];
 }
 
 export default function BookmarksPage() {
@@ -25,6 +40,12 @@ export default function BookmarksPage() {
   const [bookmarks, setBookmarks] = useState<BookmarkedShop[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "recent" | "rating">("all");
+  const [viewMode, setViewMode] = useState<"list" | "map">("list");
+  const [userLocation, setUserLocation] = useState<{
+    lat: number;
+    lng: number;
+  } | null>(null);
+  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -83,6 +104,31 @@ export default function BookmarksPage() {
     }
   };
 
+  const handleGetLocation = () => {
+    if (!navigator.geolocation) {
+      alert("เบราว์เซอร์ของคุณไม่รองรับ Geolocation");
+      return;
+    }
+
+    setIsLoadingLocation(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setUserLocation({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        });
+        setIsLoadingLocation(false);
+        setViewMode("map");
+      },
+      (error) => {
+        console.error("Error getting location:", error);
+        alert("ไม่สามารถเข้าถึงตำแหน่งของคุณได้ กรุณาอนุญาตการเข้าถึงตำแหน่ง");
+        setIsLoadingLocation(false);
+      },
+      { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+    );
+  };
+
   if (status === "loading" || isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -114,43 +160,90 @@ export default function BookmarksPage() {
           </div>
         </div>
 
-        {/* Filters */}
-        <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
-          <div className="flex items-center gap-2">
+        {/* View Mode Toggle & Filters */}
+        <div className="bg-white rounded-lg shadow-sm p-4 mb-6 space-y-4">
+          {/* View Mode Toggle */}
+          <div className="flex items-center gap-2 pb-4 border-b">
             <span className="text-sm font-medium text-gray-700 mr-2">
-              เรียงตาม:
+              มุมมอง:
             </span>
             <button
-              onClick={() => setFilter("all")}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
-                filter === "all"
+              onClick={() => setViewMode("list")}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition ${
+                viewMode === "list"
                   ? "bg-blue-600 text-white"
                   : "bg-gray-100 text-gray-700 hover:bg-gray-200"
               }`}
             >
-              ทั้งหมด
+              <List size={16} />
+              รายการ
             </button>
             <button
-              onClick={() => setFilter("recent")}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
-                filter === "recent"
+              onClick={() => {
+                if (!userLocation) {
+                  handleGetLocation();
+                } else {
+                  setViewMode("map");
+                }
+              }}
+              disabled={isLoadingLocation}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition ${
+                viewMode === "map"
                   ? "bg-blue-600 text-white"
                   : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
+              } ${isLoadingLocation ? "opacity-50 cursor-not-allowed" : ""}`}
             >
-              ล่าสุด
+              <Map size={16} />
+              {isLoadingLocation ? "กำลังโหลด..." : "แผนที่"}
             </button>
-            <button
-              onClick={() => setFilter("rating")}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
-                filter === "rating"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
-            >
-              คะแนนสูงสุด
-            </button>
+            {viewMode === "map" && userLocation && (
+              <button
+                onClick={handleGetLocation}
+                className="ml-auto px-4 py-2 bg-green-100 text-green-700 rounded-lg text-sm font-medium hover:bg-green-200 transition"
+              >
+                🔄 อัปเดตตำแหน่ง
+              </button>
+            )}
           </div>
+
+          {/* Filters - แสดงเฉพาะใน list mode */}
+          {viewMode === "list" && (
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-gray-700 mr-2">
+                เรียงตาม:
+              </span>
+              <button
+                onClick={() => setFilter("all")}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                  filter === "all"
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}
+              >
+                ทั้งหมด
+              </button>
+              <button
+                onClick={() => setFilter("recent")}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                  filter === "recent"
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}
+              >
+                ล่าสุด
+              </button>
+              <button
+                onClick={() => setFilter("rating")}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                  filter === "rating"
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}
+              >
+                คะแนนสูงสุด
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Bookmarked Shops */}
@@ -171,6 +264,8 @@ export default function BookmarksPage() {
               ค้นหาร้านอาหาร
             </Link>
           </div>
+        ) : viewMode === "map" ? (
+          <BookmarkMapView bookmarks={filteredBookmarks} userLocation={userLocation} />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredBookmarks.map((shop) => (
