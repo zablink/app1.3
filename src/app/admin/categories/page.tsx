@@ -17,15 +17,89 @@ type Category = {
 };
 
 const EMOJI_OPTIONS = [
-  '🍔', '🍕', '🍗', '🍖', '🌭', '🥪', '🌮', '🌯', '🥙', '🥗',
-  '🍝', '🍜', '🍲', '🍛', '🍣', '🍱', '🥟', '🍢', '🍡', '🍧',
-  '🍨', '🍦', '🥧', '🧁', '🍰', '🎂', '🍮', '🍭', '🍬', '🍫',
-  '🍿', '🍩', '🍪', '🌰', '🥜', '🍯', '🥛', '🍼', '☕', '🍵',
-  '🧃', '🥤', '🍶', '🍺', '🍻', '🥂', '🍷', '🥃', '🍸', '🍹',
-  '🍾', '🧉', '🧊', '🥢', '🍴', '🥄', '🔪', '🏺', '🎨', '👗',
-  '📚', '🏠', '🔧', '💻', '🎮', '🏋️', '🌺', '🐾', '🚗', '✈️',
-  '🏨', '💼', '📦', '🎵', '🎬', '📷', '💍', '⚽', '🏊', '🎯',
-  '🌟', '💊', '🔬'
+  { emoji: '🍔', keywords: 'burger hamburger อาหาร food' },
+  { emoji: '🍕', keywords: 'pizza พิซซ่า อาหาร food' },
+  { emoji: '🍗', keywords: 'chicken ไก่ทอด อาหาร food' },
+  { emoji: '🍖', keywords: 'meat steak เนื้อ อาหาร food' },
+  { emoji: '🌭', keywords: 'hotdog ฮอตดอก อาหาร food' },
+  { emoji: '🥪', keywords: 'sandwich แซนวิช อาหาร food' },
+  { emoji: '🌮', keywords: 'taco ทาโก้ อาหาร food' },
+  { emoji: '🌯', keywords: 'burrito อาหาร food' },
+  { emoji: '🥙', keywords: 'kebab อาหาร food' },
+  { emoji: '🥗', keywords: 'salad สลัด อาหาร food' },
+  { emoji: '🍝', keywords: 'pasta สปาเกตตี้ อาหาร food' },
+  { emoji: '🍜', keywords: 'noodle ramen ก่วยเตี๋ยว บะหมี่ อาหาร food' },
+  { emoji: '🍲', keywords: 'soup pot ซุป อาหาร food' },
+  { emoji: '🍛', keywords: 'curry แกง อาหาร food' },
+  { emoji: '🍣', keywords: 'sushi ซูชิ อาหาร food' },
+  { emoji: '🍱', keywords: 'bento เบนโตะ อาหาร food' },
+  { emoji: '🥟', keywords: 'dumpling เกี๊ยว อาหาร food' },
+  { emoji: '🍢', keywords: 'oden อาหาร food' },
+  { emoji: '🍡', keywords: 'dango ของหวาน dessert' },
+  { emoji: '🍧', keywords: 'shaved ice น้ำแข็งใส ของหวาน dessert' },
+  { emoji: '🍨', keywords: 'ice cream ไอศกรีม ของหวาน dessert' },
+  { emoji: '🍦', keywords: 'soft serve ไอศกรีม ของหวาน dessert' },
+  { emoji: '🥧', keywords: 'pie พาย ของหวาน dessert' },
+  { emoji: '🧁', keywords: 'cupcake คัพเค้ก ของหวาน dessert' },
+  { emoji: '🍰', keywords: 'cake เค้ก ของหวาน dessert' },
+  { emoji: '🎂', keywords: 'birthday cake เค้ก ของหวาน dessert' },
+  { emoji: '🍮', keywords: 'pudding พุดดิ้ง ของหวาน dessert' },
+  { emoji: '🍭', keywords: 'lollipop อมยิ้ม ของหวาน dessert' },
+  { emoji: '🍬', keywords: 'candy ลูกอม ของหวาน dessert' },
+  { emoji: '🍫', keywords: 'chocolate ช็อกโกแลต ของหวาน dessert' },
+  { emoji: '🍿', keywords: 'popcorn ป๊อปคอร์น snack ขนม' },
+  { emoji: '🍩', keywords: 'donut โดนัท ของหวาน dessert' },
+  { emoji: '🍪', keywords: 'cookie คุกกี้ ของหวาน dessert' },
+  { emoji: '🌰', keywords: 'chestnut snack ขนม' },
+  { emoji: '🥜', keywords: 'peanut ถ่วว snack ขนม' },
+  { emoji: '🍯', keywords: 'honey น้ำผึ้ง' },
+  { emoji: '🥛', keywords: 'milk นม เครื่องดื่ม drink' },
+  { emoji: '🍼', keywords: 'baby bottle นม เครื่องดื่ม drink' },
+  { emoji: '☕', keywords: 'coffee กาแฟ เครื่องดื่ม drink cafe' },
+  { emoji: '🍵', keywords: 'tea ชา เครื่องดื่ม drink' },
+  { emoji: '🧃', keywords: 'juice น้ำผลไม้ เครื่องดื่ม drink' },
+  { emoji: '🥤', keywords: 'soda soft drink น้ำอัดลม เครื่องดื่ม drink' },
+  { emoji: '🍶', keywords: 'sake เครื่องดื่ม drink alcohol' },
+  { emoji: '🍺', keywords: 'beer เบียร์ เครื่องดื่ม drink alcohol' },
+  { emoji: '🍻', keywords: 'beers cheers เบียร์ เครื่องดื่ม drink alcohol' },
+  { emoji: '🥂', keywords: 'champagne wine เครื่องดื่ม drink alcohol' },
+  { emoji: '🍷', keywords: 'wine ไวน์ เครื่องดื่ม drink alcohol' },
+  { emoji: '🥃', keywords: 'whiskey เครื่องดื่ม drink alcohol' },
+  { emoji: '🍸', keywords: 'cocktail ค็อกเทล เครื่องดื่ม drink alcohol' },
+  { emoji: '🍹', keywords: 'tropical drink ค็อกเทล เครื่องดื่ม drink alcohol' },
+  { emoji: '🍾', keywords: 'champagne เครื่องดื่ม drink alcohol' },
+  { emoji: '🧉', keywords: 'mate tea เครื่องดื่ม drink' },
+  { emoji: '🧊', keywords: 'ice น้ำแข็ง เครื่องดื่ม drink' },
+  { emoji: '🥢', keywords: 'chopsticks ตะเกียบ' },
+  { emoji: '🍴', keywords: 'fork knife ส้อม มีด' },
+  { emoji: '🥄', keywords: 'spoon ช้อน' },
+  { emoji: '🔪', keywords: 'knife มีด' },
+  { emoji: '🏺', keywords: 'vase แจกัน' },
+  { emoji: '🎨', keywords: 'art ศิลปะ palette' },
+  { emoji: '👗', keywords: 'dress เสื้อผ้า fashion clothing' },
+  { emoji: '📚', keywords: 'books หนังสือ education' },
+  { emoji: '🏠', keywords: 'home house บ้าน' },
+  { emoji: '🔧', keywords: 'tool wrench ซ่อม maintenance' },
+  { emoji: '💻', keywords: 'computer laptop คอมพิวเตอร์ tech technology' },
+  { emoji: '🎮', keywords: 'game gaming เกม' },
+  { emoji: '🏋️', keywords: 'gym fitness exercise ออกกำลังกาย' },
+  { emoji: '🌺', keywords: 'flower ดอกไม้ beauty' },
+  { emoji: '🐾', keywords: 'pet สัตว์เลี้ยง animal' },
+  { emoji: '🚗', keywords: 'car รถยนต์ vehicle' },
+  { emoji: '✈️', keywords: 'plane travel เที่ยว transport' },
+  { emoji: '🏨', keywords: 'hotel โรงแรม accommodation' },
+  { emoji: '💼', keywords: 'business briefcase ธุรกิจ' },
+  { emoji: '📦', keywords: 'package box delivery ส่งของ' },
+  { emoji: '🎵', keywords: 'music เพลง' },
+  { emoji: '🎬', keywords: 'movie film cinema หนัง' },
+  { emoji: '📷', keywords: 'camera photo กล้อง' },
+  { emoji: '💍', keywords: 'ring diamond แหวน jewelry' },
+  { emoji: '⚽', keywords: 'soccer football กีฬา sport' },
+  { emoji: '🏊', keywords: 'swim swimming ว่ายน้ำ sport' },
+  { emoji: '🎯', keywords: 'target goal' },
+  { emoji: '🌟', keywords: 'star ดาว' },
+  { emoji: '💊', keywords: 'pill medicine ยา health' },
+  { emoji: '🔬', keywords: 'microscope science วิทยาศาสตร์' }
 ];
 
 export default function AdminCategoriesPage() {
@@ -38,6 +112,7 @@ export default function AdminCategoriesPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [emojiSearch, setEmojiSearch] = useState('');
   const [formData, setFormData] = useState({
     name: '',
     slug: '',
@@ -58,6 +133,7 @@ export default function AdminCategoriesPage() {
         icon: editingCategory.icon || '📦',
         description: editingCategory.description || ''
       });
+      setEmojiSearch(''); // Reset search when opening form
     } else if (showAddForm) {
       setFormData({
         name: '',
@@ -65,6 +141,7 @@ export default function AdminCategoriesPage() {
         icon: '📦',
         description: ''
       });
+      setEmojiSearch(''); // Reset search when opening form
     }
   }, [editingCategory, showAddForm]);
 
@@ -359,22 +436,43 @@ export default function AdminCategoriesPage() {
                     </label>
                     <div className="flex items-center gap-4 mb-3">
                       <div className="text-5xl">{formData.icon}</div>
-                      <div className="text-sm text-gray-500">เลือกไอคอนด้านล่าง</div>
+                      <div className="flex-1">
+                        <input
+                          type="text"
+                          value={emojiSearch}
+                          onChange={(e) => setEmojiSearch(e.target.value)}
+                          placeholder="ค้นหา... เช่น อาหาร, coffee, กาแฟ"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                        />
+                      </div>
                     </div>
                     <div className="grid grid-cols-10 gap-2 p-4 bg-gray-50 rounded-lg max-h-48 overflow-y-auto">
-                      {EMOJI_OPTIONS.map((emoji) => (
+                      {EMOJI_OPTIONS
+                        .filter(item => 
+                          emojiSearch === '' || 
+                          item.keywords.toLowerCase().includes(emojiSearch.toLowerCase()) ||
+                          item.emoji.includes(emojiSearch)
+                        )
+                        .map((item) => (
                         <button
-                          key={emoji}
+                          key={item.emoji}
                           type="button"
-                          onClick={() => setFormData({ ...formData, icon: emoji })}
+                          onClick={() => setFormData({ ...formData, icon: item.emoji })}
                           className={`text-2xl p-2 rounded hover:bg-gray-200 transition ${
-                            formData.icon === emoji ? 'bg-blue-100 ring-2 ring-blue-500' : ''
+                            formData.icon === item.emoji ? 'bg-blue-100 ring-2 ring-blue-500' : ''
                           }`}
+                          title={item.keywords}
                         >
-                          {emoji}
+                          {item.emoji}
                         </button>
                       ))}
                     </div>
+                    {emojiSearch && EMOJI_OPTIONS.filter(item => 
+                      item.keywords.toLowerCase().includes(emojiSearch.toLowerCase()) ||
+                      item.emoji.includes(emojiSearch)
+                    ).length === 0 && (
+                      <p className="text-sm text-gray-500 mt-2 text-center">ไม่พบไอคอนที่ค้นหา</p>
+                    )}
                   </div>
 
                   {/* Name */}
