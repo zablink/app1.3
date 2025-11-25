@@ -6,6 +6,7 @@ import { prisma } from '@/lib/prisma';
 
 export async function GET() {
   try {
+    console.log('Start GET categories');
     const categories = await prisma.shopCategory.findMany({
       select: {
         id: true,
