@@ -130,8 +130,31 @@ export default function AdminShopsPage() {
   const [isAssigning, setIsAssigning] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
+  // Bulk selection states
+  const [selectedShopIds, setSelectedShopIds] = useState<string[]>([]);
+  const [bulkAction, setBulkAction] = useState<'categories' | 'package' | 'status' | null>(null);
+  const [bulkStatus, setBulkStatus] = useState('APPROVED');
+  const [isBulkProcessing, setIsBulkProcessing] = useState(false);
+
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
     setToast({ message, type });
+  };
+
+  // Bulk selection handlers
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedShopIds(filteredShops.map(s => s.id));
+    } else {
+      setSelectedShopIds([]);
+    }
+  };
+
+  const handleSelectShop = (shopId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedShopIds([...selectedShopIds, shopId]);
+    } else {
+      setSelectedShopIds(selectedShopIds.filter(id => id !== shopId));
+    }
   };
 
   useEffect(() => {
@@ -466,6 +489,139 @@ export default function AdminShopsPage() {
     }
   };
 
+  // Bulk action handlers
+  const handleBulkUpdateCategories = async () => {
+    if (selectedShopIds.length === 0) return;
+
+    setIsBulkProcessing(true);
+    try {
+      const res = await fetch('/api/admin/shops/bulk-update-categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          shopIds: selectedShopIds,
+          categoryIds: selectedCategoryIds 
+        }),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        showToast(data.message, 'success');
+        setBulkAction(null);
+        setSelectedShopIds([]);
+        setSelectedCategoryIds([]);
+        await loadShops();
+      } else {
+        showToast(data.error || 'เกิดข้อผิดพลาด', 'error');
+      }
+    } catch (error) {
+      console.error('Error bulk updating categories:', error);
+      showToast('เกิดข้อผิดพลาด', 'error');
+    } finally {
+      setIsBulkProcessing(false);
+    }
+  };
+
+  const handleBulkAssignPackage = async () => {
+    if (selectedShopIds.length === 0 || !selectedPackageId) return;
+
+    setIsBulkProcessing(true);
+    try {
+      const res = await fetch('/api/admin/shops/bulk-assign-package', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          shopIds: selectedShopIds,
+          packageId: selectedPackageId,
+          tokenAmount: parseInt(tokenAmount) || 0,
+          subscriptionDays: parseInt(subscriptionDays) || 30,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        showToast(data.message, 'success');
+        setBulkAction(null);
+        setSelectedShopIds([]);
+        setSelectedPackageId('');
+        setTokenAmount('0');
+        setSubscriptionDays('30');
+        await loadShops();
+      } else {
+        showToast(data.error || 'เกิดข้อผิดพลาด', 'error');
+      }
+    } catch (error) {
+      console.error('Error bulk assigning package:', error);
+      showToast('เกิดข้อผิดพลาด', 'error');
+    } finally {
+      setIsBulkProcessing(false);
+    }
+  };
+
+  const handleBulkChangeStatus = async (newStatus: string) => {
+    if (selectedShopIds.length === 0) return;
+
+    setIsBulkProcessing(true);
+    try {
+      const res = await fetch('/api/admin/shops/bulk-update-status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          shopIds: selectedShopIds,
+          status: newStatus 
+        }),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        showToast(data.message, 'success');
+        setSelectedShopIds([]);
+        await loadShops();
+      } else {
+        showToast(data.error || 'เกิดข้อผิดพลาด', 'error');
+      }
+    } catch (error) {
+      console.error('Error bulk changing status:', error);
+      showToast('เกิดข้อผิดพลาด', 'error');
+    } finally {
+      setIsBulkProcessing(false);
+    }
+  };
+
+  const handleBulkToggleMockup = async (isMockup: boolean) => {
+    if (selectedShopIds.length === 0) return;
+
+    setIsBulkProcessing(true);
+    try {
+      const res = await fetch('/api/admin/shops/bulk-toggle-mockup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          shopIds: selectedShopIds,
+          isMockup 
+        }),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        showToast(data.message, 'success');
+        setSelectedShopIds([]);
+        await loadShops();
+      } else {
+        showToast(data.error || 'เกิดข้อผิดพลาด', 'error');
+      }
+    } catch (error) {
+      console.error('Error bulk toggling mockup:', error);
+      showToast('เกิดข้อผิดพลาด', 'error');
+    } finally {
+      setIsBulkProcessing(false);
+    }
+  };
+
   const filteredShops = shops.filter(shop =>
     shop.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -563,6 +719,14 @@ export default function AdminShopsPage() {
             <table className="w-full">
               <thead className="bg-gray-50 border-b">
                 <tr>
+                  <th className="px-4 py-3 text-center">
+                    <input
+                      type="checkbox"
+                      checked={selectedShopIds.length === filteredShops.length && filteredShops.length > 0}
+                      onChange={(e) => handleSelectAll(e.target.checked)}
+                      className="w-4 h-4 text-orange-600 rounded focus:ring-orange-500"
+                    />
+                  </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     ร้านค้า
                   </th>
@@ -608,6 +772,14 @@ export default function AdminShopsPage() {
                     
                     return (
                       <tr key={shop.id} className={`hover:bg-gray-100 transition-colors ${styles.bg} ${styles.border}`}>
+                      <td className="px-4 py-4 text-center">
+                        <input
+                          type="checkbox"
+                          checked={selectedShopIds.includes(shop.id)}
+                          onChange={(e) => handleSelectShop(shop.id, e.target.checked)}
+                          className="w-4 h-4 text-orange-600 rounded focus:ring-orange-500"
+                        />
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="flex-shrink-0 h-10 w-10 bg-gray-200 rounded-full flex items-center justify-center">
@@ -969,6 +1141,283 @@ export default function AdminShopsPage() {
                   )}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Actions Toolbar */}
+      {selectedShopIds.length > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-2xl z-40 border-t-4 border-orange-600">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <span className="font-bold text-lg flex items-center gap-2">
+                  <CheckCircle className="w-5 h-5" />
+                  เลือก {selectedShopIds.length} ร้าน
+                </span>
+                <button
+                  onClick={() => setSelectedShopIds([])}
+                  className="px-3 py-1.5 bg-white/20 hover:bg-white/30 rounded-lg text-sm font-medium transition-colors flex items-center gap-1"
+                >
+                  <X className="w-4 h-4" />
+                  ยกเลิก
+                </button>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    setSelectedCategoryIds([]);
+                    setBulkAction('categories');
+                  }}
+                  disabled={isBulkProcessing}
+                  className="px-4 py-2 bg-white text-orange-600 rounded-lg hover:bg-gray-100 flex items-center gap-2 font-medium transition-all disabled:opacity-50"
+                >
+                  <Tag className="w-4 h-4" />
+                  จัดการหมวดหมู่
+                </button>
+                
+                <button
+                  onClick={() => {
+                    setSelectedPackageId('');
+                    setTokenAmount('0');
+                    setSubscriptionDays('30');
+                    setBulkAction('package');
+                  }}
+                  disabled={isBulkProcessing}
+                  className="px-4 py-2 bg-white text-orange-600 rounded-lg hover:bg-gray-100 flex items-center gap-2 font-medium transition-all disabled:opacity-50"
+                >
+                  <Package className="w-4 h-4" />
+                  มอบหมาย Package
+                </button>
+                
+                <div className="relative group">
+                  <button 
+                    disabled={isBulkProcessing}
+                    className="px-4 py-2 bg-white text-orange-600 rounded-lg hover:bg-gray-100 flex items-center gap-2 font-medium transition-all disabled:opacity-50"
+                  >
+                    <CheckCircle className="w-4 h-4" />
+                    เปลี่ยนสถานะ
+                    <ChevronRight className="w-3 h-3" />
+                  </button>
+                  <div className="absolute bottom-full right-0 mb-2 hidden group-hover:block bg-white rounded-lg shadow-xl py-2 min-w-[200px] border border-gray-200">
+                    <button 
+                      onClick={() => handleBulkChangeStatus('APPROVED')} 
+                      className="w-full px-4 py-2 text-left hover:bg-green-50 text-green-600 font-medium flex items-center gap-2"
+                    >
+                      <CheckCircle className="w-4 h-4" />
+                      อนุมัติ
+                    </button>
+                    <button 
+                      onClick={() => handleBulkChangeStatus('PENDING')} 
+                      className="w-full px-4 py-2 text-left hover:bg-yellow-50 text-yellow-600 font-medium flex items-center gap-2"
+                    >
+                      <Filter className="w-4 h-4" />
+                      รออนุมัติ
+                    </button>
+                    <button 
+                      onClick={() => handleBulkChangeStatus('REJECTED')} 
+                      className="w-full px-4 py-2 text-left hover:bg-red-50 text-red-600 font-medium flex items-center gap-2"
+                    >
+                      <XCircle className="w-4 h-4" />
+                      ปฏิเสธ
+                    </button>
+                    <button 
+                      onClick={() => handleBulkChangeStatus('SUSPENDED')} 
+                      className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-600 font-medium flex items-center gap-2"
+                    >
+                      <XCircle className="w-4 h-4" />
+                      ระงับ
+                    </button>
+                  </div>
+                </div>
+                
+                <button
+                  onClick={() => handleBulkToggleMockup(true)}
+                  disabled={isBulkProcessing}
+                  className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 flex items-center gap-2 font-medium transition-all disabled:opacity-50"
+                >
+                  <TestTube className="w-4 h-4" />
+                  DEMO
+                </button>
+                
+                <button
+                  onClick={() => handleBulkToggleMockup(false)}
+                  disabled={isBulkProcessing}
+                  className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 flex items-center gap-2 font-medium transition-all disabled:opacity-50"
+                >
+                  <XCircle className="w-4 h-4" />
+                  ยกเลิก DEMO
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Categories Modal */}
+      {bulkAction === 'categories' && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+            <div className="flex items-center justify-between p-6 border-b">
+              <h3 className="text-lg font-semibold text-gray-900">
+                จัดการหมวดหมู่ ({selectedShopIds.length} ร้าน)
+              </h3>
+              <button
+                onClick={() => setBulkAction(null)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6">
+              <div className="mb-4">
+                <p className="text-sm text-gray-600 mb-3">
+                  เลือกหมวดหมู่ที่ต้องการกำหนดให้กับร้านค้าทั้งหมดที่เลือก
+                </p>
+              </div>
+              <div className="border rounded-lg p-3 max-h-96 overflow-y-auto space-y-2">
+                {allCategories.map((category) => (
+                  <label key={category.id} className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={selectedCategoryIds.includes(category.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedCategoryIds([...selectedCategoryIds, category.id]);
+                        } else {
+                          setSelectedCategoryIds(selectedCategoryIds.filter(id => id !== category.id));
+                        }
+                      }}
+                      className="w-4 h-4 text-purple-600 rounded focus:ring-purple-500"
+                    />
+                    <span className="text-sm">
+                      {category.icon} {category.name}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </div>
+            <div className="p-6 border-t flex gap-3">
+              <button
+                onClick={() => setBulkAction(null)}
+                disabled={isBulkProcessing}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+              >
+                ยกเลิก
+              </button>
+              <button
+                onClick={handleBulkUpdateCategories}
+                disabled={isBulkProcessing}
+                className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {isBulkProcessing ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    กำลังอัปเดต...
+                  </>
+                ) : (
+                  `อัปเดต ${selectedShopIds.length} ร้าน`
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Package Modal */}
+      {bulkAction === 'package' && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+            <div className="flex items-center justify-between p-6 border-b">
+              <h3 className="text-lg font-semibold text-gray-900">
+                มอบหมาย Package ({selectedShopIds.length} ร้าน)
+              </h3>
+              <button
+                onClick={() => setBulkAction(null)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6">
+              <div className="mb-4">
+                <p className="text-sm text-gray-600 mb-3">
+                  เลือก Package และกำหนดจำนวน Token ที่จะมอบให้
+                </p>
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  เลือก Package
+                </label>
+                <select
+                  value={selectedPackageId}
+                  onChange={(e) => {
+                    setSelectedPackageId(e.target.value);
+                    const pkg = packages.find(p => p.id === e.target.value);
+                    if (pkg) {
+                      setTokenAmount(pkg.tokenAmount?.toString() || '0');
+                      setSubscriptionDays(pkg.periodDays.toString());
+                    }
+                  }}
+                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                >
+                  <option value="">-- เลือก Package --</option>
+                  {packages.map((pkg) => (
+                    <option key={pkg.id} value={pkg.id}>
+                      {pkg.name} - ฿{pkg.price} ({pkg.periodDays} วัน, {pkg.tokenAmount || 0} tokens)
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  จำนวน Token
+                </label>
+                <input
+                  type="number"
+                  value={tokenAmount}
+                  onChange={(e) => setTokenAmount(e.target.value)}
+                  min="0"
+                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  ระยะเวลา (วัน)
+                </label>
+                <input
+                  type="number"
+                  value={subscriptionDays}
+                  onChange={(e) => setSubscriptionDays(e.target.value)}
+                  min="1"
+                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                />
+              </div>
+            </div>
+            <div className="p-6 border-t flex gap-3">
+              <button
+                onClick={() => setBulkAction(null)}
+                disabled={isBulkProcessing}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+              >
+                ยกเลิก
+              </button>
+              <button
+                onClick={handleBulkAssignPackage}
+                disabled={!selectedPackageId || isBulkProcessing}
+                className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {isBulkProcessing ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    กำลังมอบหมาย...
+                  </>
+                ) : (
+                  `มอบหมาย ${selectedShopIds.length} ร้าน`
+                )}
+              </button>
             </div>
           </div>
         </div>
