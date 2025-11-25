@@ -113,6 +113,8 @@ export default function AdminCategoriesPage() {
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [emojiSearch, setEmojiSearch] = useState('');
+  const [searchResults, setSearchResults] = useState<typeof EMOJI_OPTIONS>([]);
+  const [isSearching, setIsSearching] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     slug: '',
@@ -134,6 +136,7 @@ export default function AdminCategoriesPage() {
         description: editingCategory.description || ''
       });
       setEmojiSearch(''); // Reset search when opening form
+      setSearchResults([]); // Reset search results
     } else if (showAddForm) {
       setFormData({
         name: '',
@@ -142,8 +145,48 @@ export default function AdminCategoriesPage() {
         description: ''
       });
       setEmojiSearch(''); // Reset search when opening form
+      setSearchResults([]); // Reset search results
     }
   }, [editingCategory, showAddForm]);
+
+  // Search emojis from emoji API
+  useEffect(() => {
+    const searchEmojis = async () => {
+      if (!emojiSearch || emojiSearch.length < 2) {
+        setSearchResults([]);
+        setIsSearching(false);
+        return;
+      }
+
+      setIsSearching(true);
+      try {
+        // Using emoji-api.com for searching emojis
+        const response = await fetch(
+          `https://emoji-api.com/emojis?search=${encodeURIComponent(emojiSearch)}&access_key=c64906c2db72e10919bcd32073c94f8cfef29ff5`
+        );
+        
+        if (response.ok) {
+          const data = await response.json();
+          // Convert API response to our format
+          const results = data.slice(0, 50).map((item: any) => ({
+            emoji: item.character,
+            keywords: `${item.unicodeName} ${item.slug} ${item.group} ${item.subGroup}`
+          }));
+          setSearchResults(results);
+        } else {
+          setSearchResults([]);
+        }
+      } catch (error) {
+        console.error('Error searching emojis:', error);
+        setSearchResults([]);
+      } finally {
+        setIsSearching(false);
+      }
+    };
+
+    const debounce = setTimeout(searchEmojis, 300);
+    return () => clearTimeout(debounce);
+  }, [emojiSearch]);
 
   async function fetchCategories() {
     console.log('🔍 Starting to fetch categories...');
@@ -437,22 +480,30 @@ export default function AdminCategoriesPage() {
                     <div className="flex items-center gap-4 mb-3">
                       <div className="text-5xl">{formData.icon}</div>
                       <div className="flex-1">
-                        <input
-                          type="text"
-                          value={emojiSearch}
-                          onChange={(e) => setEmojiSearch(e.target.value)}
-                          placeholder="ค้นหา... เช่น อาหาร, coffee, กาแฟ"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                        />
+                        <div className="relative">
+                          <input
+                            type="text"
+                            value={emojiSearch}
+                            onChange={(e) => setEmojiSearch(e.target.value)}
+                            placeholder="ค้นหา emoji... เช่น food, coffee, heart"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                          />
+                          {isSearching && (
+                            <div className="absolute right-3 top-2.5">
+                              <svg className="animate-spin h-4 w-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              </svg>
+                            </div>
+                          )}
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {emojiSearch ? `ผลการค้นหา ${searchResults.length} รายการ` : 'พิมพ์อย่างน้อย 2 ตัวอักษรเพื่อค้นหา'}
+                        </p>
                       </div>
                     </div>
                     <div className="grid grid-cols-10 gap-2 p-4 bg-gray-50 rounded-lg max-h-48 overflow-y-auto">
-                      {EMOJI_OPTIONS
-                        .filter(item => 
-                          emojiSearch === '' || 
-                          item.keywords.toLowerCase().includes(emojiSearch.toLowerCase()) ||
-                          item.emoji.includes(emojiSearch)
-                        )
+                      {(emojiSearch && searchResults.length > 0 ? searchResults : EMOJI_OPTIONS)
                         .map((item) => (
                         <button
                           key={item.emoji}
@@ -467,11 +518,8 @@ export default function AdminCategoriesPage() {
                         </button>
                       ))}
                     </div>
-                    {emojiSearch && EMOJI_OPTIONS.filter(item => 
-                      item.keywords.toLowerCase().includes(emojiSearch.toLowerCase()) ||
-                      item.emoji.includes(emojiSearch)
-                    ).length === 0 && (
-                      <p className="text-sm text-gray-500 mt-2 text-center">ไม่พบไอคอนที่ค้นหา</p>
+                    {emojiSearch && searchResults.length === 0 && !isSearching && (
+                      <p className="text-sm text-gray-500 mt-2 text-center">ไม่พบ emoji ที่ค้นหา ลองใช้คำค้นภาษาอังกฤษ</p>
                     )}
                   </div>
 
