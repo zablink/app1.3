@@ -66,7 +66,7 @@ export async function GET(
           WHEN ls.subscription_tier = 'BASIC' THEN 3
           ELSE 4
         END,
-        s.created_at DESC;
+        s."createdAt" DESC;
     `;
 
     // Transform to shop list
