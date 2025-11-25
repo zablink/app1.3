@@ -44,6 +44,10 @@ export default function ShopRegisterPage() {
     email: "",
     website: "",
     lineId: "",
+    lineManUrl: "",
+    grabFoodUrl: "",
+    foodPandaUrl: "",
+    shopeeUrl: "",
     hasPhysicalStore: true,
     showLocationOnMap: false,
   });
@@ -640,6 +644,91 @@ export default function ShopRegisterPage() {
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       placeholder="@yourshop"
                     />
+                  </div>
+                </div>
+
+                {/* Delivery Platform Links */}
+                <div className="border-t pt-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                    <span>🛵</span>
+                    ลิงก์ Delivery Platform (ถ้ามี)
+                  </h3>
+                  <p className="text-sm text-gray-600 mb-4">
+                    เพิ่มลิงก์ร้านค้าของคุณบนแพลตฟอร์มต่างๆ เพื่อให้ลูกค้าสั่งอาหารได้สะดวก
+                  </p>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <span className="inline-flex items-center gap-2">
+                          <span className="w-6 h-6 bg-green-500 rounded flex items-center justify-center text-white text-xs font-bold">L</span>
+                          LINE MAN URL
+                        </span>
+                      </label>
+                      <input
+                        type="url"
+                        value={formData.lineManUrl}
+                        onChange={(e) =>
+                          setFormData({ ...formData, lineManUrl: e.target.value })
+                        }
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                        placeholder="https://lineman.line.me/..."
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <span className="inline-flex items-center gap-2">
+                          <span className="w-6 h-6 bg-green-600 rounded flex items-center justify-center text-white text-xs font-bold">G</span>
+                          Grab Food URL
+                        </span>
+                      </label>
+                      <input
+                        type="url"
+                        value={formData.grabFoodUrl}
+                        onChange={(e) =>
+                          setFormData({ ...formData, grabFoodUrl: e.target.value })
+                        }
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                        placeholder="https://food.grab.com/..."
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <span className="inline-flex items-center gap-2">
+                          <span className="w-6 h-6 bg-pink-500 rounded flex items-center justify-center text-white text-xs font-bold">F</span>
+                          foodpanda URL
+                        </span>
+                      </label>
+                      <input
+                        type="url"
+                        value={formData.foodPandaUrl}
+                        onChange={(e) =>
+                          setFormData({ ...formData, foodPandaUrl: e.target.value })
+                        }
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                        placeholder="https://www.foodpanda.co.th/..."
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <span className="inline-flex items-center gap-2">
+                          <span className="w-6 h-6 bg-orange-500 rounded flex items-center justify-center text-white text-xs font-bold">S</span>
+                          Shopee Food URL
+                        </span>
+                      </label>
+                      <input
+                        type="url"
+                        value={formData.shopeeUrl}
+                        onChange={(e) =>
+                          setFormData({ ...formData, shopeeUrl: e.target.value })
+                        }
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                        placeholder="https://shopee.co.th/..."
+                      />
+                    </div>
                   </div>
                 </div>
               </div>

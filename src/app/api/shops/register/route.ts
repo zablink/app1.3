@@ -25,6 +25,10 @@ export async function POST(request: NextRequest) {
       email,
       website,
       lineId,
+      lineManUrl,
+      grabFoodUrl,
+      foodPandaUrl,
+      shopeeUrl,
       hasPhysicalStore,
       showLocationOnMap,
       image,
@@ -99,6 +103,39 @@ export async function POST(request: NextRequest) {
           shop_id: shop.id,
           type: 'line',
           url: lineId,
+        });
+      }
+
+      // Delivery platform links
+      if (lineManUrl) {
+        linksToCreate.push({
+          shop_id: shop.id,
+          type: 'lineman',
+          url: lineManUrl,
+        });
+      }
+
+      if (grabFoodUrl) {
+        linksToCreate.push({
+          shop_id: shop.id,
+          type: 'grab',
+          url: grabFoodUrl,
+        });
+      }
+
+      if (foodPandaUrl) {
+        linksToCreate.push({
+          shop_id: shop.id,
+          type: 'foodpanda',
+          url: foodPandaUrl,
+        });
+      }
+
+      if (shopeeUrl) {
+        linksToCreate.push({
+          shop_id: shop.id,
+          type: 'shopee',
+          url: shopeeUrl,
         });
       }
 
