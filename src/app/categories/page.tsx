@@ -10,7 +10,9 @@ type Category = {
   name: string;
   slug: string;
   icon: string | null;
-  shopCount?: number;
+  _count?: {
+    shops: number;
+  };
 };
 
 export default function CategoriesPage() {
@@ -23,7 +25,11 @@ export default function CategoriesPage() {
         const response = await fetch('/api/categories');
         if (response.ok) {
           const data = await response.json();
-          setCategories(data);
+          console.log('Categories data:', data);
+          // API returns { success: true, categories: [...] }
+          if (data.success && data.categories) {
+            setCategories(data.categories);
+          }
         }
       } catch (error) {
         console.error('Error fetching categories:', error);
@@ -86,9 +92,9 @@ export default function CategoriesPage() {
                   <h3 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
                     {category.name}
                   </h3>
-                  {category.shopCount !== undefined && (
+                  {category._count && (
                     <p className="text-sm text-gray-500 mt-1">
-                      {category.shopCount} ร้าน
+                      {category._count.shops} ร้าน
                     </p>
                   )}
                 </Link>
