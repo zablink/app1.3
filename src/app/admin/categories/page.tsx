@@ -62,18 +62,37 @@ export default function AdminCategoriesPage() {
     try {
       console.log('🔍 Starting to fetch categories...');
       setLoading(true);
-      const response = await fetch('/api/categories');
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 sec timeout
+      
+      const response = await fetch('/api/categories', {
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+      
       console.log('📡 Response status:', response.status);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       const data = await response.json();
       console.log('📦 Response data:', data);
+      
       if (data.success) {
         setCategories(data.categories || []);
         console.log('✅ Categories loaded:', data.categories?.length || 0);
       } else {
-        console.error('❌ API returned success: false');
+        console.error('❌ API returned success: false', data);
+        setCategories([]); // Set empty array to stop loading
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('💥 Error fetching categories:', error);
+      if (error.name === 'AbortError') {
+        console.error('⏱️ Request timeout after 10 seconds');
+      }
+      setCategories([]); // Set empty array to stop loading
     } finally {
       setLoading(false);
     }
