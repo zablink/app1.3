@@ -1,6 +1,7 @@
 // src/components/BookmarkButton.tsx
 "use client";
 
+import { useState } from "react";
 import { Star } from "lucide-react";
 import { useBookmark } from "@/hooks/useBookmark";
 
@@ -18,22 +19,21 @@ export default function BookmarkButton({
   className = "",
 }: BookmarkButtonProps) {
   const { isBookmarked, isLoading, toggleBookmark } = useBookmark(shopId);
-
-  const sizeClasses = {
-    sm: "p-2",
-    md: "p-3",
-    lg: "p-4",
-  };
+  const [isAnimating, setIsAnimating] = useState(false);
 
   const iconSizes = {
-    sm: 18,
-    md: 22,
-    lg: 26,
+    sm: 20,
+    md: 24,
+    lg: 28,
   };
 
   const handleClick = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+
+    // Trigger animation
+    setIsAnimating(true);
+    setTimeout(() => setIsAnimating(false), 600);
 
     const success = await toggleBookmark();
     if (success) {
@@ -47,29 +47,42 @@ export default function BookmarkButton({
       onClick={handleClick}
       disabled={isLoading}
       className={`
-        ${sizeClasses[size]}
-        ${
-          isBookmarked
-            ? "bg-yellow-500 text-white hover:bg-yellow-600"
-            : "bg-white/90 text-gray-700 hover:bg-white"
-        }
-        backdrop-blur-sm rounded-full shadow-lg transition-all
+        transition-all duration-200
         disabled:opacity-50 disabled:cursor-not-allowed
-        flex items-center gap-2
+        hover:scale-110 active:scale-95
         ${className}
       `}
       title={isBookmarked ? "ลบออกจากบุ๊คมาร์ค" : "เพิ่มเข้าบุ๊คมาร์ค"}
     >
       <Star
         size={iconSizes[size]}
-        fill={isBookmarked ? "currentColor" : "none"}
-        className="transition-all"
+        fill={isBookmarked ? "#FCD34D" : "none"}
+        stroke={isBookmarked ? "#FCD34D" : "#9CA3AF"}
+        strokeWidth={2}
+        className={`
+          transition-all duration-200 drop-shadow-lg
+          ${isAnimating ? 'animate-bounce-scale' : ''}
+        `}
       />
-      {showLabel && (
-        <span className="text-sm font-medium pr-1">
-          {isBookmarked ? "บันทึกแล้ว" : "บันทึก"}
-        </span>
-      )}
+      <style jsx>{`
+        @keyframes bounce-scale {
+          0%, 100% {
+            transform: scale(1) rotate(0deg);
+          }
+          25% {
+            transform: scale(1.3) rotate(-10deg);
+          }
+          50% {
+            transform: scale(0.9) rotate(10deg);
+          }
+          75% {
+            transform: scale(1.2) rotate(-5deg);
+          }
+        }
+        :global(.animate-bounce-scale) {
+          animation: bounce-scale 0.6s ease-in-out;
+        }
+      `}</style>
     </button>
   );
 }

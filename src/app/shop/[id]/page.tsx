@@ -418,7 +418,6 @@ export default function ShopDetailPage() {
           <BookmarkButton 
             shopId={shop.id}
             size="lg"
-            showLabel={true}
           />
         </div>
         
