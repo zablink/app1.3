@@ -965,69 +965,6 @@ export default function ShopDetailPage() {
               </div>
             </div>
 
-            {/* Delivery Links - Desktop Only */}
-            <div className="hidden lg:block bg-white rounded-lg shadow-sm p-6">
-              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                <span>🛵</span>
-                สั่งออนไลน์
-              </h3>
-              <div className="space-y-2">
-                <a
-                  href={`https://lineman.line.me/search?q=${encodeURIComponent(shop.name)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-3 p-3 border border-green-200 rounded-lg hover:bg-green-50 hover:border-green-400 transition group"
-                >
-                  <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
-                    <span className="text-white font-bold text-sm">L</span>
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-semibold text-gray-800 group-hover:text-green-700">LINE MAN</p>
-                    <p className="text-xs text-gray-500">สั่งผ่าน LINE MAN</p>
-                  </div>
-                  <span className="text-gray-400 group-hover:text-green-600">→</span>
-                </a>
-                
-                <a
-                  href={`https://food.grab.com/th/th/search?query=${encodeURIComponent(shop.name)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-3 p-3 border border-green-200 rounded-lg hover:bg-green-50 hover:border-green-400 transition group"
-                >
-                  <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center">
-                    <span className="text-white font-bold text-sm">G</span>
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-semibold text-gray-800 group-hover:text-green-700">Grab Food</p>
-                    <p className="text-xs text-gray-500">สั่งผ่าน Grab</p>
-                  </div>
-                  <span className="text-gray-400 group-hover:text-green-600">→</span>
-                </a>
-
-                <a
-                  href={`https://www.foodpanda.co.th/search?query=${encodeURIComponent(shop.name)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-3 p-3 border border-pink-200 rounded-lg hover:bg-pink-50 hover:border-pink-400 transition group"
-                >
-                  <div className="w-10 h-10 bg-pink-500 rounded-lg flex items-center justify-center">
-                    <span className="text-white font-bold text-sm">F</span>
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-semibold text-gray-800 group-hover:text-pink-700">foodpanda</p>
-                    <p className="text-xs text-gray-500">สั่งผ่าน foodpanda</p>
-                  </div>
-                  <span className="text-gray-400 group-hover:text-pink-600">→</span>
-                </a>
-              </div>
-
-              <div className="mt-4 p-3 bg-blue-50 border border-blue-100 rounded-lg">
-                <p className="text-xs text-blue-700">
-                  💡 <strong>หมายเหตุ:</strong> ลิงก์จะเปิดหน้าค้นหาบนแพลตฟอร์มต่างๆ
-                </p>
-              </div>
-            </div>
-
             {/* Map */}
             {shouldShowMap && (
               <div className="bg-white rounded-lg shadow-sm p-6">
