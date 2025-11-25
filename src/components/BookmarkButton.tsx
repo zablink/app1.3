@@ -1,7 +1,7 @@
 // src/components/BookmarkButton.tsx
 "use client";
 
-import { Heart } from "lucide-react";
+import { Star } from "lucide-react";
 import { useBookmark } from "@/hooks/useBookmark";
 
 interface BookmarkButtonProps {
@@ -50,7 +50,7 @@ export default function BookmarkButton({
         ${sizeClasses[size]}
         ${
           isBookmarked
-            ? "bg-red-500 text-white hover:bg-red-600"
+            ? "bg-yellow-500 text-white hover:bg-yellow-600"
             : "bg-white/90 text-gray-700 hover:bg-white"
         }
         backdrop-blur-sm rounded-full shadow-lg transition-all
@@ -60,7 +60,7 @@ export default function BookmarkButton({
       `}
       title={isBookmarked ? "ลบออกจากบุ๊คมาร์ค" : "เพิ่มเข้าบุ๊คมาร์ค"}
     >
-      <Heart
+      <Star
         size={iconSizes[size]}
         fill={isBookmarked ? "currentColor" : "none"}
         className="transition-all"

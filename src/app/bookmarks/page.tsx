@@ -6,7 +6,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { Heart, MapPin, Star, Trash2, ExternalLink, Map, List } from "lucide-react";
+import { Star, MapPin, Trash2, ExternalLink, Map, List, Share2 } from "lucide-react";
 import dynamic from "next/dynamic";
 
 const BookmarkMapView = dynamic(() => import("@/components/BookmarkMapView"), {
@@ -46,6 +46,8 @@ export default function BookmarksPage() {
     lng: number;
   } | null>(null);
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareUrl, setShareUrl] = useState("");
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -129,6 +131,24 @@ export default function BookmarksPage() {
     );
   };
 
+  const handleShareBookmarks = async () => {
+    // สร้าง URL สำหรับแชร์
+    const shopIds = bookmarks.map(b => b.id).join(',');
+    const url = `${window.location.origin}/bookmarks/shared?shops=${shopIds}`;
+    setShareUrl(url);
+    setShowShareModal(true);
+  };
+
+  const handleCopyShareUrl = async () => {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      alert("คัดลอกลิงก์เรียบร้อย!");
+    } catch (error) {
+      console.error("Error copying to clipboard:", error);
+      alert("ไม่สามารถคัดลอกลิงก์ได้");
+    }
+  };
+
   if (status === "loading" || isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -156,7 +176,19 @@ export default function BookmarksPage() {
                 ร้านที่คุณบันทึกไว้ทั้งหมด ({bookmarks.length} ร้าน)
               </p>
             </div>
-            <Heart className="text-red-500" size={40} fill="currentColor" />
+            <div className="flex items-center gap-3">
+              {bookmarks.length > 0 && (
+                <button
+                  onClick={handleShareBookmarks}
+                  className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium"
+                  title="แชร์รายการร้านให้เพื่อน"
+                >
+                  <Share2 size={20} />
+                  <span className="hidden sm:inline">แชร์</span>
+                </button>
+              )}
+              <Star className="text-yellow-500" size={40} fill="currentColor" />
+            </div>
           </div>
         </div>
 
@@ -249,7 +281,7 @@ export default function BookmarksPage() {
         {/* Bookmarked Shops */}
         {filteredBookmarks.length === 0 ? (
           <div className="bg-white rounded-lg shadow-sm p-12 text-center">
-            <Heart className="mx-auto mb-4 text-gray-400" size={64} />
+            <Star className="mx-auto mb-4 text-gray-400" size={64} />
             <h3 className="text-xl font-semibold text-gray-900 mb-2">
               ยังไม่มีร้านที่บันทึกไว้
             </h3>
@@ -353,6 +385,50 @@ export default function BookmarksPage() {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Share Modal */}
+        {showShareModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg max-w-md w-full p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-bold text-gray-900">
+                  แชร์รายการร้าน
+                </h3>
+                <button
+                  onClick={() => setShowShareModal(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <p className="text-gray-600 mb-4">
+                คัดลอกลิงก์ด้านล่างเพื่อแชร์รายการร้าน {bookmarks.length} ร้านให้เพื่อนของคุณ
+              </p>
+
+              <div className="bg-gray-50 p-3 rounded-lg mb-4 break-all text-sm text-gray-700">
+                {shareUrl}
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={handleCopyShareUrl}
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
+                >
+                  คัดลอกลิงก์
+                </button>
+                <button
+                  onClick={() => setShowShareModal(false)}
+                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition font-medium"
+                >
+                  ปิด
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>

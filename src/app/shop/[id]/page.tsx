@@ -6,6 +6,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import BookmarkButton from "@/components/BookmarkButton";
 
 type Shop = {
   id: string;
@@ -412,9 +413,18 @@ export default function ShopDetailPage() {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
         
-        {/* Demo Badge - Top Right */}
+        {/* Bookmark Button - Top Right */}
+        <div className="absolute top-4 right-4 z-10">
+          <BookmarkButton 
+            shopId={shop.id}
+            size="lg"
+            showLabel={true}
+          />
+        </div>
+        
+        {/* Demo Badge - Below Bookmark */}
         {shop.isMockup && (
-          <div className="absolute top-4 right-4 bg-gradient-to-r from-orange-500 to-red-500 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-2 animate-pulse">
+          <div className="absolute top-20 right-4 bg-gradient-to-r from-orange-500 to-red-500 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-2 animate-pulse">
             <span className="text-xl">🎨</span>
             <span className="font-bold text-sm md:text-base">ร้านตัวอย่าง (DEMO)</span>
           </div>
