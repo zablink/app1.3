@@ -60,12 +60,14 @@ export default function AdminCategoriesPage() {
   }, [editingCategory, showAddForm]);
 
   async function fetchCategories() {
+    console.log('🔍 Starting to fetch categories...');
+    setLoading(true);
+    
     try {
-      console.log('🔍 Starting to fetch categories...');
-      setLoading(true);
-      
+      console.log('🌐 About to fetch from /api/categories');
       const response = await fetch('/api/categories');
-      console.log('📡 Response status:', response.status);
+      console.log('📡 Response received, status:', response.status);
+      console.log('📡 Response headers:', response.headers);
       
       const data = await response.json();
       console.log('📦 Response data:', data);
@@ -77,6 +79,7 @@ export default function AdminCategoriesPage() {
       setCategories([]);
     } finally {
       setLoading(false);
+      console.log('🏁 Fetch complete, loading set to false');
     }
   }
 
