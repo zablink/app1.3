@@ -55,8 +55,8 @@ export async function GET(
       FROM "Shop" s
       INNER JOIN shop_category_mapping scm ON scm.shop_id = s.id
       LEFT JOIN latest_subscriptions ls ON s.id = ls.shop_id
-      LEFT JOIN provinces p ON s.province_id = p.id
-      LEFT JOIN amphures a ON s.amphure_id = a.id
+      LEFT JOIN loc_provinces p ON s.province_id = p.id
+      LEFT JOIN loc_amphures a ON s.amphure_id = a.id
       WHERE scm.category_id = ${category.id}
         AND s.status = 'APPROVED'
       ORDER BY 
