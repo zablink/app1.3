@@ -16,6 +16,11 @@ export async function GET() {
         name: true,
         slug: true,
         icon: true,
+        _count: {
+          select: {
+            shops: true,
+          },
+        },
       },
       orderBy: {
         name: 'asc',
