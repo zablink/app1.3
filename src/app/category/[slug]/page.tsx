@@ -51,7 +51,7 @@ export default function CategoryDetailPage() {
         setError(null);
 
         // Fetch category details and shops
-        const response = await fetch(`/api/categories/${slug}`);
+        const response = await fetch(`/api/category/${slug}`);
         
         if (!response.ok) {
           throw new Error('ไม่พบหมวดหมู่นี้');
