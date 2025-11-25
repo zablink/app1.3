@@ -13,7 +13,7 @@ export async function GET() {
       include: {
         _count: {
           select: {
-            shops: true,
+            shops: true, // This counts ShopCategoryMapping entries
           },
         },
       },
