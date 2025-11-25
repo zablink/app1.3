@@ -66,9 +66,9 @@ export default function BookmarkButton({
       >
         <Star
           size={iconSizes[size]}
-          fill={isBookmarked ? "#FFFFFF" : "none"}
+          fill={isBookmarked ? "#FCD34D" : "rgba(255,255,255,0.6)"}
           stroke="#1F2937"
-          strokeWidth={2.5}
+          strokeWidth={isBookmarked ? 2.5 : 1.6}
           className={`
             transition-all duration-200 
             ${isBookmarked ? 'drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]' : 'drop-shadow-[0_1px_2px_rgba(0,0,0,0.2)]'}
