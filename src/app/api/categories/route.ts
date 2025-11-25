@@ -6,44 +6,14 @@ import { prisma } from '@/lib/prisma';
 
 export async function GET() {
   console.log('🚀 GET /api/categories called');
-  try {
-    console.log('📊 Start GET categories');
-    
-    // Bypass database for testing
-    return NextResponse.json({
-      success: true,
-      categories: [
-        { id: '1', name: 'Test Category', slug: 'test', icon: '🍔' }
-      ],
-    });
-    
-    /* Original code - temporarily disabled
-    const categories = await prisma.shopCategory.findMany({
-      select: {
-        id: true,
-        name: true,
-        slug: true,
-        icon: true,
-      },
-      orderBy: {
-        name: 'asc',
-      },
-    });
-    
-    console.log('✅ Found categories:', categories.length);
-
-    return NextResponse.json({
-      success: true,
-      categories,
-    });
-    */
-  } catch (error) {
-    console.error('💥 Error fetching categories:', error);
-    return NextResponse.json(
-      { success: false, error: 'Failed to fetch categories' },
-      { status: 500 }
-    );
-  }
+  
+  // Simple test response
+  return NextResponse.json({
+    success: true,
+    categories: [
+      { id: '1', name: 'Test Category', slug: 'test', icon: '🍔' }
+    ],
+  });
 }
 
 export async function POST(request: NextRequest) {
