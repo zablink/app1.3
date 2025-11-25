@@ -99,37 +99,42 @@ export async function GET(request: NextRequest) {
       const whereClause = whereParts.length > 0 ? `WHERE ${whereParts.join(' AND ')}` : '';
       
       try {
-        // Optimized query using LEFT JOIN with DISTINCT ON for better performance
+        // Optimized query using window function to get latest subscription per shop
         const sql = `
-          SELECT DISTINCT ON (s.id)
-            s.id, s.name, s.description, s.address, s."createdAt", s.image, s.lat, s.lng, s.is_mockup as "isMockup",
-            lt.name_th as subdistrict,
-            la.name_th as district,
-            lp.name_th as province,
-            COALESCE(sp.tier, 'FREE') as "subscriptionTier",
-            (
-              SELECT JSON_AGG(JSON_BUILD_OBJECT('id', sc.id, 'name', sc.name, 'slug', sc.slug, 'icon', sc.icon))
-              FROM shop_category_mapping scm
-              JOIN "ShopCategory" sc ON scm.category_id = sc.id
-              WHERE scm.shop_id = s.id
-            ) as categories
-          FROM "Shop" s
-          LEFT JOIN loc_tambons lt ON s.tambon_id = lt.id
-          LEFT JOIN loc_amphures la ON s.amphure_id = la.id
-          LEFT JOIN loc_provinces lp ON s.province_id = lp.id
-          LEFT JOIN shop_subscriptions ss ON ss.shop_id = s.id 
-            AND ss.status = 'ACTIVE' 
-            AND ss.end_date > NOW()
-          LEFT JOIN subscription_packages sp ON ss.package_id = sp.id
-          ${whereClause}
-          ORDER BY s.id,
-            CASE sp.tier
-              WHEN 'PREMIUM' THEN 1
-              WHEN 'PRO' THEN 2
-              WHEN 'BASIC' THEN 3
-              ELSE 4
-            END,
-            s."createdAt" DESC
+          WITH ranked_shops AS (
+            SELECT DISTINCT ON (s.id)
+              s.id, s.name, s.description, s.address, s."createdAt", s.image, s.lat, s.lng, s.is_mockup as "isMockup",
+              lt.name_th as subdistrict,
+              la.name_th as district,
+              lp.name_th as province,
+              COALESCE(sp.tier, 'FREE') as "subscriptionTier",
+              (
+                SELECT JSON_AGG(JSON_BUILD_OBJECT('id', sc.id, 'name', sc.name, 'slug', sc.slug, 'icon', sc.icon))
+                FROM shop_category_mapping scm
+                JOIN "ShopCategory" sc ON scm.category_id = sc.id
+                WHERE scm.shop_id = s.id
+              ) as categories,
+              CASE sp.tier
+                WHEN 'PREMIUM' THEN 1
+                WHEN 'PRO' THEN 2
+                WHEN 'BASIC' THEN 3
+                ELSE 4
+              END as tier_rank
+            FROM "Shop" s
+            LEFT JOIN loc_tambons lt ON s.tambon_id = lt.id
+            LEFT JOIN loc_amphures la ON s.amphure_id = la.id
+            LEFT JOIN loc_provinces lp ON s.province_id = lp.id
+            LEFT JOIN shop_subscriptions ss ON ss.shop_id = s.id 
+              AND ss.status = 'ACTIVE' 
+              AND ss.end_date > NOW()
+            LEFT JOIN subscription_packages sp ON ss.package_id = sp.id
+            ${whereClause}
+            ORDER BY s.id, ss.start_date DESC NULLS LAST, ss.created_at DESC NULLS LAST
+          )
+          SELECT id, name, description, address, "createdAt", image, lat, lng, "isMockup",
+                 subdistrict, district, province, "subscriptionTier", categories
+          FROM ranked_shops
+          ORDER BY tier_rank ASC, "createdAt" DESC
           OFFSET $${params.length + 1}
           LIMIT $${params.length + 2};
         `;
@@ -237,24 +242,32 @@ export async function GET(request: NextRequest) {
       params.push(limit);
 
       const sql = `
-        SELECT DISTINCT ON (s.id) ${selectList}
-        FROM "Shop" s
-        LEFT JOIN loc_tambons lt ON s.tambon_id = lt.id
-        LEFT JOIN loc_amphures la ON s.amphure_id = la.id
-        LEFT JOIN loc_provinces lp ON s.province_id = lp.id
-        LEFT JOIN shop_subscriptions ss ON ss.shop_id = s.id 
-          AND ss.status = 'ACTIVE' 
-          AND ss.end_date > NOW()
-        LEFT JOIN subscription_packages sp ON ss.package_id = sp.id
-        ${whereParts.length > 0 ? `WHERE ${whereParts.join(' AND ')}` : ''}
-        ORDER BY s.id,
-          CASE sp.tier
-            WHEN 'PREMIUM' THEN 1
-            WHEN 'PRO' THEN 2
-            WHEN 'BASIC' THEN 3
-            ELSE 4
-          END,
-          ${ (sortBy === 'distance' && hasLocationCol) ? 'distance ASC NULLS LAST' : (sortBy === 'name' ? 's.name ASC' : 's."createdAt" DESC') }
+        WITH ranked_shops AS (
+          SELECT DISTINCT ON (s.id) ${selectList},
+            CASE sp.tier
+              WHEN 'PREMIUM' THEN 1
+              WHEN 'PRO' THEN 2
+              WHEN 'BASIC' THEN 3
+              ELSE 4
+            END as tier_rank
+          FROM "Shop" s
+          LEFT JOIN loc_tambons lt ON s.tambon_id = lt.id
+          LEFT JOIN loc_amphures la ON s.amphure_id = la.id
+          LEFT JOIN loc_provinces lp ON s.province_id = lp.id
+          LEFT JOIN shop_subscriptions ss ON ss.shop_id = s.id 
+            AND ss.status = 'ACTIVE' 
+            AND ss.end_date > NOW()
+          LEFT JOIN subscription_packages sp ON ss.package_id = sp.id
+          ${whereParts.length > 0 ? `WHERE ${whereParts.join(' AND ')}` : ''}
+          ORDER BY s.id, ss.start_date DESC NULLS LAST, ss.created_at DESC NULLS LAST
+        )
+        SELECT ${selectList.split(',').map(col => {
+          const match = col.trim().match(/as\s+"?(\w+)"?$/i);
+          return match ? match[1] : col.trim().split('.').pop()?.replace(/^"/, '').replace(/"$/, '') || col;
+        }).join(', ')}
+        FROM ranked_shops
+        ORDER BY tier_rank ASC,
+          ${ (sortBy === 'distance' && hasLocationCol) ? 'distance ASC NULLS LAST' : (sortBy === 'name' ? 'name ASC' : '"createdAt" DESC') }
         LIMIT $${params.length};
       `;
       const shopsRes = await prisma.$queryRawUnsafe(sql, ...params);
@@ -281,24 +294,31 @@ export async function GET(request: NextRequest) {
         whereClauseParts.push(`ST_DWithin(s.location::geography, ST_SetSRID(ST_MakePoint($1,$2),4326)::geography, $3)`);
         // categoryId filter removed
         const sql = `
-          SELECT DISTINCT ON (s.id) ${selectList}
-          FROM "Shop" s
-          LEFT JOIN loc_tambons lt ON s.tambon_id = lt.id
-          LEFT JOIN loc_amphures la ON s.amphure_id = la.id
-          LEFT JOIN loc_provinces lp ON s.province_id = lp.id
-          LEFT JOIN shop_subscriptions ss ON ss.shop_id = s.id 
-            AND ss.status = 'ACTIVE' 
-            AND ss.end_date > NOW()
-          LEFT JOIN subscription_packages sp ON ss.package_id = sp.id
-          WHERE ${whereClauseParts.join(' AND ')}
-          ORDER BY s.id,
-            CASE sp.tier
-              WHEN 'PREMIUM' THEN 1
-              WHEN 'PRO' THEN 2
-              WHEN 'BASIC' THEN 3
-              ELSE 4
-            END,
-            distance ASC
+          WITH ranked_shops AS (
+            SELECT DISTINCT ON (s.id) ${selectList},
+              CASE sp.tier
+                WHEN 'PREMIUM' THEN 1
+                WHEN 'PRO' THEN 2
+                WHEN 'BASIC' THEN 3
+                ELSE 4
+              END as tier_rank
+            FROM "Shop" s
+            LEFT JOIN loc_tambons lt ON s.tambon_id = lt.id
+            LEFT JOIN loc_amphures la ON s.amphure_id = la.id
+            LEFT JOIN loc_provinces lp ON s.province_id = lp.id
+            LEFT JOIN shop_subscriptions ss ON ss.shop_id = s.id 
+              AND ss.status = 'ACTIVE' 
+              AND ss.end_date > NOW()
+            LEFT JOIN subscription_packages sp ON ss.package_id = sp.id
+            WHERE ${whereClauseParts.join(' AND ')}
+            ORDER BY s.id, ss.start_date DESC NULLS LAST, ss.created_at DESC NULLS LAST
+          )
+          SELECT ${selectList.split(',').map(col => {
+            const match = col.trim().match(/as\s+"?(\w+)"?$/i);
+            return match ? match[1] : col.trim().split('.').pop()?.replace(/^"/, '').replace(/"$/, '') || col;
+          }).join(', ')}
+          FROM ranked_shops
+          ORDER BY tier_rank ASC, distance ASC
           LIMIT $${params.length};
         `;
         const rows = await prisma.$queryRawUnsafe(sql, ...params);
@@ -323,24 +343,31 @@ export async function GET(request: NextRequest) {
     // categoryId filter removed
     paramsFinal.push(limit);
     const sqlFinal = `
-      SELECT DISTINCT ON (s.id) ${selectList.replace(/CASE WHEN s.location.*?END as distance/, 'NULL as distance')}
-      FROM "Shop" s
-      LEFT JOIN loc_tambons lt ON s.tambon_id = lt.id
-      LEFT JOIN loc_amphures la ON s.amphure_id = la.id
-      LEFT JOIN loc_provinces lp ON s.province_id = lp.id
-      LEFT JOIN shop_subscriptions ss ON ss.shop_id = s.id 
-        AND ss.status = 'ACTIVE' 
-        AND ss.end_date > NOW()
-      LEFT JOIN subscription_packages sp ON ss.package_id = sp.id
-      ${whereFinal.length > 0 ? `WHERE ${whereFinal.join(' AND ')}` : ''}
-      ORDER BY s.id,
-        CASE sp.tier
-          WHEN 'PREMIUM' THEN 1
-          WHEN 'PRO' THEN 2
-          WHEN 'BASIC' THEN 3
-          ELSE 4
-        END,
-        RANDOM()
+      WITH ranked_shops AS (
+        SELECT DISTINCT ON (s.id) ${selectList.replace(/CASE WHEN s.location.*?END as distance/, 'NULL as distance')},
+          CASE sp.tier
+            WHEN 'PREMIUM' THEN 1
+            WHEN 'PRO' THEN 2
+            WHEN 'BASIC' THEN 3
+            ELSE 4
+          END as tier_rank
+        FROM "Shop" s
+        LEFT JOIN loc_tambons lt ON s.tambon_id = lt.id
+        LEFT JOIN loc_amphures la ON s.amphure_id = la.id
+        LEFT JOIN loc_provinces lp ON s.province_id = lp.id
+        LEFT JOIN shop_subscriptions ss ON ss.shop_id = s.id 
+          AND ss.status = 'ACTIVE' 
+          AND ss.end_date > NOW()
+        LEFT JOIN subscription_packages sp ON ss.package_id = sp.id
+        ${whereFinal.length > 0 ? `WHERE ${whereFinal.join(' AND ')}` : ''}
+        ORDER BY s.id, ss.start_date DESC NULLS LAST, ss.created_at DESC NULLS LAST
+      )
+      SELECT ${selectList.replace(/CASE WHEN s.location.*?END as distance/, 'NULL as distance').split(',').map(col => {
+        const match = col.trim().match(/as\s+"?(\w+)"?$/i);
+        return match ? match[1] : col.trim().split('.').pop()?.replace(/^"/, '').replace(/"$/, '') || col;
+      }).join(', ')}
+      FROM ranked_shops
+      ORDER BY tier_rank ASC, RANDOM()
       LIMIT $${paramsFinal.length};
     `;
     const fallbackRows = await prisma.$queryRawUnsafe(sqlFinal, ...paramsFinal);
