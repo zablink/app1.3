@@ -88,7 +88,16 @@ export default function BookmarkMapView({
       const centerLat = userLocation?.lat || shopsWithCoords[0].lat!;
       const centerLng = userLocation?.lng || shopsWithCoords[0].lng!;
 
-      const map = L.map("bookmark-map").setView([centerLat, centerLng], 14);
+      const map = L.map("bookmark-map", {
+        center: [centerLat, centerLng],
+        zoom: 14,
+        zoomControl: true,
+        scrollWheelZoom: true,
+        doubleClickZoom: true,
+        touchZoom: true,
+        dragging: true,
+        tap: true,
+      });
 
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         attribution:
