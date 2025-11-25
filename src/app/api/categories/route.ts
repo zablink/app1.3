@@ -7,6 +7,12 @@ import { prisma } from '@/lib/prisma';
 export async function GET() {
   try {
     const categories = await prisma.shopCategory.findMany({
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        icon: true,
+      },
       orderBy: {
         name: 'asc',
       },

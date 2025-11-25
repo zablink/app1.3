@@ -28,6 +28,7 @@ export default function AdminCategoriesPage() {
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<Category | null>(null);
+  const [error, setError] = useState('');
   const [formData, setFormData] = useState({
     name: '',
     slug: '',
@@ -100,6 +101,7 @@ export default function AdminCategoriesPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    setError(''); // Clear previous errors
     
     try {
       if (editingCategory) {
@@ -110,12 +112,14 @@ export default function AdminCategoriesPage() {
           body: JSON.stringify(formData)
         });
         
+        const data = await response.json();
+        
         if (response.ok) {
           await fetchCategories();
           setEditingCategory(null);
-          alert('อัปเดตหมวดหมู่สำเร็จ');
+          setError('');
         } else {
-          alert('เกิดข้อผิดพลาดในการอัปเดต');
+          setError(data.error || 'เกิดข้อผิดพลาดในการอัปเดต');
         }
       } else {
         // Create new category
@@ -125,17 +129,19 @@ export default function AdminCategoriesPage() {
           body: JSON.stringify(formData)
         });
         
+        const data = await response.json();
+        
         if (response.ok) {
           await fetchCategories();
           setShowAddForm(false);
-          alert('เพิ่มหมวดหมู่สำเร็จ');
+          setError('');
         } else {
-          alert('เกิดข้อผิดพลาดในการเพิ่มหมวดหมู่');
+          setError(data.error || 'เกิดข้อผิดพลาดในการเพิ่มหมวดหมู่');
         }
       }
     } catch (error) {
       console.error('Error saving category:', error);
-      alert('เกิดข้อผิดพลาด');
+      setError('เกิดข้อผิดพลาดในการเชื่อมต่อ');
     }
   }
 
@@ -295,6 +301,12 @@ export default function AdminCategoriesPage() {
                   {editingCategory ? 'แก้ไขหมวดหมู่' : 'เพิ่มหมวดหมู่ใหม่'}
                 </h2>
                 
+                {error && (
+                  <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+                    {error}
+                  </div>
+                )}
+                
                 <form onSubmit={handleSubmit} className="space-y-4">
                   {/* Icon Picker */}
                   <div>
@@ -345,12 +357,12 @@ export default function AdminCategoriesPage() {
                       type="text"
                       required
                       value={formData.slug}
-                      onChange={(e) => setFormData({ ...formData, slug: e.target.value.toLowerCase().replace(/\s+/g, '-') })}
+                      onChange={(e) => setFormData({ ...formData, slug: e.target.value.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-sm"
                       placeholder="food-and-drink"
                     />
                     <p className="text-xs text-gray-500 mt-1">
-                      ใช้ตัวอักษรภาษาอังกฤษพิมพ์เล็ก ตัวเลข และ - เท่านั้น
+                      ใช้ตัวอักษรภาษาอังกฤษพิมพ์เล็ก ตัวเลข และ - เท่านั้น (จะแปลงอัตโนมัติ)
                     </p>
                   </div>
 
@@ -375,6 +387,7 @@ export default function AdminCategoriesPage() {
                       onClick={() => {
                         setEditingCategory(null);
                         setShowAddForm(false);
+                        setError('');
                       }}
                       className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
                     >
