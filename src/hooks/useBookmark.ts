@@ -33,18 +33,22 @@ export function useBookmark(shopId: string) {
       return false;
     }
 
+    // Optimistic UI Update - เปลี่ยนสถานะทันทีก่อน API
+    const previousState = isBookmarked;
+    setIsBookmarked(!isBookmarked);
     setIsLoading(true);
 
     try {
-      if (isBookmarked) {
+      if (previousState) {
         // ลบ bookmark
         const res = await fetch(`/api/user/bookmarks/${shopId}`, {
           method: "DELETE",
         });
 
-        if (res.ok) {
-          setIsBookmarked(false);
-          return true;
+        if (!res.ok) {
+          // Revert on error
+          setIsBookmarked(previousState);
+          throw new Error("Failed to remove bookmark");
         }
       } else {
         // เพิ่ม bookmark
@@ -54,12 +58,13 @@ export function useBookmark(shopId: string) {
           body: JSON.stringify({ shopId, notes, tags }),
         });
 
-        if (res.ok) {
-          setIsBookmarked(true);
-          return true;
+        if (!res.ok) {
+          // Revert on error
+          setIsBookmarked(previousState);
+          throw new Error("Failed to add bookmark");
         }
       }
-      return false;
+      return true;
     } catch (error) {
       console.error("Error toggling bookmark:", error);
       return false;
