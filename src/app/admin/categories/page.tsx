@@ -60,14 +60,20 @@ export default function AdminCategoriesPage() {
 
   async function fetchCategories() {
     try {
+      console.log('🔍 Starting to fetch categories...');
       setLoading(true);
       const response = await fetch('/api/categories');
+      console.log('📡 Response status:', response.status);
       const data = await response.json();
+      console.log('📦 Response data:', data);
       if (data.success) {
         setCategories(data.categories || []);
+        console.log('✅ Categories loaded:', data.categories?.length || 0);
+      } else {
+        console.error('❌ API returned success: false');
       }
     } catch (error) {
-      console.error('Error fetching categories:', error);
+      console.error('💥 Error fetching categories:', error);
     } finally {
       setLoading(false);
     }
