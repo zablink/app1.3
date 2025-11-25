@@ -29,6 +29,7 @@ export default function AdminCategoriesPage() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<Category | null>(null);
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const [formData, setFormData] = useState({
     name: '',
     slug: '',
@@ -141,16 +142,24 @@ export default function AdminCategoriesPage() {
       });
       
       if (response.ok) {
-        await fetchCategories();
+        // Remove from local state without refetching
+        setCategories(prev => prev.filter(cat => cat.id !== category.id));
         setDeleteConfirm(null);
-        alert('ลบหมวดหมู่สำเร็จ');
+        
+        // Show success message
+        setSuccessMessage('ลบหมวดหมู่สำเร็จ');
+        setTimeout(() => setSuccessMessage(''), 3000);
       } else {
         const data = await response.json();
-        alert(data.error || 'เกิดข้อผิดพลาดในการลบ');
+        setError(data.error || 'เกิดข้อผิดพลาดในการลบ');
+        setTimeout(() => setError(''), 3000);
+        setDeleteConfirm(null);
       }
     } catch (error) {
       console.error('Error deleting category:', error);
-      alert('เกิดข้อผิดพลาด');
+      setError('เกิดข้อผิดพลาด');
+      setTimeout(() => setError(''), 3000);
+      setDeleteConfirm(null);
     }
   }
 
@@ -170,6 +179,35 @@ export default function AdminCategoriesPage() {
       {/* <AdminBreadcrumb /> */}
       <div className="p-6">
         <div className="max-w-7xl mx-auto">
+        
+        {/* Success Message */}
+        {successMessage && (
+          <div className="fixed top-4 right-4 z-50 animate-slide-in-right">
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4 shadow-lg flex items-center gap-3">
+              <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                <svg className="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <p className="text-green-800 font-medium">{successMessage}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Error Message */}
+        {error && !editingCategory && !showAddForm && (
+          <div className="fixed top-4 right-4 z-50 animate-slide-in-right">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 shadow-lg flex items-center gap-3">
+              <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                <svg className="w-5 h-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </div>
+              <p className="text-red-800 font-medium">{error}</p>
+            </div>
+          </div>
+        )}
+
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
