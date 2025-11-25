@@ -7,7 +7,7 @@ import Image from 'next/image';
 import { useSession, signOut } from 'next-auth/react';
 import { useLocation } from '@/contexts/LocationContext';
 import { useSiteSettings } from '@/hooks/useSiteSettings';
-import { MapPin, Menu, X, User, LogOut, Store, LayoutDashboard, Grid3x3, Info, DollarSign, Search } from 'lucide-react';
+import { MapPin, Menu, X, User, LogOut, Store, LayoutDashboard, Grid3x3, Info, DollarSign, Search, Star } from 'lucide-react';
 import LocationModal from '@/components/location/LocationModal';
 
 export default function Navbar() {
@@ -137,6 +137,14 @@ export default function Navbar() {
                         className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                       >
                         โปรไฟล์
+                      </Link>
+                      
+                      <Link
+                        href="/bookmarks"
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                      >
+                        <Star className="w-4 h-4 text-yellow-500" fill="#FCD34D" />
+                        บุ๊คมาร์คของฉัน
                       </Link>
                       
                       {userRole === 'USER' && (
@@ -306,6 +314,15 @@ export default function Navbar() {
                       onClick={() => setShowMobileMenu(false)}
                     >
                       โปรไฟล์
+                    </Link>
+
+                    <Link
+                      href="/bookmarks"
+                      className="block px-4 py-2 text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                      onClick={() => setShowMobileMenu(false)}
+                    >
+                      <Star className="w-4 h-4 text-yellow-500" fill="#FCD34D" />
+                      บุ๊คมาร์คของฉัน
                     </Link>
 
                     {userRole === 'ADMIN' && (

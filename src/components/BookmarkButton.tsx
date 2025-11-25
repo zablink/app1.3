@@ -37,12 +37,15 @@ export default function BookmarkButton({
     setIsAnimating(true);
     setTimeout(() => setIsAnimating(false), 600);
 
-    const wasBookmarked = isBookmarked;
+    // Capture the current state BEFORE calling toggleBookmark
+    // because toggleBookmark will change it optimistically
+    const currentState = isBookmarked;
+    
     const success = await toggleBookmark();
     
     if (success) {
-      // Show toast
-      setToastMessage(wasBookmarked ? "ลบออกจากบุ๊คมาร์คแล้ว" : "บันทึกเรียบร้อย");
+      // Show toast based on the state we captured
+      setToastMessage(currentState ? "ลบออกจากบุ๊คมาร์คแล้ว" : "บันทึกเรียบร้อย");
       setShowToast(true);
       setTimeout(() => setShowToast(false), 2000);
     }
@@ -63,11 +66,12 @@ export default function BookmarkButton({
       >
         <Star
           size={iconSizes[size]}
-          fill={isBookmarked ? "#FCD34D" : "none"}
-          stroke={isBookmarked ? "#FCD34D" : "#9CA3AF"}
-          strokeWidth={2}
+          fill={isBookmarked ? "#FFFFFF" : "none"}
+          stroke="#1F2937"
+          strokeWidth={2.5}
           className={`
-            transition-all duration-200 drop-shadow-lg
+            transition-all duration-200 
+            ${isBookmarked ? 'drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]' : 'drop-shadow-[0_1px_2px_rgba(0,0,0,0.2)]'}
             ${isAnimating ? 'animate-bounce-scale' : ''}
           `}
         />

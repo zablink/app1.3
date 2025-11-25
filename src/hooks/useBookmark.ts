@@ -1,5 +1,5 @@
 // src/hooks/useBookmark.ts
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 
 export function useBookmark(shopId: string) {
@@ -7,11 +7,7 @@ export function useBookmark(shopId: string) {
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    checkBookmarkStatus();
-  }, [shopId, session]);
-
-  const checkBookmarkStatus = async () => {
+  const checkBookmarkStatus = useCallback(async () => {
     if (!session) {
       setIsBookmarked(false);
       return;
@@ -25,7 +21,11 @@ export function useBookmark(shopId: string) {
       console.error("Error checking bookmark status:", error);
       setIsBookmarked(false);
     }
-  };
+  }, [shopId, session]);
+
+  useEffect(() => {
+    checkBookmarkStatus();
+  }, [checkBookmarkStatus]);
 
   const toggleBookmark = async (notes?: string, tags?: string[]) => {
     if (!session) {
@@ -35,7 +35,7 @@ export function useBookmark(shopId: string) {
 
     // Optimistic UI Update - เปลี่ยนสถานะทันทีก่อน API
     const previousState = isBookmarked;
-    setIsBookmarked(!isBookmarked);
+    setIsBookmarked(!previousState);
     setIsLoading(true);
 
     try {
