@@ -8,6 +8,16 @@ export async function GET() {
   console.log('🚀 GET /api/categories called');
   try {
     console.log('📊 Start GET categories');
+    
+    // Bypass database for testing
+    return NextResponse.json({
+      success: true,
+      categories: [
+        { id: '1', name: 'Test Category', slug: 'test', icon: '🍔' }
+      ],
+    });
+    
+    /* Original code - temporarily disabled
     const categories = await prisma.shopCategory.findMany({
       select: {
         id: true,
@@ -26,6 +36,7 @@ export async function GET() {
       success: true,
       categories,
     });
+    */
   } catch (error) {
     console.error('💥 Error fetching categories:', error);
     return NextResponse.json(
