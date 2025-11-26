@@ -68,35 +68,57 @@ function SignInFormContent() {
     try {
       console.log('⏳ Calling signIn...');
       
-      // Check if NextAuth is working by calling providers endpoint
+      // Check if NextAuth is working by calling providers endpoint with timeout
       console.log('🔍 Checking NextAuth providers endpoint...');
-      const providersRes = await fetch('/api/auth/providers');
-      console.log('📡 Providers response status:', providersRes.status);
       
-      if (!providersRes.ok) {
-        console.error('❌ Providers endpoint failed:', providersRes.statusText);
-        throw new Error(`NextAuth API failed: ${providersRes.status} ${providersRes.statusText}`);
-      }
-      
-      const providers = await providersRes.json();
-      console.log('✅ Available providers:', Object.keys(providers));
-      
-      if (!providers[provider]) {
-        console.error(`❌ Provider "${provider}" not found in available providers`);
-        throw new Error(`Provider "${provider}" is not configured`);
-      }
-      
-      // Set a timeout to detect if signIn hangs
+      const controller = new AbortController();
       const timeoutId = setTimeout(() => {
-        console.error('⚠️ signIn is taking too long (>5s)');
-      }, 5000);
+        console.error('⏰ Providers endpoint timeout (10s)');
+        controller.abort();
+      }, 10000);
       
+      try {
+        const providersRes = await fetch('/api/auth/providers', {
+          signal: controller.signal,
+          headers: {
+            'Accept': 'application/json',
+          },
+        });
+        clearTimeout(timeoutId);
+        
+        console.log('📡 Providers response status:', providersRes.status);
+        
+        if (!providersRes.ok) {
+          const errorText = await providersRes.text();
+          console.error('❌ Providers endpoint failed:', providersRes.statusText);
+          console.error('📄 Error response:', errorText);
+          throw new Error(`NextAuth API failed: ${providersRes.status} ${providersRes.statusText}`);
+        }
+        
+        const providers = await providersRes.json();
+        console.log('✅ Available providers:', Object.keys(providers));
+        
+        if (!providers[provider]) {
+          console.error(`❌ Provider "${provider}" not found in available providers`);
+          throw new Error(`Provider "${provider}" is not configured`);
+        }
+      } catch (fetchError: any) {
+        clearTimeout(timeoutId);
+        
+        if (fetchError.name === 'AbortError') {
+          console.error('❌ Providers endpoint timeout - NextAuth may not be running');
+          throw new Error('การเชื่อมต่อใช้เวลานานเกินไป กรุณาลองใหม่อีกครั้ง');
+        }
+        throw fetchError;
+      }
+      
+      // Now try to sign in
+      console.log('🔑 Starting OAuth flow...');
       const result = await signIn(provider, {
         callbackUrl,
         redirect: true,
       });
       
-      clearTimeout(timeoutId);
       console.log('✅ signIn result:', result);
     } catch (error) {
       console.error('❌ Sign in error:', error);
