@@ -1,7 +1,7 @@
 // components/Notification.tsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { CheckCircle, XCircle, AlertCircle, X } from "lucide-react";
 
 export type NotificationType = "success" | "error" | "warning" | "info";
@@ -20,34 +20,39 @@ export default function Notification({
   onClose,
 }: NotificationProps) {
   const [isExiting, setIsExiting] = useState(false);
+  const onCloseRef = useRef(onClose);
+
+  // Keep onClose ref updated
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
   useEffect(() => {
-    if (!message) return;
-
+    console.log('Notification mounted:', message, 'duration:', duration);
+    
     // Start fade out animation 500ms before duration ends
     const fadeTimer = setTimeout(() => {
+      console.log('Starting fade out...');
       setIsExiting(true);
     }, duration - 500);
 
     // Call onClose after duration
     const closeTimer = setTimeout(() => {
-      if (onClose) {
-        onClose();
-      }
+      console.log('Calling onClose...');
+      onCloseRef.current?.();
     }, duration);
 
     return () => {
+      console.log('Cleaning up timers...');
       clearTimeout(fadeTimer);
       clearTimeout(closeTimer);
     };
-  }, [message]); // Only re-run if message changes
+  }, [duration]); // Re-run only if duration changes
 
   const handleClose = () => {
     setIsExiting(true);
     setTimeout(() => {
-      if (onClose) {
-        onClose();
-      }
+      onCloseRef.current?.();
     }, 300);
   };
 
