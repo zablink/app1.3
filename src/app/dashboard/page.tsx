@@ -13,11 +13,30 @@ import {
   ChevronRight,
   Plus
 } from "lucide-react";
+import Image from "next/image";
 
 interface UserStats {
   favoriteShops: number;
   recentViews: number;
   reviews: number;
+}
+
+interface Shop {
+  id: string;
+  name: string;
+  image: string | null;
+  status: string | null;
+  categories: {
+    category: {
+      name: string;
+    };
+  }[];
+}
+
+interface Creator {
+  id: string;
+  displayName: string;
+  applicationStatus: string;
 }
 
 export default function UserDashboard() {
@@ -28,14 +47,44 @@ export default function UserDashboard() {
     recentViews: 0,
     reviews: 0,
   });
+  const [shops, setShops] = useState<Shop[]>([]);
+  const [creator, setCreator] = useState<Creator | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/");
     }
+    if (status === "authenticated") {
+      fetchUserData();
+    }
   }, [status, router]);
 
-  if (status === "loading") {
+  const fetchUserData = async () => {
+    try {
+      // Fetch user's shops
+      const shopsRes = await fetch("/api/user/shops");
+      if (shopsRes.ok) {
+        const shopsData = await shopsRes.json();
+        setShops(shopsData.shops || []);
+      }
+
+      // Fetch creator profile if user is a creator
+      if (session?.user?.role === "CREATOR") {
+        const creatorRes = await fetch("/api/creator/profile");
+        if (creatorRes.ok) {
+          const creatorData = await creatorRes.json();
+          setCreator(creatorData);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (status === "loading" || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -45,6 +94,9 @@ export default function UserDashboard() {
       </div>
     );
   }
+
+  const hasShops = shops.length > 0;
+  const isCreator = creator !== null;
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -121,11 +173,25 @@ export default function UserDashboard() {
 
         {/* Quick Actions */}
         <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg shadow-lg p-8 mb-6">
-          <h2 className="text-2xl font-bold text-white mb-6">เริ่มต้นกับ Zablink</h2>
+          <h2 className="text-2xl font-bold text-white mb-6">
+            {hasShops || isCreator ? "จัดการบัญชีของคุณ" : "เริ่มต้นกับ Zablink"}
+          </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Register as Shop Owner */}
+            {/* Shop Management */}
             <div
-              onClick={() => router.push("/shop/register")}
+              onClick={() => {
+                if (hasShops) {
+                  // If has shops, go to selection page (or direct to edit if only one)
+                  if (shops.length === 1) {
+                    router.push(`/shop/edit/${shops[0].id}`);
+                  } else {
+                    router.push("/shop/select");
+                  }
+                } else {
+                  // If no shops, go to register
+                  router.push("/shop/register");
+                }
+              }}
               className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg p-6 hover:bg-white/20 transition cursor-pointer group"
             >
               <div className="flex items-start justify-between mb-4">
@@ -134,19 +200,63 @@ export default function UserDashboard() {
                 </div>
                 <ChevronRight className="text-white/60 group-hover:text-white group-hover:translate-x-1 transition" />
               </div>
-              <h3 className="text-xl font-bold text-white mb-2">ลงทะเบียนร้านค้า</h3>
-              <p className="text-white/80 text-sm">
-                เพิ่มร้านค้าของคุณเข้าสู่ระบบ Zablink และเริ่มเข้าถึงลูกค้ามากขึ้น
+              <h3 className="text-xl font-bold text-white mb-2">
+                {hasShops ? "จัดการร้านค้า" : "เพิ่มร้านค้า"}
+              </h3>
+              <p className="text-white/80 text-sm mb-4">
+                {hasShops
+                  ? "แก้ไขข้อมูลร้านค้าของคุณ และเพิ่มร้านใหม่ได้ตลอดเวลา"
+                  : "เพิ่มร้านค้าของคุณเข้าสู่ระบบ Zablink และเริ่มเข้าถึงลูกค้ามากขึ้น"}
               </p>
-              <div className="mt-4 flex items-center gap-2">
-                <Plus size={16} className="text-white" />
-                <span className="text-white font-medium text-sm">สมัครเลย</span>
-              </div>
+              {hasShops && (
+                <div className="space-y-2">
+                  <div className="text-white/90 text-sm font-medium">
+                    ร้านค้าของคุณ ({shops.length} ร้าน):
+                  </div>
+                  {shops.slice(0, 2).map((shop) => (
+                    <div
+                      key={shop.id}
+                      className="flex items-center gap-2 text-white/80 text-sm bg-white/10 rounded px-3 py-2"
+                    >
+                      <Store size={14} />
+                      <span className="truncate">{shop.name}</span>
+                      <span
+                        className={`ml-auto px-2 py-0.5 rounded text-xs ${
+                          shop.status === "APPROVED"
+                            ? "bg-green-500/30 text-green-100"
+                            : "bg-yellow-500/30 text-yellow-100"
+                        }`}
+                      >
+                        {shop.status === "APPROVED" ? "✓" : "⏳"}
+                      </span>
+                    </div>
+                  ))}
+                  {shops.length > 2 && (
+                    <div className="text-white/60 text-xs pl-3">
+                      และอีก {shops.length - 2} ร้าน...
+                    </div>
+                  )}
+                </div>
+              )}
+              {!hasShops && (
+                <div className="mt-4 flex items-center gap-2">
+                  <Plus size={16} className="text-white" />
+                  <span className="text-white font-medium text-sm">เริ่มเลย</span>
+                </div>
+              )}
             </div>
 
-            {/* Register as Creator */}
+            {/* Creator Management */}
             <div
-              onClick={() => router.push("/creator/register")}
+              onClick={() => {
+                if (isCreator) {
+                  // If already a creator, go to creator dashboard
+                  router.push("/dashboard/creator");
+                } else {
+                  // If not a creator, go to register
+                  router.push("/creator/register");
+                }
+              }}
               className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg p-6 hover:bg-white/20 transition cursor-pointer group"
             >
               <div className="flex items-start justify-between mb-4">
@@ -155,14 +265,44 @@ export default function UserDashboard() {
                 </div>
                 <ChevronRight className="text-white/60 group-hover:text-white group-hover:translate-x-1 transition" />
               </div>
-              <h3 className="text-xl font-bold text-white mb-2">สมัครเป็นนักรีวิว</h3>
-              <p className="text-white/80 text-sm">
-                รับงานรีวิวร้านอาหารและสร้างรายได้จากการทำคอนเทนต์
+              <h3 className="text-xl font-bold text-white mb-2">
+                {isCreator ? "จัดการบัญชีนักรีวิว" : "สมัครเป็นนักรีวิว"}
+              </h3>
+              <p className="text-white/80 text-sm mb-4">
+                {isCreator
+                  ? "ดูสถานะ งานรีวิว และรายได้ของคุณ"
+                  : "รับงานรีวิวร้านอาหารและสร้างรายได้จากการทำคอนเทนต์"}
               </p>
-              <div className="mt-4 flex items-center gap-2">
-                <Plus size={16} className="text-white" />
-                <span className="text-white font-medium text-sm">เริ่มเลย</span>
-              </div>
+              {isCreator && (
+                <div className="space-y-2">
+                  <div className="text-white/90 text-sm font-medium">สถานะ:</div>
+                  <div className="flex items-center gap-2 text-white/80 text-sm bg-white/10 rounded px-3 py-2">
+                    <UserIcon size={14} />
+                    <span className="truncate">{creator.displayName}</span>
+                    <span
+                      className={`ml-auto px-2 py-0.5 rounded text-xs ${
+                        creator.applicationStatus === "APPROVED"
+                          ? "bg-green-500/30 text-green-100"
+                          : creator.applicationStatus === "PENDING"
+                          ? "bg-yellow-500/30 text-yellow-100"
+                          : "bg-red-500/30 text-red-100"
+                      }`}
+                    >
+                      {creator.applicationStatus === "APPROVED"
+                        ? "อนุมัติแล้ว"
+                        : creator.applicationStatus === "PENDING"
+                        ? "รออนุมัติ"
+                        : "ปฏิเสธ"}
+                    </span>
+                  </div>
+                </div>
+              )}
+              {!isCreator && (
+                <div className="mt-4 flex items-center gap-2">
+                  <Plus size={16} className="text-white" />
+                  <span className="text-white font-medium text-sm">เริ่มเลย</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
