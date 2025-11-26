@@ -8,16 +8,13 @@ import {
   Store, 
   Video, 
   User as UserIcon, 
-  Heart, 
   Clock,
   ChevronRight,
   Plus
 } from "lucide-react";
 
 interface UserStats {
-  favoriteShops: number;
   recentViews: number;
-  reviews: number;
 }
 
 interface Shop {
@@ -42,9 +39,7 @@ export default function UserDashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [stats, setStats] = useState<UserStats>({
-    favoriteShops: 0,
     recentViews: 0,
-    reviews: 0,
   });
   const [shops, setShops] = useState<Shop[]>([]);
   const [creator, setCreator] = useState<Creator | null>(null);
@@ -133,19 +128,7 @@ export default function UserDashboard() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
-                <Heart className="text-red-600" size={24} />
-              </div>
-              <div>
-                <p className="text-gray-600 text-sm">ร้านที่ชอบ</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.favoriteShops}</p>
-              </div>
-            </div>
-          </div>
-
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -154,18 +137,6 @@ export default function UserDashboard() {
               <div>
                 <p className="text-gray-600 text-sm">ดูล่าสุด</p>
                 <p className="text-2xl font-bold text-gray-900">{stats.recentViews}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                <UserIcon className="text-green-600" size={24} />
-              </div>
-              <div>
-                <p className="text-gray-600 text-sm">รีวิวของฉัน</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.reviews}</p>
               </div>
             </div>
           </div>
