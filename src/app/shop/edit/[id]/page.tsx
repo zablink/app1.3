@@ -124,6 +124,7 @@ export default function ShopEditPage({ params }: { params: { id: string } }) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('📝 Form submitted - handleSubmit called');
     setIsSaving(true);
     setError("");
     setSuccess("");
@@ -139,12 +140,16 @@ export default function ShopEditPage({ params }: { params: { id: string } }) {
         }),
       });
 
+      console.log('📡 API Response status:', res.status, res.ok);
+
       if (!res.ok) {
         throw new Error("Failed to update shop");
       }
 
+      console.log('✅ Setting success message');
       setSuccess("บันทึกข้อมูลสำเร็จ!");
     } catch (err) {
+      console.log('❌ Error occurred:', err);
       setError("เกิดข้อผิดพลาดในการบันทึก");
     } finally {
       setIsSaving(false);
@@ -193,7 +198,10 @@ export default function ShopEditPage({ params }: { params: { id: string } }) {
               key={`error-${error}`}
               message={error} 
               type="error" 
-              onClose={() => setError("")} 
+              onClose={() => {
+                console.log('🔴 Error notification onClose called');
+                setError("");
+              }} 
             />
           )}
 
@@ -202,7 +210,10 @@ export default function ShopEditPage({ params }: { params: { id: string } }) {
               key={`success-${success}`}
               message={success} 
               type="success" 
-              onClose={() => setSuccess("")} 
+              onClose={() => {
+                console.log('🟢 Success notification onClose called');
+                setSuccess("");
+              }} 
             />
           )}
         </div>
