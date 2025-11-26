@@ -20,39 +20,40 @@ export default function Notification({
   onClose,
 }: NotificationProps) {
   const [isExiting, setIsExiting] = useState(false);
-  const onCloseRef = useRef(onClose);
-
-  // Keep onClose ref updated
-  useEffect(() => {
-    onCloseRef.current = onClose;
-  }, [onClose]);
+  const [isMounted, setIsMounted] = useState(false);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const closeTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    console.log('Notification mounted:', message, 'duration:', duration);
+    // Mark as mounted
+    setIsMounted(true);
+    
+    console.log('Notification mounted:', message);
     
     // Start fade out animation 500ms before duration ends
-    const fadeTimer = setTimeout(() => {
-      console.log('Starting fade out...');
+    timerRef.current = setTimeout(() => {
+      console.log('Starting fade out animation');
       setIsExiting(true);
     }, duration - 500);
 
     // Call onClose after duration
-    const closeTimer = setTimeout(() => {
-      console.log('Calling onClose...');
-      onCloseRef.current?.();
+    closeTimerRef.current = setTimeout(() => {
+      console.log('Auto-closing notification');
+      onClose?.();
     }, duration);
 
     return () => {
-      console.log('Cleaning up timers...');
-      clearTimeout(fadeTimer);
-      clearTimeout(closeTimer);
+      console.log('Cleanup - clearing timers');
+      if (timerRef.current) clearTimeout(timerRef.current);
+      if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
     };
-  }, [duration]); // Re-run only if duration changes
+  }, []); // Run only once on mount
 
   const handleClose = () => {
+    console.log('Manual close clicked');
     setIsExiting(true);
     setTimeout(() => {
-      onCloseRef.current?.();
+      onClose?.();
     }, 300);
   };
 
