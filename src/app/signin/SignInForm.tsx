@@ -12,8 +12,14 @@ function SignInFormContent() {
   const error = searchParams.get('error');
   const callbackUrl = searchParams.get('callbackUrl') || '/dashboard';
 
+  console.log('🔍 SignInFormContent mounted');
+  console.log('📍 Current URL:', typeof window !== 'undefined' ? window.location.href : 'SSR');
+  console.log('❌ Error from URL:', error);
+  console.log('🔗 Callback URL:', callbackUrl);
+
   // แปลง error code เป็นข้อความภาษาไทย
   const getErrorMessage = (error: string | null): string | null => {
+    console.log('🔄 getErrorMessage called with:', error);
     if (!error) return null;
 
     const errorMessages: Record<string, string> = {
@@ -34,27 +40,41 @@ function SignInFormContent() {
 
   const errorMessage = getErrorMessage(error);
 
+  console.log('💬 Error message:', errorMessage);
+
   // ลบ error จาก URL หลังจากแสดงผล 5 วินาที
   useEffect(() => {
+    console.log('🎯 Error cleanup useEffect triggered, error:', error);
     if (error) {
       const timer = setTimeout(() => {
+        console.log('⏰ Timeout reached, clearing error from URL');
         const url = new URL(window.location.href);
         url.searchParams.delete('error');
         router.replace(url.pathname + url.search);
       }, 5000);
 
-      return () => clearTimeout(timer);
+      return () => {
+        console.log('🧹 Cleanup timeout');
+        clearTimeout(timer);
+      };
     }
   }, [error, router]);
 
   const handleSocialSignIn = async (provider: string) => {
+    console.log('🚀 handleSocialSignIn called');
+    console.log('📱 Provider:', provider);
+    console.log('🔗 Callback URL:', callbackUrl);
+    
     try {
-      await signIn(provider, {
+      console.log('⏳ Calling signIn...');
+      const result = await signIn(provider, {
         callbackUrl,
         redirect: true,
       });
+      console.log('✅ signIn result:', result);
     } catch (error) {
-      console.error('Sign in error:', error);
+      console.error('❌ Sign in error:', error);
+      console.error('📊 Error details:', JSON.stringify(error, null, 2));
     }
   };
 
@@ -246,7 +266,10 @@ function SignInFormContent() {
               
               {/* Google */}
               <button
-                onClick={() => handleSocialSignIn('google')}
+                onClick={() => {
+                  console.log('🖱️ Google button clicked');
+                  handleSocialSignIn('google');
+                }}
                 className="w-full flex items-center justify-center gap-3 px-4 py-3.5 bg-white border-2 border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 group shadow-sm"
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -274,7 +297,10 @@ function SignInFormContent() {
 
               {/* Facebook */}
               <button
-                onClick={() => handleSocialSignIn('facebook')}
+                onClick={() => {
+                  console.log('🖱️ Facebook button clicked');
+                  handleSocialSignIn('facebook');
+                }}
                 className="w-full flex items-center justify-center gap-3 px-4 py-3.5 bg-[#1877F2] text-white rounded-xl hover:bg-[#166FE5] transition-all duration-200 shadow-sm hover:shadow-md"
               >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -287,7 +313,10 @@ function SignInFormContent() {
 
               {/* LINE */}
               <button
-                onClick={() => handleSocialSignIn('line')}
+                onClick={() => {
+                  console.log('🖱️ LINE button clicked');
+                  handleSocialSignIn('line');
+                }}
                 className="w-full flex items-center justify-center gap-3 px-4 py-3.5 bg-[#00B900] text-white rounded-xl hover:bg-[#00A000] transition-all duration-200 shadow-sm hover:shadow-md"
               >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -300,7 +329,10 @@ function SignInFormContent() {
 
               {/* Twitter/X */}
               <button
-                onClick={() => handleSocialSignIn('twitter')}
+                onClick={() => {
+                  console.log('🖱️ Twitter/X button clicked');
+                  handleSocialSignIn('twitter');
+                }}
                 className="w-full flex items-center justify-center gap-3 px-4 py-3.5 bg-black text-white rounded-xl hover:bg-gray-800 transition-all duration-200 shadow-sm hover:shadow-md"
               >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -313,7 +345,10 @@ function SignInFormContent() {
 
               {/* TikTok */}
               <button
-                onClick={() => handleSocialSignIn('tiktok')}
+                onClick={() => {
+                  console.log('🖱️ TikTok button clicked');
+                  handleSocialSignIn('tiktok');
+                }}
                 className="w-full flex items-center justify-center gap-3 px-4 py-3.5 bg-white border-2 border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 group shadow-sm"
               >
                 {/* TikTok Logo with gradient border */}
@@ -356,7 +391,10 @@ function SignInFormContent() {
               <p className="text-sm text-gray-600">
                 คุณยังไม่มีบัญชี?{' '}
                 <button 
-                  onClick={() => handleSocialSignIn('google')}
+                  onClick={() => {
+                    console.log('🖱️ สมัครสมาชิก button clicked');
+                    handleSocialSignIn('google');
+                  }}
                   className="text-blue-600 hover:text-blue-700 font-medium hover:underline"
                 >
                   สมัครสมาชิก
@@ -412,6 +450,7 @@ function SignInFormContent() {
 
 // Export with Suspense wrapper
 export default function SignInForm() {
+  console.log('🎬 SignInForm wrapper rendering');
   return (
     <Suspense fallback={<SignInFormLoading />}>
       <SignInFormContent />
@@ -421,6 +460,7 @@ export default function SignInForm() {
 
 // Loading component
 function SignInFormLoading() {
+  console.log('⏳ SignInFormLoading rendering');
   return (
     <div className="min-h-screen flex items-center justify-center bg-blue-50 px-4 py-12">
       <div className="max-w-md w-full">
