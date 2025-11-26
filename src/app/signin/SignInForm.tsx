@@ -67,14 +67,49 @@ function SignInFormContent() {
     
     try {
       console.log('⏳ Calling signIn...');
+      
+      // Check if NextAuth is working by calling providers endpoint
+      console.log('🔍 Checking NextAuth providers endpoint...');
+      const providersRes = await fetch('/api/auth/providers');
+      console.log('📡 Providers response status:', providersRes.status);
+      
+      if (!providersRes.ok) {
+        console.error('❌ Providers endpoint failed:', providersRes.statusText);
+        throw new Error(`NextAuth API failed: ${providersRes.status} ${providersRes.statusText}`);
+      }
+      
+      const providers = await providersRes.json();
+      console.log('✅ Available providers:', Object.keys(providers));
+      
+      if (!providers[provider]) {
+        console.error(`❌ Provider "${provider}" not found in available providers`);
+        throw new Error(`Provider "${provider}" is not configured`);
+      }
+      
+      // Set a timeout to detect if signIn hangs
+      const timeoutId = setTimeout(() => {
+        console.error('⚠️ signIn is taking too long (>5s)');
+      }, 5000);
+      
       const result = await signIn(provider, {
         callbackUrl,
         redirect: true,
       });
+      
+      clearTimeout(timeoutId);
       console.log('✅ signIn result:', result);
     } catch (error) {
       console.error('❌ Sign in error:', error);
       console.error('📊 Error details:', JSON.stringify(error, null, 2));
+      console.error('📊 Error type:', typeof error);
+      console.error('📊 Error constructor:', error?.constructor?.name);
+      
+      // Show error to user
+      if (error instanceof Error) {
+        alert(`เกิดข้อผิดพลาด: ${error.message}\n\nกรุณาลองใหม่อีกครั้งหรือติดต่อผู้ดูแลระบบ`);
+      } else {
+        alert('เกิดข้อผิดพลาดในการเข้าสู่ระบบ\n\nกรุณาลองใหม่อีกครั้ง');
+      }
     }
   };
 
