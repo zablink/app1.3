@@ -48,14 +48,16 @@ export default function ShopEditPage({ params }: { params: { id: string } }) {
   const [links, setLinks] = useState<any[]>([]);
 
   useEffect(() => {
+    console.log('Status : ' , status);
     if (status === "unauthenticated") {
       router.push("/");
+      return;
     }
-    if (status === "authenticated") {
+    if (status === "authenticated" && session?.user?.id) {
       fetchShopData();
       fetchCategories();
     }
-  }, [status, shopId]);
+  }, [status, shopId, session?.user?.id]);
 
   const fetchCategories = async () => {
     try {
@@ -68,6 +70,12 @@ export default function ShopEditPage({ params }: { params: { id: string } }) {
   };
 
   const fetchShopData = async () => {
+    // Wait for session to be fully loaded
+    if (!session?.user?.id) {
+      console.log('Session not ready yet');
+      return;
+    }
+
     try {
       setIsLoading(true);
 
@@ -77,7 +85,8 @@ export default function ShopEditPage({ params }: { params: { id: string } }) {
       const shop = await shopRes.json();
 
       // Check ownership
-      if (shop.ownerId !== session?.user?.id && session?.user?.role !== "ADMIN") {
+      if (shop.ownerId !== session.user.id && session.user.role !== "ADMIN") {
+        console.log('Not owner, redirecting...');
         router.push("/dashboard");
         return;
       }
@@ -142,7 +151,7 @@ export default function ShopEditPage({ params }: { params: { id: string } }) {
     }
   };
 
-  if (isLoading) {
+  if (status === "loading" || isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
