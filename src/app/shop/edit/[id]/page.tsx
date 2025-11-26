@@ -85,9 +85,9 @@ export default function ShopEditPage({ params }: { params: { id: string } }) {
       if (!shopRes.ok) throw new Error("Shop not found");
       const shop = await shopRes.json();
 
-      // Check ownership
-      if (shop.ownerId !== session.user.id && session.user.role !== "ADMIN") {
-        console.log('Not owner, redirecting...');
+      // Check ownership - allow if owner OR admin
+      if (shop.ownerId !== session.user.id || session.user.role !== "ADMIN") {
+        console.log('Not owner and not admin, redirecting...');
         router.push("/dashboard");
         return;
       }
