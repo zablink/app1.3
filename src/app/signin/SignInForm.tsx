@@ -1,12 +1,12 @@
 // src/app/signin/SignInForm.tsx
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import Link from 'next/link';
 
-export default function SignInForm() {
+function SignInFormContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const error = searchParams.get('error');
@@ -406,6 +406,39 @@ export default function SignInForm() {
           animation: shake 0.5s ease-in-out;
         }
       `}</style>
+    </div>
+  );
+}
+
+// Export with Suspense wrapper
+export default function SignInForm() {
+  return (
+    <Suspense fallback={<SignInFormLoading />}>
+      <SignInFormContent />
+    </Suspense>
+  );
+}
+
+// Loading component
+function SignInFormLoading() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-blue-50 px-4 py-12">
+      <div className="max-w-md w-full">
+        <div className="relative bg-gradient-to-b from-white to-blue-200 rounded-2xl shadow-xl p-8">
+          <div className="relative z-10 space-y-6">
+            <div className="text-center space-y-2">
+              <div className="flex justify-center">
+                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-green-500 rounded-2xl flex items-center justify-center animate-pulse">
+                  <span className="text-2xl font-bold text-white">Z</span>
+                </div>
+              </div>
+              <h1 className="text-3xl font-bold text-gray-900">
+                กำลังโหลด...
+              </h1>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
