@@ -6,7 +6,6 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Video, User, MapPin, Phone, Check } from "lucide-react";
 import Notification from "@/components/Notification";
-import Notification from "@/components/Notification";
 
 interface Province {
   id: number;
