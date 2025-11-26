@@ -20,6 +20,7 @@ model User {
   accounts      Account[]
   sessions      Session[]
   bookmarks     UserBookmark[]
+  shops         Shop[]
 
   @@map("users")
 }
@@ -48,6 +49,7 @@ model Shop {
   foodPandaUrl         String?                  @map("foodpanda_url")
   shopeeUrl            String?                  @map("shopee_url")
   isMockup             Boolean                  @default(false) @map("is_mockup")
+  owner                User                     @relation(fields: [ownerId], references: [id])
   analytics            Analytics[]
   adPackage            AdPackage?               @relation(fields: [adPackageId], references: [id])
   categories           ShopCategoryMapping[]
