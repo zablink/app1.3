@@ -9,30 +9,28 @@ import { Store, Edit, Package, Coins, Eye, TrendingUp, Settings } from "lucide-r
 export default function ShopDashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [shop, setShop] = useState<any>(null);
+  const [shops, setShops] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/");
+      return;
     }
     if (status === "authenticated") {
-      fetchShopData();
+      fetchShopsData();
     }
   }, [status]);
 
-  const fetchShopData = async () => {
+  const fetchShopsData = async () => {
     try {
-      const res = await fetch('/api/shops/my-shop');
+      const res = await fetch('/api/user/shops');
       if (res.ok) {
         const data = await res.json();
-        setShop(data.shop);
-      } else {
-        // ถ้ายังไม่มีร้าน ให้ไปหน้าสมัคร
-        router.push('/shop/register');
+        setShops(data.shops || []);
       }
     } catch (error) {
-      console.error('Error fetching shop:', error);
+      console.error('Error fetching shops:', error);
     } finally {
       setLoading(false);
     }
@@ -41,192 +39,130 @@ export default function ShopDashboard() {
   if (loading || status === "loading") {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">กำลังโหลด...</p>
+        </div>
       </div>
     );
   }
 
-  if (!shop) {
+  if (shops.length === 0) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <Store className="w-16 h-16 text-gray-400 mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-gray-800 mb-2">ยังไม่มีร้านค้า</h2>
-          <p className="text-gray-600 mb-4">กรุณาสมัครร้านค้าก่อนเข้าใช้งาน</p>
+          <p className="text-gray-600 mb-4">กรุณาเพิ่มร้านค้าก่อนเข้าใช้งาน</p>
           <Link
             href="/shop/register"
             className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
           >
-            สมัครร้านค้า
+            เพิ่มร้านค้า
           </Link>
         </div>
       </div>
     );
   }
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-blue-100 rounded-lg">
-                <Store className="w-8 h-8 text-blue-600" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">{shop.name}</h1>
-                <p className="text-sm text-gray-600">จัดการร้านค้าของคุณ</p>
-              </div>
+  if (shops.length === 1) {
+    const shop = shops[0];
+    return (
+      <div className="min-h-screen bg-gray-50 py-8">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="bg-white rounded-lg shadow-sm p-6">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">จัดการร้านค้า</h2>
+            
+            <div className="space-y-4">
+              <Link
+                href={`/shop/edit/${shop.id}`}
+                className="flex items-center gap-4 p-4 border rounded-lg hover:bg-gray-50 transition"
+              >
+                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <Edit className="w-6 h-6 text-blue-600" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-gray-900">{shop.name}</h3>
+                  <p className="text-sm text-gray-600">แก้ไขข้อมูลร้าน</p>
+                </div>
+                <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                  shop.status === 'APPROVED' 
+                    ? 'bg-green-100 text-green-800' 
+                    : 'bg-yellow-100 text-yellow-800'
+                }`}>
+                  {shop.status === 'APPROVED' ? 'อนุมัติแล้ว' : 'รออนุมัติ'}
+                </span>
+              </Link>
+
+              <Link
+                href="/shop/register"
+                className="flex items-center gap-4 p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition"
+              >
+                <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
+                  <Store className="w-6 h-6 text-gray-600" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-gray-900">เพิ่มร้านค้าใหม่</h3>
+                  <p className="text-sm text-gray-600">ลงทะเบียนร้านค้าเพิ่มเติม</p>
+                </div>
+              </Link>
             </div>
-            <Link
-              href={`/shop/edit/${shop.id}`}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-            >
-              <Edit className="w-4 h-4" />
-              แก้ไขร้าน
-            </Link>
           </div>
         </div>
       </div>
+    );
+  }
 
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Status Card */}
-        <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-1">สถานะร้านค้า</h3>
-              <p className="text-sm text-gray-600">ตรวจสอบสถานะและแพ็กเกจของคุณ</p>
-            </div>
-            <div className="text-right">
-              <span className={`inline-block px-4 py-2 rounded-full text-sm font-semibold ${
-                shop.status === 'APPROVED' 
-                  ? 'bg-green-100 text-green-800' 
-                  : shop.status === 'PENDING'
-                  ? 'bg-yellow-100 text-yellow-800'
-                  : 'bg-red-100 text-red-800'
-              }`}>
-                {shop.status === 'APPROVED' ? '✓ อนุมัติแล้ว' : shop.status === 'PENDING' ? '⏳ รออนุมัติ' : '✗ ปฏิเสธ'}
-              </span>
-            </div>
-          </div>
+  return (
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">จัดการร้านค้า</h1>
+          <p className="text-gray-600">คุณมี {shops.length} ร้านค้า</p>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow-sm border p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 mb-1">ผู้เข้าชมวันนี้</p>
-                <p className="text-2xl font-bold text-gray-900">0</p>
-              </div>
-              <div className="p-3 bg-blue-100 rounded-lg">
-                <Eye className="w-6 h-6 text-blue-600" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-sm border p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 mb-1">ผู้เข้าชมเดือนนี้</p>
-                <p className="text-2xl font-bold text-gray-900">0</p>
-              </div>
-              <div className="p-3 bg-green-100 rounded-lg">
-                <TrendingUp className="w-6 h-6 text-green-600" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-sm border p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 mb-1">Token คงเหลือ</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {shop.tokenWallet?.balance || 0}
-                </p>
-              </div>
-              <div className="p-3 bg-yellow-100 rounded-lg">
-                <Coins className="w-6 h-6 text-yellow-600" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-sm border p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 mb-1">แพ็กเกจ</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {shop.subscription?.package?.name || 'FREE'}
-                </p>
-              </div>
-              <div className="p-3 bg-purple-100 rounded-lg">
-                <Package className="w-6 h-6 text-purple-600" />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Quick Actions */}
-        <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">การจัดการ</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="space-y-4">
+          {shops.map((shop) => (
             <Link
+              key={shop.id}
               href={`/shop/edit/${shop.id}`}
-              className="flex items-center gap-3 p-4 border rounded-lg hover:bg-gray-50 transition"
+              className="block bg-white rounded-lg shadow-sm border hover:shadow-md transition"
             >
-              <Edit className="w-5 h-5 text-blue-600" />
-              <div>
-                <p className="font-medium text-gray-900">แก้ไขข้อมูลร้าน</p>
-                <p className="text-sm text-gray-600">เปลี่ยนชื่อ รายละเอียด รูปภาพ</p>
+              <div className="p-6 flex items-center gap-4">
+                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <Store className="w-6 h-6 text-blue-600" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-gray-900">{shop.name}</h3>
+                  <p className="text-sm text-gray-600">
+                    {shop.categories?.map((c: any) => c.category.name).join(', ') || 'ไม่ระบุหมวดหมู่'}
+                  </p>
+                </div>
+                <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                  shop.status === 'APPROVED' 
+                    ? 'bg-green-100 text-green-800' 
+                    : 'bg-yellow-100 text-yellow-800'
+                }`}>
+                  {shop.status === 'APPROVED' ? 'อนุมัติแล้ว' : 'รออนุมัติ'}
+                </span>
               </div>
             </Link>
+          ))}
 
-            <Link
-              href={`/shop/${shop.id}`}
-              className="flex items-center gap-3 p-4 border rounded-lg hover:bg-gray-50 transition"
-            >
-              <Eye className="w-5 h-5 text-green-600" />
-              <div>
-                <p className="font-medium text-gray-900">ดูหน้าร้าน</p>
-                <p className="text-sm text-gray-600">ดูหน้าร้านแบบที่ลูกค้าเห็น</p>
+          <Link
+            href="/shop/register"
+            className="block bg-white rounded-lg border-2 border-dashed border-gray-300 hover:border-blue-500 hover:shadow-md transition"
+          >
+            <div className="p-6 flex items-center gap-4">
+              <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center">
+                <Store className="w-6 h-6 text-blue-600" />
               </div>
-            </Link>
-
-            <button
-              onClick={() => alert('ฟีเจอร์กำลังพัฒนา')}
-              className="flex items-center gap-3 p-4 border rounded-lg hover:bg-gray-50 transition"
-            >
-              <Settings className="w-5 h-5 text-gray-600" />
-              <div>
-                <p className="font-medium text-gray-900">ตั้งค่าเพิ่มเติม</p>
-                <p className="text-sm text-gray-600">การแจ้งเตือน การตลาด</p>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-gray-900">เพิ่มร้านค้าใหม่</h3>
+                <p className="text-sm text-gray-600">ลงทะเบียนร้านค้าเพิ่มเติม</p>
               </div>
-            </button>
-          </div>
-        </div>
-
-        {/* Shop Info */}
-        <div className="bg-white rounded-lg shadow-sm border p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">ข้อมูลร้าน</h3>
-          <div className="space-y-3">
-            <div className="flex justify-between">
-              <span className="text-gray-600">ที่อยู่:</span>
-              <span className="text-gray-900 text-right max-w-md">{shop.address}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">หมวดหมู่:</span>
-              <span className="text-gray-900">
-                {shop.categories?.map((c: any) => c.name).join(', ') || 'ไม่ระบุ'}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">วันที่สร้าง:</span>
-              <span className="text-gray-900">
-                {new Date(shop.createdAt).toLocaleDateString('th-TH')}
-              </span>
-            </div>
-          </div>
+          </Link>
         </div>
       </div>
     </div>
