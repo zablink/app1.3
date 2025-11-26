@@ -25,34 +25,38 @@ export default function Notification({
   const closeTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    // Mark as mounted
-    setIsMounted(true);
-    
-    console.log('Notification mounted:', message);
+    console.log('🔔 Notification mounted! Message::', message, 'Duration:', duration);
     
     // Start fade out animation 500ms before duration ends
     timerRef.current = setTimeout(() => {
-      console.log('Starting fade out animation');
+      console.log('⏰ Starting fade out animation after ', duration - 500, 'ms');
       setIsExiting(true);
     }, duration - 500);
 
     // Call onClose after duration
     closeTimerRef.current = setTimeout(() => {
-      console.log('Auto-closing notification');
+      console.log('❌ Auto-closing notification after ', duration, 'ms');
       onClose?.();
     }, duration);
 
     return () => {
-      console.log('Cleanup - clearing timers');
-      if (timerRef.current) clearTimeout(timerRef.current);
-      if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+      console.log('🧹 Cleanup - clearing timers for:', message);
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        console.log('  - Cleared fade timer');
+      }
+      if (closeTimerRef.current) {
+        clearTimeout(closeTimerRef.current);
+        console.log('  - Cleared close timer');
+      }
     };
   }, []); // Run only once on mount
 
   const handleClose = () => {
-    console.log('Manual close clicked');
+    console.log('👆 Manual close button clicked');
     setIsExiting(true);
     setTimeout(() => {
+      console.log('👆 Calling onClose after fade animation');
       onClose?.();
     }, 300);
   };
