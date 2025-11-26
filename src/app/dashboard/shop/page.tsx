@@ -12,15 +12,17 @@ export default function ShopDashboard() {
   const [shop, setShop] = useState<any>(null);
   const [shops, setShops] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [hasRedirected, setHasRedirected] = useState(false);
 
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/");
+      return;
     }
-    if (status === "authenticated") {
+    if (status === "authenticated" && !hasRedirected) {
       fetchShopsData();
     }
-  }, [status, router]);
+  }, [status, hasRedirected]);
 
   const fetchShopsData = async () => {
     try {
@@ -33,16 +35,20 @@ export default function ShopDashboard() {
         
         if (userShops.length === 0) {
           // No shops - redirect to register
+          setHasRedirected(true);
           router.push('/shop/register');
         } else if (userShops.length === 1) {
           // Only one shop - redirect to edit page
+          setHasRedirected(true);
           router.push(`/shop/edit/${userShops[0].id}`);
         } else {
           // Multiple shops - redirect to selection page
+          setHasRedirected(true);
           router.push('/shop/select');
         }
       } else {
         // No shops found, redirect to register
+        setHasRedirected(true);
         router.push('/shop/register');
       }
     } catch (error) {
