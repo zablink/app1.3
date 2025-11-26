@@ -80,7 +80,6 @@ export default function BookmarkMapView({
       doubleClickZoom: true,
       touchZoom: true,
       dragging: true,
-      tap: true,
     });
 
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -101,10 +100,6 @@ export default function BookmarkMapView({
       }
     };
   }, []);
-
-  // อัพเดต markers เมื่อข้อมูลเปลี่ยน
-  useEffect(() => {
-    if (!mapRef.current || !mapInitialized || shopsWithCoords.length === 0) return;
 
   // อัพเดต markers เมื่อข้อมูลเปลี่ยน
   useEffect(() => {
@@ -142,7 +137,7 @@ export default function BookmarkMapView({
               🍴
             </div>
             ${
-              shop.distance
+              'distance' in shop && shop.distance
                 ? `<div class="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-white px-2 py-0.5 rounded text-xs font-semibold whitespace-nowrap shadow">
                 ${shop.distance.toFixed(1)} km
               </div>`
@@ -167,7 +162,7 @@ export default function BookmarkMapView({
           <h3 class="font-bold text-sm mb-1">${shop.name}</h3>
           <p class="text-xs text-gray-600 mb-1">${shop.category}</p>
           ${
-            shop.distance
+            'distance' in shop && shop.distance
               ? `<p class="text-xs font-semibold text-blue-600">ระยะทาง: ${shop.distance.toFixed(2)} กม.</p>`
               : ""
           }
@@ -342,7 +337,7 @@ export default function BookmarkMapView({
                 <p className="text-gray-600">{selectedShop.category}</p>
               </div>
 
-              {selectedShop.distance && (
+              {'distance' in selectedShop && typeof selectedShop.distance === 'number' && (
                 <div className="bg-blue-50 p-3 rounded-lg">
                   <p className="text-sm text-gray-600">ระยะทางจากคุณ</p>
                   <p className="font-bold text-lg text-blue-600">
