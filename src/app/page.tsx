@@ -5,6 +5,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Hero from '@/components/Hero';
+import Notification from '@/components/Notification';
 
 interface Shop {
   id: string;
@@ -406,36 +407,35 @@ export default function HomePage() {
         )}
       </main>
 
-      {showLocationNotif && locationState.status !== 'idle' && (
-        <div className="fixed top-20 right-4 z-50 animate-slide-in-from-right">
-          <div className={`bg-white rounded-lg shadow-lg border-l-4 p-4 max-w-sm ${locationState.status === 'loading' ? 'border-blue-500' : ''} ${locationState.status === 'success' ? 'border-green-500' : ''} ${locationState.status === 'error' ? 'border-red-500' : ''}`}>
-            <div className="flex items-start">
-              <div className="flex-shrink-0">
-                {locationState.status === 'loading' && <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>}
-                {locationState.status === 'success' && (
-                  <svg className="h-5 w-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/></svg>
-                )}
-                {locationState.status === 'error' && (
-                  <svg className="h-5 w-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
-                )}
-              </div>
-              <div className="ml-3 flex-1">
-                <p className="text-sm font-medium text-gray-900">
-                  {locationState.status === 'loading' && 'กำลังโหลดตำแหน่ง...'}
-                  {locationState.status === 'success' && 'อัปเดตตำแหน่งเรียบร้อย'}
-                  {locationState.status === 'error' && 'ไม่สามารถโหลดตำแหน่งได้'}
-                </p>
-                {locationState.status === 'success' && <p className="mt-1 text-xs text-gray-600">ร้านค้าถูกเรียงตามระยะทางแล้ว</p>}
-                {locationState.status === 'error' && (
-                  <div>
-                    <p className="mt-1 text-xs text-gray-600">{locationState.error}</p>
-                    <button onClick={requestLocation} className="mt-2 text-xs text-blue-600 hover:text-blue-800 font-medium">ลองอีกครั้ง</button>
-                  </div>
-                )}
-              </div>
-              <button onClick={() => setShowLocationNotif(false)} className="ml-3 flex-shrink-0 text-gray-400 hover:text-gray-600">
-                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
-              </button>
+      {/* Location Notification */}
+      {showLocationNotif && locationState.status === 'success' && (
+        <div className="fixed top-20 right-4 z-50 max-w-sm">
+          <Notification
+            message="อัปเดตตำแหน่งเรียบร้อย - ร้านค้าถูกเรียงตามระยะทางแล้ว"
+            type="success"
+            duration={5000}
+            onClose={() => setShowLocationNotif(false)}
+          />
+        </div>
+      )}
+
+      {showLocationNotif && locationState.status === 'error' && (
+        <div className="fixed top-20 right-4 z-50 max-w-sm">
+          <Notification
+            message={`ไม่สามารถโหลดตำแหน่งได้: ${locationState.error || 'กรุณาลองอีกครั้ง'}`}
+            type="error"
+            duration={6000}
+            onClose={() => setShowLocationNotif(false)}
+          />
+        </div>
+      )}
+
+      {showLocationNotif && locationState.status === 'loading' && (
+        <div className="fixed top-20 right-4 z-50 max-w-sm">
+          <div className="bg-white rounded-lg shadow-lg border-l-4 border-blue-500 p-4">
+            <div className="flex items-center gap-3">
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+              <p className="text-sm font-medium text-gray-900">กำลังโหลดตำแหน่ง...</p>
             </div>
           </div>
         </div>
