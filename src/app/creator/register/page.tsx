@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Video, User, MapPin, Phone, Check } from "lucide-react";
+import Notification from "@/components/Notification";
 
 interface Province {
   id: number;
@@ -348,8 +349,8 @@ export default function CreatorRegisterPage() {
         {/* Form */}
         <div className="bg-white rounded-lg shadow-sm p-6">
           {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-600">
-              {error}
+            <div className="mb-6">
+              <Notification message={error} type="error" onClose={() => setError("")} />
             </div>
           )}
 

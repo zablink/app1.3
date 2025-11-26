@@ -4,6 +4,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import AdminBreadcrumb from '@/components/admin/Breadcrumb';
+import Notification from '@/components/Notification';
 
 type Category = {
   id: string;
@@ -366,11 +367,9 @@ export default function AdminCategoriesPage() {
           await fetchCategories();
           setEditingCategory(null);
           setSuccessMessage('แก้ไขหมวดหมู่สำเร็จ');
-          setTimeout(() => setSuccessMessage(''), 3000);
         } else {
           setError(data.error || 'เกิดข้อผิดพลาดในการอัปเดต');
           setEditingCategory(null);
-          setTimeout(() => setError(''), 3000);
           window.scrollTo({ top: 0, behavior: 'smooth' });
         }
       } else {
@@ -387,16 +386,13 @@ export default function AdminCategoriesPage() {
           await fetchCategories();
           setShowAddForm(false);
           setSuccessMessage('เพิ่มหมวดหมู่สำเร็จ');
-          setTimeout(() => setSuccessMessage(''), 3000);
         } else {
           setError(data.error || 'เกิดข้อผิดพลาดในการเพิ่มหมวดหมู่');
-          setTimeout(() => setError(''), 3000);
         }
       }
     } catch (error) {
       console.error('Error saving category:', error);
       setError('เกิดข้อผิดพลาดในการเชื่อมต่อ');
-      setTimeout(() => setError(''), 3000);
     } finally {
       setSaving(false);
     }
@@ -421,17 +417,14 @@ export default function AdminCategoriesPage() {
         
         // Show success message
         setSuccessMessage('ลบหมวดหมู่สำเร็จ');
-        setTimeout(() => setSuccessMessage(''), 3000);
       } else {
         const data = await response.json();
         setError(data.error || 'เกิดข้อผิดพลาดในการลบ');
-        setTimeout(() => setError(''), 3000);
         setDeleteConfirm(null);
       }
     } catch (error) {
       console.error('Error deleting category:', error);
       setError('เกิดข้อผิดพลาด');
-      setTimeout(() => setError(''), 3000);
       setDeleteConfirm(null);
     } finally {
       setDeleting(false);
@@ -457,29 +450,23 @@ export default function AdminCategoriesPage() {
         
         {/* Success Message */}
         {successMessage && (
-          <div className="fixed top-4 right-4 z-50 animate-slide-in-right">
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4 shadow-lg flex items-center gap-3">
-              <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                <svg className="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              <p className="text-green-800 font-medium">{successMessage}</p>
-            </div>
+          <div className="fixed top-4 right-4 z-50">
+            <Notification 
+              message={successMessage} 
+              type="success" 
+              onClose={() => setSuccessMessage('')}
+            />
           </div>
         )}
 
         {/* Error Message */}
         {error && !editingCategory && !showAddForm && (
-          <div className="fixed top-4 right-4 z-50 animate-slide-in-right">
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4 shadow-lg flex items-center gap-3">
-              <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
-                <svg className="w-5 h-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </div>
-              <p className="text-red-800 font-medium">{error}</p>
-            </div>
+          <div className="fixed top-4 right-4 z-50">
+            <Notification 
+              message={error} 
+              type="error" 
+              onClose={() => setError('')}
+            />
           </div>
         )}
 

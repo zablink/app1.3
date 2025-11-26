@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Store, MapPin, Phone, Mail, Globe, Upload, X, Check } from "lucide-react";
 import dynamic from "next/dynamic";
+import Notification from "@/components/Notification";
 
 const MapPicker = dynamic(() => import("@/components/shop/MapPicker"), {
   ssr: false,
@@ -436,8 +437,8 @@ export default function ShopRegisterPage() {
         {/* Form */}
         <div className="bg-white rounded-lg shadow-sm p-6">
           {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-600">
-              {error}
+            <div className="mb-6">
+              <Notification message={error} type="error" onClose={() => setError("")} />
             </div>
           )}
 
