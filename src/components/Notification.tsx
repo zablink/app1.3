@@ -22,6 +22,8 @@ export default function Notification({
   const [isExiting, setIsExiting] = useState(false);
 
   useEffect(() => {
+    if (!message) return;
+
     // Start fade out animation 500ms before duration ends
     const fadeTimer = setTimeout(() => {
       setIsExiting(true);
@@ -29,19 +31,23 @@ export default function Notification({
 
     // Call onClose after duration
     const closeTimer = setTimeout(() => {
-      onClose?.();
+      if (onClose) {
+        onClose();
+      }
     }, duration);
 
     return () => {
       clearTimeout(fadeTimer);
       clearTimeout(closeTimer);
     };
-  }, [duration, onClose]);
+  }, [message]); // Only re-run if message changes
 
   const handleClose = () => {
     setIsExiting(true);
     setTimeout(() => {
-      onClose?.();
+      if (onClose) {
+        onClose();
+      }
     }, 300);
   };
 

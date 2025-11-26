@@ -187,17 +187,25 @@ export default function ShopEditPage({ params }: { params: { id: string } }) {
         </div>
 
         {/* Messages */}
-        {error && (
-          <div className="mb-6">
-            <Notification message={error} type="error" onClose={() => setError("")} />
-          </div>
-        )}
+        <div className="mb-6">
+          {error && (
+            <Notification 
+              key={`error-${error}`}
+              message={error} 
+              type="error" 
+              onClose={() => setError("")} 
+            />
+          )}
 
-        {success && (
-          <div className="mb-6">
-            <Notification message={success} type="success" onClose={() => setSuccess("")} />
-          </div>
-        )}
+          {success && (
+            <Notification 
+              key={`success-${success}`}
+              message={success} 
+              type="success" 
+              onClose={() => setSuccess("")} 
+            />
+          )}
+        </div>
 
         {/* Basic Info Form */}
         <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
