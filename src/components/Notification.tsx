@@ -19,7 +19,6 @@ export default function Notification({
   duration = 5000,
   onClose,
 }: NotificationProps) {
-  const [isVisible, setIsVisible] = useState(true);
   const [isExiting, setIsExiting] = useState(false);
 
   useEffect(() => {
@@ -28,27 +27,23 @@ export default function Notification({
       setIsExiting(true);
     }, duration - 500);
 
-    // Remove component after duration
-    const removeTimer = setTimeout(() => {
-      setIsVisible(false);
+    // Call onClose after duration
+    const closeTimer = setTimeout(() => {
       onClose?.();
     }, duration);
 
     return () => {
       clearTimeout(fadeTimer);
-      clearTimeout(removeTimer);
+      clearTimeout(closeTimer);
     };
   }, [duration, onClose]);
 
   const handleClose = () => {
     setIsExiting(true);
     setTimeout(() => {
-      setIsVisible(false);
       onClose?.();
     }, 300);
   };
-
-  if (!isVisible) return null;
 
   const config = {
     success: {
