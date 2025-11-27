@@ -67,6 +67,14 @@ function SignInFormContent() {
 
   const handleSocialSignIn = async (provider: string) => {
     try {
+      // Clear any stale NextAuth cookies before signing in
+      document.cookie.split(";").forEach((c) => {
+        const cookieName = c.trim().split("=")[0];
+        if (cookieName.includes('next-auth')) {
+          document.cookie = cookieName + '=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;';
+        }
+      });
+      
       // Direct redirect to OAuth provider
       const params = new URLSearchParams({
         callbackUrl: callbackUrl,
