@@ -9,7 +9,6 @@ interface SessionProviderProps {
 }
 
 export default function SessionProvider({ children }: SessionProviderProps) {
-  console.log('🔧 SessionProvider initialized');
   return (
     <NextAuthSessionProvider basePath="/api/auth">
       {children}

@@ -26,10 +26,7 @@ export const authOptions: NextAuthOptions = {
           access_type: "offline",
           response_type: "code"
         }
-      },
-      httpOptions: {
-        timeout: 10000, // 10 seconds timeout
-      },
+      }
     }),
 
     // Facebook OAuth
@@ -238,18 +235,12 @@ export const authOptions: NextAuthOptions = {
     },
 
     async signIn({ user, account }) {
-      console.log('🔐 signIn callback triggered');
-      console.log('👤 User:', user);
-      console.log('🔑 Account:', account);
-      
       try {
         // ตรวจสอบว่ามี user email
         if (!user.email) {
-          console.error("❌ No email provided");
+          console.error("No email provided");
           return false;
         }
-
-        console.log('✅ Email found:', user.email);
 
         // สำหรับ user ใหม่ ให้ set role เป็น USER
         if (account && user.email) {
@@ -259,39 +250,28 @@ export const authOptions: NextAuthOptions = {
 
           // Log สำหรับ debug
           if (!existingUser) {
-            console.log("🆕 New user signing in:", user.email);
-          } else {
-            console.log("👋 Existing user:", user.email);
+            console.log("New user signing in:", user.email);
           }
         }
         
-        console.log('✅ Sign in successful');
         return true;
       } catch (error) {
-        console.error("❌ Sign in error:", error);
+        console.error("Sign in error:", error);
         return false;
       }
     },
 
     // Custom redirect behavior
     async redirect({ url, baseUrl }) {
-      console.log('🔄 Redirect callback triggered');
-      console.log('📍 URL:', url);
-      console.log('🏠 Base URL:', baseUrl);
-      
       // ถ้า URL เริ่มต้นด้วย "/" ให้ใช้ baseUrl + url
       if (url.startsWith("/")) {
-        const redirectUrl = `${baseUrl}${url}`;
-        console.log('➡️ Redirecting to:', redirectUrl);
-        return redirectUrl;
+        return `${baseUrl}${url}`;
       }
       // ถ้า URL เป็น baseUrl ให้ redirect ได้
       else if (new URL(url).origin === baseUrl) {
-        console.log('➡️ Redirecting to:', url);
         return url;
       }
       // ถ้าไม่ใช่ ให้กลับไปหน้าแรก
-      console.log('➡️ Redirecting to base URL:', baseUrl);
       return baseUrl;
     },
   },
