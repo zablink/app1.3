@@ -66,72 +66,21 @@ function SignInFormContent() {
     console.log('🔗 Callback URL:', callbackUrl);
     
     try {
-      console.log('⏳ Calling signIn...');
+      // Use direct redirect instead of signIn() function
+      console.log('🔄 Using direct redirect to OAuth provider...');
       
-      // Check if NextAuth is working by calling providers endpoint with timeout
-      console.log('🔍 Checking NextAuth providers endpoint...');
-      
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => {
-        console.error('⏰ Providers endpoint timeout (10s)');
-        controller.abort();
-      }, 10000);
-      
-      try {
-        const providersRes = await fetch('/api/auth/providers', {
-          signal: controller.signal,
-          headers: {
-            'Accept': 'application/json',
-          },
-        });
-        clearTimeout(timeoutId);
-        
-        console.log('📡 Providers response status:', providersRes.status);
-        
-        if (!providersRes.ok) {
-          const errorText = await providersRes.text();
-          console.error('❌ Providers endpoint failed:', providersRes.statusText);
-          console.error('📄 Error response:', errorText);
-          throw new Error(`NextAuth API failed: ${providersRes.status} ${providersRes.statusText}`);
-        }
-        
-        const providers = await providersRes.json();
-        console.log('✅ Available providers:', Object.keys(providers));
-        
-        if (!providers[provider]) {
-          console.error(`❌ Provider "${provider}" not found in available providers`);
-          throw new Error(`Provider "${provider}" is not configured`);
-        }
-      } catch (fetchError: any) {
-        clearTimeout(timeoutId);
-        
-        if (fetchError.name === 'AbortError') {
-          console.error('❌ Providers endpoint timeout - NextAuth may not be running');
-          throw new Error('การเชื่อมต่อใช้เวลานานเกินไป กรุณาลองใหม่อีกครั้ง');
-        }
-        throw fetchError;
-      }
-      
-      // Now try to sign in
-      console.log('🔑 Starting OAuth flow...');
-      const result = await signIn(provider, {
-        callbackUrl,
-        redirect: true,
+      const params = new URLSearchParams({
+        callbackUrl: callbackUrl,
       });
       
-      console.log('✅ signIn result:', result);
+      const signInUrl = `/api/auth/signin/${provider}?${params.toString()}`;
+      console.log('📍 Redirect URL:', signInUrl);
+      
+      // Direct redirect
+      window.location.href = signInUrl;
     } catch (error) {
       console.error('❌ Sign in error:', error);
-      console.error('📊 Error details:', JSON.stringify(error, null, 2));
-      console.error('📊 Error type:', typeof error);
-      console.error('📊 Error constructor:', error?.constructor?.name);
-      
-      // Show error to user
-      if (error instanceof Error) {
-        alert(`เกิดข้อผิดพลาด: ${error.message}\n\nกรุณาลองใหม่อีกครั้งหรือติดต่อผู้ดูแลระบบ`);
-      } else {
-        alert('เกิดข้อผิดพลาดในการเข้าสู่ระบบ\n\nกรุณาลองใหม่อีกครั้ง');
-      }
+      alert('เกิดข้อผิดพลาดในการเข้าสู่ระบบ\n\nกรุณาลองใหม่อีกครั้ง');
     }
   };
 

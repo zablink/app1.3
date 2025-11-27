@@ -13,8 +13,7 @@ import bcrypt from 'bcryptjs';
  * NextAuth configuration options
  */
 export const authOptions: NextAuthOptions = {
-  // TEMPORARILY DISABLED: PrismaAdapter to test if database is causing the hang
-  // adapter: PrismaAdapter(prisma),
+  adapter: PrismaAdapter(prisma),
   
   providers: [
     // Google OAuth
