@@ -67,28 +67,16 @@ function SignInFormContent() {
 
   const handleSocialSignIn = async (provider: string) => {
     try {
-      // Clear any stale NextAuth cookies before signing in
-      document.cookie.split(";").forEach((c) => {
-        const cookieName = c.trim().split("=")[0];
-        if (cookieName.includes('next-auth')) {
-          document.cookie = cookieName + '=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;';
-        }
-      });
+      console.log('🚀 Starting sign in with provider:', provider);
+      console.log('📍 Callback URL:', callbackUrl);
       
-      // Direct redirect to OAuth provider
-      const params = new URLSearchParams({
+      // Use NextAuth's signIn function - it handles CSRF and state properly
+      await signIn(provider, {
         callbackUrl: callbackUrl,
+        redirect: true,
       });
-      
-      const signInUrl = `/api/auth/signin/${provider}?${params.toString()}`;
-      
-      // Log for debugging
-      console.log('🔗 Redirecting to:', signInUrl);
-      console.log('🌐 Full URL:', window.location.origin + signInUrl);
-      
-      window.location.href = signInUrl;
     } catch (error) {
-      console.error('Sign in error:', error);
+      console.error('❌ Sign in error:', error);
       alert('เกิดข้อผิดพลาดในการเข้าสู่ระบบ\n\nกรุณาลองใหม่อีกครั้ง');
     }
   };
@@ -320,8 +308,8 @@ function SignInFormContent() {
                 </span>
               </button>
 
-              {/* LINE */}
-              <button
+              {/* LINE - Disabled: No credentials configured */}
+              {/* <button
                 onClick={() => handleSocialSignIn('line')}
                 className="w-full flex items-center justify-center gap-3 px-4 py-3.5 bg-[#00B900] text-white rounded-xl hover:bg-[#00A000] transition-all duration-200 shadow-sm hover:shadow-md"
               >
@@ -331,7 +319,7 @@ function SignInFormContent() {
                 <span className="font-medium">
                   เข้าสู่ระบบด้วย LINE
                 </span>
-              </button>
+              </button> */}
 
               {/* Twitter/X */}
               <button
@@ -346,12 +334,11 @@ function SignInFormContent() {
                 </span>
               </button>
 
-              {/* TikTok */}
-              <button
+              {/* TikTok - Disabled: No credentials configured */}
+              {/* <button
                 onClick={() => handleSocialSignIn('tiktok')}
                 className="w-full flex items-center justify-center gap-3 px-4 py-3.5 bg-white border-2 border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 group shadow-sm"
               >
-                {/* TikTok Logo with gradient border */}
                 <div className="relative w-6 h-6 flex items-center justify-center">
                   <div 
                     className="absolute inset-0 rounded-full"
@@ -370,7 +357,7 @@ function SignInFormContent() {
                 <span className="text-gray-700 font-medium group-hover:text-gray-900">
                   เข้าสู่ระบบด้วย TikTok
                 </span>
-              </button>
+              </button> */}
 
             </div>
 

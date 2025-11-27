@@ -35,83 +35,83 @@ export const authOptions: NextAuthOptions = {
       clientSecret: process.env.FACEBOOK_CLIENT_SECRET || "",
     }),
 
-    // LINE OAuth
-    {
-      id: 'line',
-      name: 'LINE',
-      type: 'oauth',
-      authorization: {
-        url: 'https://access.line.me/oauth2/v2.1/authorize',
-        params: {
-          scope: 'profile openid email',
-          bot_prompt: 'normal',
-        },
-      },
-      token: 'https://api.line.me/oauth2/v2.1/token',
-      userinfo: 'https://api.line.me/v2/profile',
-      clientId: process.env.LINE_CLIENT_ID || "",
-      clientSecret: process.env.LINE_CLIENT_SECRET || "",
-      profile(profile: any) {
-        return {
-          id: profile.userId,
-          name: profile.displayName,
-          email: profile.email || `${profile.userId}@line.local`,
-          image: profile.pictureUrl,
-        };
-      },
-    },
+    // LINE OAuth - Disabled: No credentials configured
+    // {
+    //   id: 'line',
+    //   name: 'LINE',
+    //   type: 'oauth',
+    //   authorization: {
+    //     url: 'https://access.line.me/oauth2/v2.1/authorize',
+    //     params: {
+    //       scope: 'profile openid email',
+    //       bot_prompt: 'normal',
+    //     },
+    //   },
+    //   token: 'https://api.line.me/oauth2/v2.1/token',
+    //   userinfo: 'https://api.line.me/v2/profile',
+    //   clientId: process.env.LINE_CLIENT_ID || "",
+    //   clientSecret: process.env.LINE_CLIENT_SECRET || "",
+    //   profile(profile: any) {
+    //     return {
+    //       id: profile.userId,
+    //       name: profile.displayName,
+    //       email: profile.email || `${profile.userId}@line.local`,
+    //       image: profile.pictureUrl,
+    //     };
+    //   },
+    // },
 
-    // TikTok OAuth
-    {
-      id: 'tiktok',
-      name: 'TikTok',
-      type: 'oauth',
-      authorization: {
-        url: 'https://www.tiktok.com/v2/auth/authorize',
-        params: {
-          client_key: process.env.TIKTOK_CLIENT_KEY,
-          scope: 'user.info.basic',
-          response_type: 'code',
-        },
-      },
-      token: 'https://open.tiktokapis.com/v2/oauth/token/',
-      userinfo: 'https://open.tiktokapis.com/v2/user/info/',
-      clientId: process.env.TIKTOK_CLIENT_KEY || "",
-      clientSecret: process.env.TIKTOK_CLIENT_SECRET || "",
-      profile(profile: any) {
-        return {
-          id: profile.data?.user?.open_id || profile.open_id,
-          name: profile.data?.user?.display_name || profile.display_name,
-          email: `${profile.data?.user?.open_id || profile.open_id}@tiktok.local`,
-          image: profile.data?.user?.avatar_url || profile.avatar_url,
-        };
-      },
-    },
+    // TikTok OAuth - Disabled: No credentials configured
+    // {
+    //   id: 'tiktok',
+    //   name: 'TikTok',
+    //   type: 'oauth',
+    //   authorization: {
+    //     url: 'https://www.tiktok.com/v2/auth/authorize',
+    //     params: {
+    //       client_key: process.env.TIKTOK_CLIENT_KEY,
+    //       scope: 'user.info.basic',
+    //       response_type: 'code',
+    //     },
+    //   },
+    //   token: 'https://open.tiktokapis.com/v2/oauth/token/',
+    //   userinfo: 'https://open.tiktokapis.com/v2/user/info/',
+    //   clientId: process.env.TIKTOK_CLIENT_KEY || "",
+    //   clientSecret: process.env.TIKTOK_CLIENT_SECRET || "",
+    //   profile(profile: any) {
+    //     return {
+    //       id: profile.data?.user?.open_id || profile.open_id,
+    //       name: profile.data?.user?.display_name || profile.display_name,
+    //       email: `${profile.data?.user?.open_id || profile.open_id}@tiktok.local`,
+    //       image: profile.data?.user?.avatar_url || profile.avatar_url,
+    //     };
+    //   },
+    // },
 
-    // Instagram OAuth (via Facebook)
-    {
-      id: 'instagram',
-      name: 'Instagram',
-      type: 'oauth',
-      authorization: {
-        url: 'https://api.instagram.com/oauth/authorize',
-        params: {
-          scope: 'user_profile,user_media',
-        },
-      },
-      token: 'https://api.instagram.com/oauth/access_token',
-      userinfo: 'https://graph.instagram.com/me?fields=id,username,account_type',
-      clientId: process.env.INSTAGRAM_CLIENT_ID || "",
-      clientSecret: process.env.INSTAGRAM_CLIENT_SECRET || "",
-      profile(profile: any) {
-        return {
-          id: profile.id,
-          name: profile.username,
-          email: `${profile.username}@instagram.local`,
-          image: `https://www.instagram.com/${profile.username}/`,
-        };
-      },
-    },
+    // Instagram OAuth (via Facebook) - Disabled: No credentials configured
+    // {
+    //   id: 'instagram',
+    //   name: 'Instagram',
+    //   type: 'oauth',
+    //   authorization: {
+    //     url: 'https://api.instagram.com/oauth/authorize',
+    //     params: {
+    //       scope: 'user_profile,user_media',
+    //     },
+    //   },
+    //   token: 'https://api.instagram.com/oauth/access_token',
+    //   userinfo: 'https://graph.instagram.com/me?fields=id,username,account_type',
+    //   clientId: process.env.INSTAGRAM_CLIENT_ID || "",
+    //   clientSecret: process.env.INSTAGRAM_CLIENT_SECRET || "",
+    //   profile(profile: any) {
+    //     return {
+    //       id: profile.id,
+    //       name: profile.username,
+    //       email: `${profile.username}@instagram.local`,
+    //       image: `https://www.instagram.com/${profile.username}/`,
+    //     };
+    //   },
+    // },
 
     // X (Twitter) OAuth 2.0
     {
