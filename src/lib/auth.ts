@@ -388,6 +388,13 @@ export async function requireShopOwner() {
 }
 
 /**
+ * Require shop owner or admin role (alias for requireShopOwner)
+ */
+export async function requireOwnerOrAdmin() {
+  return requireRole(['SHOP', 'ADMIN']);
+}
+
+/**
  * Require creator role
  */
 export async function requireCreator() {
