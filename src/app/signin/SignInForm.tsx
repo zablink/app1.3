@@ -12,6 +12,22 @@ function SignInFormContent() {
   const error = searchParams.get('error');
   const callbackUrl = searchParams.get('callbackUrl') || '/dashboard';
 
+  // Log all URL parameters for debugging
+  useEffect(() => {
+    const allParams: Record<string, string> = {};
+    searchParams.forEach((value, key) => {
+      allParams[key] = value;
+    });
+    
+    if (Object.keys(allParams).length > 0) {
+      console.log('📋 URL Parameters:', allParams);
+    }
+    
+    if (error) {
+      console.error('❌ NextAuth Error Code:', error);
+    }
+  }, [searchParams, error]);
+
   // แปลง error code เป็นข้อความภาษาไทย
   const getErrorMessage = (error: string | null): string | null => {
     if (!error) return null;
@@ -55,6 +71,11 @@ function SignInFormContent() {
       });
       
       const signInUrl = `/api/auth/signin/${provider}?${params.toString()}`;
+      
+      // Log for debugging
+      console.log('🔗 Redirecting to:', signInUrl);
+      console.log('🌐 Full URL:', window.location.origin + signInUrl);
+      
       window.location.href = signInUrl;
     } catch (error) {
       console.error('Sign in error:', error);
