@@ -235,12 +235,18 @@ export const authOptions: NextAuthOptions = {
     },
 
     async signIn({ user, account }) {
+      console.log('🔐 signIn callback triggered');
+      console.log('👤 User:', JSON.stringify(user, null, 2));
+      console.log('🔑 Account:', JSON.stringify(account, null, 2));
+      
       try {
         // ตรวจสอบว่ามี user email
         if (!user.email) {
-          console.error("No email provided");
+          console.error("❌ No email provided");
           return false;
         }
+
+        console.log('✅ Email found:', user.email);
 
         // สำหรับ user ใหม่ ให้ set role เป็น USER
         if (account && user.email) {
@@ -250,13 +256,17 @@ export const authOptions: NextAuthOptions = {
 
           // Log สำหรับ debug
           if (!existingUser) {
-            console.log("New user signing in:", user.email);
+            console.log("🆕 New user signing in:", user.email);
+          } else {
+            console.log("👋 Existing user:", user.email, "Role:", existingUser.role);
           }
         }
         
+        console.log('✅ Sign in successful');
         return true;
       } catch (error) {
-        console.error("Sign in error:", error);
+        console.error("❌ Sign in error:", error);
+        console.error("Error stack:", error instanceof Error ? error.stack : 'No stack');
         return false;
       }
     },
