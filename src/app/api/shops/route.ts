@@ -27,6 +27,7 @@ function assertAreaTable(t: string): asserts t is AreaTable {
 async function findAreaId(areaTable: AreaTable, pointLng: number, pointLat: number, radiiMeters: number[]) {
   assertAreaTable(areaTable);
   const containsSql = `SELECT id FROM "${areaTable}" WHERE ST_Contains(geom, ST_SetSRID(ST_MakePoint($1, $2), 4326)) LIMIT 1;`;
+  console.log('[api/shops] SQL (contains):', containsSql, pointLng, pointLat);
   const containsRes: Array<{ id: number }> = await prisma.$queryRawUnsafe(containsSql, pointLng, pointLat);
   if (containsRes && containsRes.length > 0) return containsRes[0].id;
 
@@ -38,6 +39,7 @@ async function findAreaId(areaTable: AreaTable, pointLng: number, pointLat: numb
       ORDER BY dist ASC
       LIMIT 1;
     `;
+    console.log('[api/shops] SQL (near):', nearSql, pointLng, pointLat, r);
     const nearRes: Array<{ id: number; dist: number }> = await prisma.$queryRawUnsafe(nearSql, pointLng, pointLat, r);
     if (nearRes && nearRes.length > 0) return nearRes[0].id;
   }
@@ -46,6 +48,7 @@ async function findAreaId(areaTable: AreaTable, pointLng: number, pointLat: numb
 
 async function tableHasColumn(tableName: string, columnName: string) {
   const q = `SELECT 1 FROM information_schema.columns WHERE table_name ILIKE $1 AND column_name = $2 LIMIT 1;`;
+  console.log('[api/shops] SQL (tableHasColumn):', q, tableName, columnName);
   const res: any[] = await prisma.$queryRawUnsafe(q, tableName, columnName);
   return Array.isArray(res) && res.length > 0;
 }
@@ -140,6 +143,7 @@ export async function GET(request: NextRequest) {
         `;
         params.push(offset);
         params.push(limit);
+        console.log('[api/shops] SQL (random):', sql, params);
         const rows = await prisma.$queryRawUnsafe(sql, ...params);
         const elapsed = Date.now() - startTime;
         console.log(`[api/shops] random rows: ${Array.isArray(rows) ? rows.length : 'not array'}, offset: ${offset}, time: ${elapsed}ms`);
@@ -169,6 +173,7 @@ export async function GET(request: NextRequest) {
         `;
         const fallbackParams = params.slice(0, -1); // Remove the last param (limit) that was already added
         fallbackParams.push(limit); // Add limit again
+        console.log('[api/shops] SQL (fallback random):', simpleSql, fallbackParams);
         const rows = await prisma.$queryRawUnsafe(simpleSql, ...fallbackParams);
         const elapsed = Date.now() - startTime;
         console.log(`[api/shops] fallback random rows: ${Array.isArray(rows) ? rows.length : 0}, time: ${elapsed}ms`);
@@ -270,6 +275,7 @@ export async function GET(request: NextRequest) {
           ${ (sortBy === 'distance' && hasLocationCol) ? 'distance ASC NULLS LAST' : (sortBy === 'name' ? 'name ASC' : '"createdAt" DESC') }
         LIMIT $${params.length};
       `;
+      console.log('[api/shops] SQL (area):', sql, params);
       const shopsRes = await prisma.$queryRawUnsafe(sql, ...params);
       const elapsed = Date.now() - startTime;
       console.log(`[api/shops] area query rows: ${shopsRes.length}, chosenLevel: ${chosenLevel}, areaId: ${areaId}, time: ${elapsed}ms`);
@@ -321,6 +327,7 @@ export async function GET(request: NextRequest) {
           ORDER BY tier_rank ASC, distance ASC
           LIMIT $${params.length};
         `;
+        console.log('[api/shops] SQL (distance):', sql, params);
         const rows = await prisma.$queryRawUnsafe(sql, ...params);
         const elapsed = Date.now() - startTime;
         console.log(`[api/shops] distance r=${r}m, rows=${rows.length}, time=${elapsed}ms`);
@@ -370,6 +377,7 @@ export async function GET(request: NextRequest) {
       ORDER BY tier_rank ASC, RANDOM()
       LIMIT $${paramsFinal.length};
     `;
+    console.log('[api/shops] SQL (final fallback):', sqlFinal, paramsFinal);
     const fallbackRows = await prisma.$queryRawUnsafe(sqlFinal, ...paramsFinal);
     const elapsed = Date.now() - startTime;
     console.log(`[api/shops] fallback rows: ${fallbackRows.length}, time: ${elapsed}ms`);
@@ -378,6 +386,10 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     const elapsed = Date.now() - startTime;
     console.error(`[api/shops] Error after ${elapsed}ms:`, error);
+    if (typeof error === 'object' && error && 'query' in error) {
+      // Prisma error object may have .query
+      console.error('[api/shops] Last SQL:', (error as any).query);
+    }
     return NextResponse.json(
       { success: false, error: 'Failed to fetch shops', message: error instanceof Error ? error.message : 'Unknown', queryTime: elapsed },
       { status: 500 }
