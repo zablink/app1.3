@@ -246,6 +246,14 @@ export async function GET(request: NextRequest) {
       // categoryId filter removed
       params.push(limit);
 
+      const selectFields = [
+        'id', 'name', 'description', 'address', 'has_physical_store', 'createdAt', 'image', 'isMockup',
+        'lat', 'lng', 'subdistrict', 'district', 'province', 'subscriptionTier', 'categories',
+        ...(hasAmphureCol ? ['amphure_id'] : []),
+        ...(hasTambonCol ? ['tambon_id'] : []),
+        ...(hasProvinceCol ? ['province_id'] : []),
+        'distance'
+      ];
       const sql = `
         WITH ranked_shops AS (
           SELECT DISTINCT ON (s.id) ${selectList},
@@ -266,10 +274,7 @@ export async function GET(request: NextRequest) {
           ${whereParts.length > 0 ? `WHERE ${whereParts.join(' AND ')}` : ''}
           ORDER BY s.id, ss.start_date DESC NULLS LAST, ss.created_at DESC NULLS LAST
         )
-        SELECT ${selectList.split(',').map(col => {
-          const match = col.trim().match(/as\s+"?(\w+)"?$/i);
-          return match ? match[1] : col.trim().split('.').pop()?.replace(/^"/, '').replace(/"$/, '') || col;
-        }).join(', ')}
+        SELECT ${selectFields.join(', ')}
         FROM ranked_shops
         ORDER BY tier_rank ASC,
           ${ (sortBy === 'distance' && hasLocationCol) ? 'distance ASC NULLS LAST' : (sortBy === 'name' ? 'name ASC' : '"createdAt" DESC') }
