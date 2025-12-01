@@ -8,7 +8,7 @@ import prisma from '@/lib/prisma';
 // GET /api/campaigns/[id] - ดึงข้อมูล campaign
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession();
@@ -17,7 +17,7 @@ export async function GET(
     }
 
     const campaign = await prisma.campaign.findUnique({
-      where: { id: params.id },
+      where: { id: (await params).id },
       include: {
         shop: {
           select: {
@@ -68,7 +68,7 @@ export async function GET(
 // PATCH /api/campaigns/[id] - แก้ไข campaign
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession();
@@ -77,7 +77,7 @@ export async function PATCH(
     }
 
     const campaign = await prisma.campaign.findUnique({
-      where: { id: params.id },
+      where: { id: (await params).id },
       include: {
         shop: {
           select: { ownerId: true }
@@ -119,7 +119,7 @@ export async function PATCH(
     }
 
     const updatedCampaign = await prisma.campaign.update({
-      where: { id: params.id },
+      where: { id: (await params).id },
       data: {
         ...(title && { title }),
         ...(description && { description }),
@@ -162,7 +162,7 @@ export async function PATCH(
 // DELETE /api/campaigns/[id] - ลบ campaign
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession();
@@ -171,7 +171,7 @@ export async function DELETE(
     }
 
     const campaign = await prisma.campaign.findUnique({
-      where: { id: params.id },
+      where: { id: (await params).id },
       include: {
         shop: {
           select: { ownerId: true }
@@ -208,7 +208,7 @@ export async function DELETE(
 
     // ลบ campaign (จะลบ jobs ที่เกี่ยวข้องด้วยเพราะมี onDelete: Cascade)
     await prisma.campaign.delete({
-      where: { id: params.id }
+      where: { id: (await params).id }
     });
 
     return NextResponse.json({ message: 'Campaign deleted successfully' });

@@ -4,14 +4,14 @@ import { requireAdmin } from '@/lib/auth';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const { error } = await requireAdmin();
   if (error) return error;
 
   try {
     const user = await prisma.user.findUnique({
-      where: { id: params.id },
+      where: { id: (await params).id },
       select: {
         id: true,
         name: true,
@@ -43,7 +43,7 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const { error } = await requireAdmin();
   if (error) return error;
@@ -60,7 +60,7 @@ export async function PATCH(
     }
 
     const user = await prisma.user.update({
-      where: { id: params.id },
+      where: { id: (await params).id },
       data: {
         role,
         updatedAt: new Date(),

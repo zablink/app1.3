@@ -4,14 +4,14 @@ import { requireAdmin } from '@/lib/auth';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const { error } = await requireAdmin();
   if (error) return error;
 
   try {
     const creator = await prisma.creators.findUnique({
-      where: { id: params.id },
+      where: { id: (await params).id },
       include: {
         user: {
           select: {

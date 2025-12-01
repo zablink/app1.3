@@ -6,10 +6,10 @@ import { prisma } from '@/lib/prisma';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const shopId = params.id;
+    const shopId = (await params).id;
 
     if (!shopId) {
       return NextResponse.json(
@@ -173,11 +173,11 @@ export async function GET(
 // PUT - Update shop
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
-    const shopId = params.id;
+    const shopId = (await params).id;
 
     if (!session?.user) {
       return NextResponse.json(

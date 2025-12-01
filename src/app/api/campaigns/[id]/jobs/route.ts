@@ -8,7 +8,7 @@ import prisma from '@/lib/prisma';
 // GET /api/campaigns/[id]/jobs - ดึง jobs ทั้งหมดของ campaign
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession();
@@ -20,7 +20,7 @@ export async function GET(
     const status = searchParams.get('status'); // Filter by status
 
     const campaign = await prisma.campaign.findUnique({
-      where: { id: params.id },
+      where: { id: (await params).id },
       select: {
         id: true,
         shop: {
@@ -44,7 +44,7 @@ export async function GET(
     }
 
     const whereClause: any = {
-      campaignId: params.id
+      campaignId: (await params).id
     };
 
     if (status) {
@@ -74,7 +74,7 @@ export async function GET(
     });
 
     return NextResponse.json({
-      campaignId: params.id,
+      campaignId: (await params).id,
       total: jobs.length,
       jobs
     });
@@ -90,7 +90,7 @@ export async function GET(
 // POST /api/campaigns/[id]/jobs - สร้าง job ใหม่ (เชิญ creator)
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession();
@@ -109,7 +109,7 @@ export async function POST(
     }
 
     const campaign = await prisma.campaign.findUnique({
-      where: { id: params.id },
+      where: { id: (await params).id },
       include: {
         shop: {
           select: {
@@ -204,7 +204,7 @@ export async function POST(
     // สร้าง job ใหม่
     const newJob = await prisma.campaignJob.create({
       data: {
-        campaignId: params.id,
+        campaignId: (await params).id,
         creatorId: creatorId,
         agreedPrice: priceInTokens,
         status: 'PENDING',

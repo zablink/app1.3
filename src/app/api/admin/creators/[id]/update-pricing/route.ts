@@ -4,7 +4,7 @@ import { requireAdmin } from '@/lib/auth';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const { error, session } = await requireAdmin();
   if (error) return error;
@@ -35,7 +35,7 @@ export async function POST(
     }
 
     const creator = await prisma.creators.findUnique({
-      where: { id: params.id },
+      where: { id: (await params).id },
       include: {
         creator_price_history: {
           where: { effectiveTo: null },
@@ -72,7 +72,7 @@ export async function POST(
       const newHistory = await tx.creator_price_history.create({
         data: {
           id: `cph_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-          creatorId: params.id,
+          creatorId: (await params).id,
           priceMin: parseInt(newPriceMin),
           priceMax: parseInt(newPriceMax),
           effectiveFrom: now,
@@ -83,7 +83,7 @@ export async function POST(
       });
 
       const updatedCreator = await tx.creators.update({
-        where: { id: params.id },
+        where: { id: (await params).id },
         data: {
           currentPriceMin: parseInt(newPriceMin),
           currentPriceMax: parseInt(newPriceMax),
@@ -110,14 +110,14 @@ export async function POST(
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const { error } = await requireAdmin();
   if (error) return error;
 
   try {
     const priceHistory = await prisma.creator_price_history.findMany({
-      where: { creatorId: params.id },
+      where: { creatorId: (await params).id },
       orderBy: { effectiveFrom: 'desc' },
       include: {
         creators: {

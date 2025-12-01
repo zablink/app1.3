@@ -6,7 +6,7 @@ import { requireAdmin } from '@/lib/auth';
 // PATCH: Toggle mockup status
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const { error } = await requireAdmin();
   if (error) return error;

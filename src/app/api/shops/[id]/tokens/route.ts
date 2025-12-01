@@ -6,8 +6,8 @@ import { requireOwnerOrAdmin } from "@/lib/auth";
 
 const omise = new Omise({ secretKey: process.env.OMISE_SECRET_KEY || "" });
 
-export async function POST(req: Request, { params }: { params: { id: string } }) {
-  const shopId = params.id;
+export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const shopId = (await params).id;
   const authErr = await requireOwnerOrAdmin(req, shopId);
   if (authErr) return authErr;
 

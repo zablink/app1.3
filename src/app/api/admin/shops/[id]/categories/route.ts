@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma';
 // GET: ดูหมวดหมู่ของร้าน
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id: shopId } = params;
@@ -33,7 +33,7 @@ export async function GET(
 // PUT: อัพเดทหมวดหมู่ของร้าน (replace all)
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id: shopId } = params;
@@ -87,7 +87,7 @@ export async function PUT(
 // POST: เพิ่มหมวดหมู่ให้ร้าน (add without removing existing)
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id: shopId } = params;
@@ -131,7 +131,7 @@ export async function POST(
 // DELETE: ลบหมวดหมู่ออกจากร้าน
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id: shopId } = params;

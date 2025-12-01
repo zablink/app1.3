@@ -1,7 +1,7 @@
 // app/shop/edit/[id]/page.tsx
 "use client";
 
-import { useState, useEffect } from "react";
+import { use, useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Save, ArrowLeft, Store } from "lucide-react";
@@ -20,10 +20,10 @@ interface Category {
   name: string;
 }
 
-export default function ShopEditPage({ params }: { params: { id: string } }) {
+export default function ShopEditPage({ params }: { params: Promise<{ id: string }> }) {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const shopId = params.id;
+  const { id: shopId } = use(params);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);

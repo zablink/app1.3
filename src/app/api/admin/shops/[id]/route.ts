@@ -4,14 +4,14 @@ import { requireAdmin } from '@/lib/auth';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const { error } = await requireAdmin();
   if (error) return error;
 
   try {
     const shop = await prisma.shop.findUnique({
-      where: { id: params.id },
+      where: { id: (await params).id },
       include: {
         User: true,
         ShopCategory: true,
@@ -30,7 +30,7 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const { error } = await requireAdmin();
   if (error) return error;
@@ -39,7 +39,7 @@ export async function PATCH(
     const data = await request.json();
     
     const shop = await prisma.shop.update({
-      where: { id: params.id },
+      where: { id: (await params).id },
       data,
     });
 
@@ -51,14 +51,14 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const { error } = await requireAdmin();
   if (error) return error;
 
   try {
     await prisma.shop.delete({
-      where: { id: params.id },
+      where: { id: (await params).id },
     });
 
     return NextResponse.json({ message: 'Shop deleted' });

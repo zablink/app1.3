@@ -4,7 +4,7 @@ import { requireAdmin } from '@/lib/auth';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const { error } = await requireAdmin();
   if (error) return error;
@@ -21,7 +21,7 @@ export async function POST(
     }
 
     const creator = await prisma.creators.update({
-      where: { id: params.id },
+      where: { id: (await params).id },
       data: {
         applicationStatus: 'REJECTED',
         rejectedAt: new Date(),

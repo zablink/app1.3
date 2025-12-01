@@ -11,7 +11,7 @@ import { prisma } from '@/lib/prisma';
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -24,7 +24,7 @@ export async function GET(
     }
 
     const banner = await prisma.heroBanner.findUnique({
-      where: { id: params.id }
+      where: { id: (await params).id }
     });
 
     if (!banner) {
@@ -53,7 +53,7 @@ export async function GET(
  */
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -69,7 +69,7 @@ export async function PUT(
     const { title, subtitle, ctaLabel, ctaLink, imageUrl, priority, isActive, startDate, endDate } = body;
 
     const banner = await prisma.heroBanner.update({
-      where: { id: params.id },
+      where: { id: (await params).id },
       data: {
         ...(title !== undefined && { title }),
         ...(subtitle !== undefined && { subtitle }),
@@ -102,7 +102,7 @@ export async function PUT(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -115,7 +115,7 @@ export async function DELETE(
     }
 
     await prisma.heroBanner.delete({
-      where: { id: params.id }
+      where: { id: (await params).id }
     });
 
     return NextResponse.json({

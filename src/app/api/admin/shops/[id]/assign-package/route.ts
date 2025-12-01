@@ -4,14 +4,14 @@ import { requireAdmin } from '@/lib/auth';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const { error } = await requireAdmin();
   if (error) return error;
 
   try {
     const { packageId, tokenAmount, subscriptionDays } = await request.json();
-    const shopId = params.id;
+    const shopId = (await params).id;
 
     console.log('Assign package request:', { shopId, packageId, tokenAmount, subscriptionDays });
 

@@ -8,7 +8,7 @@ import prisma from "@/lib/prisma";
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -45,7 +45,7 @@ export async function POST(
 
     // Find creator
     const creator = await prisma.creator.findUnique({
-      where: { id: params.id },
+      where: { id: (await params).id },
       include: {
         user: {
           select: {
@@ -95,7 +95,7 @@ export async function POST(
       }
 
       const updatedCreator = await prisma.creator.update({
-        where: { id: params.id },
+        where: { id: (await params).id },
         data: {
           applicationStatus: "APPROVED",
           currentPriceMin: parseInt(currentPriceMin),
@@ -131,7 +131,7 @@ export async function POST(
       }
 
       const updatedCreator = await prisma.creator.update({
-        where: { id: params.id },
+        where: { id: (await params).id },
         data: {
           applicationStatus: "REJECTED",
           rejectReason,

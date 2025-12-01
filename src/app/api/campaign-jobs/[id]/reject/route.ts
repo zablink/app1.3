@@ -8,7 +8,7 @@ import prisma from '@/lib/prisma';
 // POST /api/campaign-jobs/[id]/reject - Shop ปฏิเสธงาน
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession();
@@ -27,7 +27,7 @@ export async function POST(
     }
 
     const job = await prisma.campaignJob.findUnique({
-      where: { id: params.id },
+      where: { id: (await params).id },
       include: {
         creator: {
           select: {
@@ -69,7 +69,7 @@ export async function POST(
     const result = await prisma.$transaction(async (tx) => {
       // 1. Update job status
       const updatedJob = await tx.campaignJob.update({
-        where: { id: params.id },
+        where: { id: (await params).id },
         data: {
           status: 'REJECTED',
           rejectedAt: new Date(),
@@ -130,7 +130,7 @@ export async function POST(
 // DELETE /api/campaign-jobs/[id]/reject - Creator ยกเลิกงาน (ถอนตัว)
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession();
@@ -142,7 +142,7 @@ export async function DELETE(
     const { reason } = body;
 
     const job = await prisma.campaignJob.findUnique({
-      where: { id: params.id },
+      where: { id: (await params).id },
       include: {
         creator: {
           select: {
@@ -180,7 +180,7 @@ export async function DELETE(
     const result = await prisma.$transaction(async (tx) => {
       // 1. Update job status
       const updatedJob = await tx.campaignJob.update({
-        where: { id: params.id },
+        where: { id: (await params).id },
         data: {
           status: 'CANCELLED',
           cancelledAt: new Date(),

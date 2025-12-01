@@ -4,7 +4,7 @@ import { requireAdmin } from '@/lib/auth';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const { error, session } = await requireAdmin();
   if (error) return error;
@@ -39,7 +39,7 @@ export async function POST(
     const result = await prisma.$transaction(async (tx) => {
       // Update creator status
       const creator = await tx.creators.update({
-        where: { id: params.id },
+        where: { id: (await params).id },
         data: {
           applicationStatus: 'APPROVED',
           approvedAt: now,
@@ -52,7 +52,7 @@ export async function POST(
       await tx.creator_price_history.create({
         data: {
           id: `cph_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-          creatorId: params.id,
+          creatorId: (await params).id,
           priceMin: parseInt(priceMin),
           priceMax: parseInt(priceMax),
           effectiveFrom: now,

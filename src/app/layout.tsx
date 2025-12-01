@@ -8,6 +8,10 @@ import GoogleAnalytics from "@/components/GoogleAnalytics";
 import { getSiteMetadata } from '@/lib/settings';
 import "./globals.css";
 
+// Force dynamic rendering เพราะใช้ database
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 const prompt = Prompt({ 
   subsets: ["thai", "latin"],
   weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],

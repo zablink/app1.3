@@ -3,9 +3,9 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { requireOwnerOrAdmin } from "@/lib/auth";
 
-export async function GET(req: Request, { params }: { params: { id: string } }) {
+export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const shopId = params.id;
+    const shopId = (await params).id;
     const active = await prisma.shopSubscription.findFirst({
       where: { shopId, status: "ACTIVE" },
       include: { plan: true },
@@ -18,8 +18,8 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
   }
 }
 
-export async function POST(req: Request, { params }: { params: { id: string } }) {
-  const shopId = params.id;
+export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const shopId = (await params).id;
   const authErr = await requireOwnerOrAdmin(req, shopId);
   if (authErr) return authErr;
 
@@ -82,8 +82,8 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   }
 }
 
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
-  const shopId = params.id;
+export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const shopId = (await params).id;
   const authErr = await requireOwnerOrAdmin(req, shopId);
   if (authErr) return authErr;
 

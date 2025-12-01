@@ -8,7 +8,7 @@ import prisma from '@/lib/prisma';
 // POST /api/campaign-jobs/[id]/accept - Creator รับงาน
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession();
@@ -17,7 +17,7 @@ export async function POST(
     }
 
     const job = await prisma.campaignJob.findUnique({
-      where: { id: params.id },
+      where: { id: (await params).id },
       include: {
         creator: {
           select: {
@@ -86,7 +86,7 @@ export async function POST(
     const updatedJob = await prisma.$transaction(async (tx) => {
       // 1. Update job status
       const job = await tx.campaignJob.update({
-        where: { id: params.id },
+        where: { id: (await params).id },
         data: {
           status: 'ACCEPTED',
           acceptedAt: new Date()

@@ -13,7 +13,7 @@ const TOKEN_TO_BAHT = 1;
 // POST /api/campaign-jobs/[id]/complete - Shop อนุมัติงาน
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession();
@@ -22,7 +22,7 @@ export async function POST(
     }
 
     const job = await prisma.campaignJob.findUnique({
-      where: { id: params.id },
+      where: { id: (await params).id },
       include: {
         creator: {
           select: {
@@ -71,7 +71,7 @@ export async function POST(
     const result = await prisma.$transaction(async (tx) => {
       // 1. Update job status เป็น COMPLETED
       const updatedJob = await tx.campaignJob.update({
-        where: { id: params.id },
+        where: { id: (await params).id },
         data: {
           status: 'COMPLETED',
           completedAt: new Date(),

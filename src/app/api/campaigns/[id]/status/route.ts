@@ -8,7 +8,7 @@ import prisma from '@/lib/prisma';
 // PATCH /api/campaigns/[id]/status - เปลี่ยน status ของ campaign
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession();
@@ -28,8 +28,9 @@ export async function PATCH(
       );
     }
 
+    const { id } = await params;
     const campaign = await prisma.campaign.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         shop: {
           select: {

@@ -38,7 +38,8 @@ interface HeroBanner {
 export default function HomePage() {
   const router = useRouter();
 
-  const [shops, setShops] = useState<Shop[]>([]);
+  const [shopsDefault, setShopsDefault] = useState<Shop[]>([]); // ร้านค้าทั่วไป
+  const [shopsNearby, setShopsNearby] = useState<Shop[] | null>(null); // ร้านค้าใกล้เคียง (location)
   const [banners, setBanners] = useState<HeroBanner[]>([]);
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
   const [isLoadingShops, setIsLoadingShops] = useState(true);
@@ -110,7 +111,7 @@ export default function HomePage() {
       setIsLoadingShops(true);
       const res = await fetch(`/api/shops?limit=${SHOPS_PER_PAGE}`);
       const data = await res.json();
-      setShops(data.shops || []);
+      setShopsDefault(Array.isArray(data.shops) ? data.shops : []);
       setHasMoreShops((data.shops?.length || 0) >= SHOPS_PER_PAGE);
       setCurrentPage(1);
     } catch (err) {
@@ -122,17 +123,14 @@ export default function HomePage() {
 
   const loadMoreShops = async () => {
     if (isLoadingMore || !hasMoreShops) return;
-    
     try {
       setIsLoadingMore(true);
       const nextPage = currentPage + 1;
       const offset = currentPage * SHOPS_PER_PAGE;
-      
       const res = await fetch(`/api/shops?limit=${SHOPS_PER_PAGE}&offset=${offset}`);
       const data = await res.json();
-      
       if (data.shops && data.shops.length > 0) {
-        setShops(prev => [...prev, ...data.shops]);
+        setShopsDefault(prev => [...prev, ...data.shops]);
         setHasMoreShops(data.shops.length >= SHOPS_PER_PAGE);
         setCurrentPage(nextPage);
       } else {
@@ -157,7 +155,7 @@ export default function HomePage() {
       try {
         const resp = await fetch(`/api/shops?lat=${latitude}&lng=${longitude}&limit=50&sortBy=distance`);
         const data = await resp.json();
-        setShops(data.shops || []);
+        setShopsNearby(Array.isArray(data.shops) ? data.shops : []);
       } catch (err) {
         console.error('Error updating shops with distance:', err);
       }
@@ -172,17 +170,26 @@ export default function HomePage() {
     //
   };
 
-  // Group shops by subscription tier
+  // Normalize tier string
+  const normalizeTier = (tier: any): 'PREMIUM' | 'PRO' | 'BASIC' | 'FREE' | null => {
+    if (!tier) return 'FREE';
+    const t = String(tier).toUpperCase();
+    if (['PREMIUM', 'PRO', 'BASIC', 'FREE'].includes(t)) return t as any;
+    return 'FREE';
+  };
+
+  // Group shops by subscription tier (always robust)
   const groupShopsByTier = (shops: Shop[]) => {
-    const premium = shops.filter(s => s.subscriptionTier === 'PREMIUM').slice(0, 6);
-    const pro = shops.filter(s => s.subscriptionTier === 'PRO').slice(0, 3);
-    const basic = shops.filter(s => s.subscriptionTier === 'BASIC').slice(0, 3);
-    const free = shops.filter(s => !s.subscriptionTier || s.subscriptionTier === 'FREE').slice(0, 12);
-    
+    const premium = shops.filter(s => normalizeTier(s.subscriptionTier) === 'PREMIUM').slice(0, 6);
+    const pro = shops.filter(s => normalizeTier(s.subscriptionTier) === 'PRO').slice(0, 3);
+    const basic = shops.filter(s => normalizeTier(s.subscriptionTier) === 'BASIC').slice(0, 3);
+    const free = shops.filter(s => normalizeTier(s.subscriptionTier) === 'FREE').slice(0, 12);
     return { premium, pro, basic, free };
   };
 
-  const groupedShops = groupShopsByTier(shops);
+  // เลือก source ที่จะแสดง: ถ้ามี location และมีร้าน nearby ให้ใช้, ไม่งั้น fallback เป็น default
+  const shopsToShow = shopsNearby && shopsNearby.length > 0 ? shopsNearby : shopsDefault;
+  const groupedShops = groupShopsByTier(shopsToShow);
 
   // Render shop card component
   const ShopCard = ({ shop, tierColor }: { shop: Shop; tierColor?: string }) => (

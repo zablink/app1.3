@@ -8,7 +8,7 @@ import { requireAdmin } from '@/lib/auth';
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const { error } = await requireAdmin();
   if (error) return error;
@@ -19,7 +19,7 @@ export async function GET(
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '10');
 
-    const where: any = { creatorId: params.id };
+    const where: any = { creatorId: (await params).id };
     if (status) {
       where.status = status;
     }
@@ -48,7 +48,7 @@ export async function GET(
       // สถิติของงาน
       prisma.campaign_jobs.groupBy({
         by: ['status'],
-        where: { creatorId: params.id },
+        where: { creatorId: (await params).id },
         _count: true,
       }),
     ]);
