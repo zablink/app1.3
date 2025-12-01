@@ -247,8 +247,8 @@ export async function GET(request: NextRequest) {
       params.push(limit);
 
       const selectFields = [
-        'id', 'name', 'description', 'address', 'has_physical_store', 'createdAt', 'image', 'isMockup',
-        'lat', 'lng', 'subdistrict', 'district', 'province', 'subscriptionTier', 'categories',
+        'id', 'name', 'description', 'address', 'has_physical_store', '"createdAt"', 'image', '"isMockup"',
+        'lat', 'lng', 'subdistrict', 'district', 'province', '"subscriptionTier"', 'categories',
         ...(hasAmphureCol ? ['amphure_id'] : []),
         ...(hasTambonCol ? ['tambon_id'] : []),
         ...(hasProvinceCol ? ['province_id'] : []),
