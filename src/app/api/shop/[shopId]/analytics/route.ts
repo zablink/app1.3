@@ -1,4 +1,4 @@
-// app/api/shop/[id]/analytics/route.ts
+// app/api/shop/[shopId]/analytics/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ shopId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -15,7 +15,7 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id: shopId } = params;
+    const { shopId } = await params;
 
     // Verify shop ownership
     const shop = await prisma.shop.findUnique({

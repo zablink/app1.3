@@ -1,4 +1,4 @@
-// src/app/api/shop/[id]/hours/route.ts
+// src/app/api/shop/[shopId]/hours/route.ts
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
@@ -11,15 +11,15 @@ const supabase = createClient(
 export const runtime = 'nodejs';
 
 /**
- * GET /api/shop/[id]/hours
+ * GET /api/shop/[shopId]/hours
  * Get shop opening hours
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ shopId: string }> }
 ) {
   try {
-    const { id: shopId } = await params;
+    const { shopId } = await params;
 
     // Get main hours config
     const { data: hours, error: hoursError } = await supabase
@@ -75,15 +75,15 @@ export async function GET(
 }
 
 /**
- * POST /api/shop/[id]/hours
+ * POST /api/shop/[shopId]/hours
  * Save shop opening hours
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ shopId: string }> }
 ) {
   try {
-    const { id: shopId } = await params;
+    const { shopId } = await params;
     const body = await request.json();
 
     const {

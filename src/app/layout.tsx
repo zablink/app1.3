@@ -21,7 +21,10 @@ const prompt = Prompt({
 // Dynamic metadata from database settings
 export async function generateMetadata() {
   const metadata = await getSiteMetadata();
-  return metadata;
+  return {
+    metadataBase: new URL('https://www.zablink.com'),
+    ...metadata,
+  };
 }
 
 export default function RootLayout({
