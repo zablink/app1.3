@@ -1,0 +1,94 @@
+2025-12-02 09:37:44.593 [error] Error fetching public settings: Error [PrismaClientInitializationError]: 
+Invalid `prisma.siteSetting.findMany()` invocation:
+
+
+Error querying the database: FATAL: Tenant or user not found
+    at async x (.next/server/app/api/settings/route.js:1:627)
+    at async k (.next/server/app/api/settings/route.js:1:4044)
+    at async g (.next/server/app/api/settings/route.js:1:5047) {
+  clientVersion: '6.16.2',
+  errorCode: undefined,
+  retryable: undefined
+}
+
+
+
+
+
+
+
+Error fetching analytics settings: Error [PrismaClientInitializationError]: 
+Invalid `prisma.siteSetting.findMany()` invocation:
+
+
+Error querying the database: FATAL: Tenant or user not found
+    at async w (.next/server/app/api/settings/analytics/route.js:1:888)
+    at async k (.next/server/app/api/settings/analytics/route.js:1:4784)
+    at async g (.next/server/app/api/settings/analytics/route.js:1:5787) {
+  clientVersion: '6.16.2',
+  errorCode: undefined,
+  retryable: undefined
+}
+
+
+
+
+Error fetching banners: Error [PrismaClientInitializationError]: 
+Invalid `prisma.heroBanner.findMany()` invocation:
+
+
+Error querying the database: FATAL: Tenant or user not found
+    at async x (.next/server/app/api/banners/route.js:1:715)
+    at async k (.next/server/app/api/banners/route.js:1:3768)
+    at async g (.next/server/app/api/banners/route.js:1:4771) {
+  clientVersion: '6.16.2',
+  errorCode: undefined,
+  retryable: undefined
+}
+
+
+
+[api/shops] Error after 2781ms: Error [PrismaClientInitializationError]: 
+Invalid `prisma.$queryRawUnsafe()` invocation:
+
+
+Error querying the database: FATAL: Tenant or user not found
+    at async y (.next/server/app/api/shops/route.js:7:327)
+    at async z (.next/server/app/api/shops/route.js:7:898)
+    at async k (.next/server/app/api/shops/route.js:141:3140) {
+  clientVersion: '6.16.2',
+  errorCode: undefined,
+  retryable: undefined
+}
+
+
+
+Error fetching user role: Error [PrismaClientInitializationError]: 
+Invalid `prisma.user.findUnique()` invocation:
+
+
+Error querying the database: FATAL: Tenant or user not found
+    at async Object.session (.next/server/app/api/auth/[...nextauth]/route.js:1:2760)
+    at async Object.e (.next/server/chunks/2963.js:10:46843)
+    at async q (.next/server/chunks/2963.js:10:39583)
+    at async g (.next/server/chunks/2963.js:1:1893)
+    at async a.length.b (.next/server/chunks/2963.js:1:3334) {
+  clientVersion: '6.16.2',
+  errorCode: undefined,
+  retryable: undefined
+}
+
+
+
+[api/shops] Error after 916ms: Error [PrismaClientInitializationError]: 
+Invalid `prisma.$queryRawUnsafe()` invocation:
+
+
+Error querying the database: FATAL: Tenant or user not found
+    at async y (.next/server/app/api/shops/route.js:7:327)
+    at async z (.next/server/app/api/shops/route.js:7:898)
+    at async k (.next/server/app/api/shops/route.js:141:3140) {
+  clientVersion: '6.16.2',
+  errorCode: undefined,
+  retryable: undefined
+}

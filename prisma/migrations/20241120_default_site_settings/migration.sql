@@ -7,31 +7,23 @@
 -- BRANDING (แบรนด์)
 -- ============================================
 
-INSERT INTO site_settings (key, value, category, data_type, label, description, created_at, updated_at)
-VALUES 
-  -- Site Identity
-  ('site_name', 'Zablink', 'branding', 'string', 'ชื่อเว็บไซต์', 'ชื่อเว็บไซต์ที่แสดงในหัวข้อและโลโก้', NOW(), NOW()),
-  ('site_tagline', 'ค้นหาร้านอาหารและรีวิวที่ดีที่สุด', 'branding', 'string', 'คำขวัญ (Tagline)', 'คำอธิบายสั้นๆ เกี่ยวกับเว็บไซต์', NOW(), NOW()),
-  
-  -- Logos & Icons
-  ('site_logo', '/images/logo.png', 'branding', 'image', 'โลโก้หลัก', 'โลโก้ที่แสดงใน navbar และ footer', NOW(), NOW()),
-  ('site_logo_dark', '/images/logo-dark.png', 'branding', 'image', 'โลโก้ (โหมดมืด)', 'โลโก้สำหรับ dark mode', NOW(), NOW()),
-  ('site_favicon', '/favicon.ico', 'branding', 'image', 'Favicon', 'ไอคอนที่แสดงในแท็บเบราว์เซอร์', NOW(), NOW()),
-  ('site_icon_192', '/images/icon-192.png', 'branding', 'image', 'App Icon 192x192', 'ไอคอนสำหรับ PWA และ mobile', NOW(), NOW()),
-  ('site_icon_512', '/images/icon-512.png', 'branding', 'image', 'App Icon 512x512', 'ไอคอนขนาดใหญ่สำหรับ PWA', NOW(), NOW()),
-  
-  -- Brand Colors
-  ('brand_primary_color', '#ea580c', 'branding', 'color', 'สีหลัก (Primary)', 'สีหลักของแบรนด์ (Orange)', NOW(), NOW()),
-  ('brand_secondary_color', '#dc2626', 'branding', 'color', 'สีรอง (Secondary)', 'สีรองของแบรนด์ (Red)', NOW(), NOW()),
-  ('brand_accent_color', '#f97316', 'branding', 'color', 'สีเน้น (Accent)', 'สีเน้นสำหรับปุ่มและไฮไลท์', NOW(), NOW()),
-  
-  -- Social Media
-  ('social_facebook', 'https://facebook.com/zablink', 'branding', 'string', 'Facebook URL', 'ลิงก์ Facebook Page', NOW(), NOW()),
-  ('social_instagram', 'https://instagram.com/zablink', 'branding', 'string', 'Instagram URL', 'ลิงก์ Instagram', NOW(), NOW()),
-  ('social_twitter', 'https://twitter.com/zablink', 'branding', 'string', 'Twitter/X URL', 'ลิงก์ Twitter/X', NOW(), NOW()),
-  ('social_line', '', 'branding', 'string', 'LINE ID', 'LINE Official Account ID', NOW(), NOW()),
-  ('social_tiktok', '', 'branding', 'string', 'TikTok URL', 'ลิงก์ TikTok', NOW(), NOW())
-
+INSERT INTO site_settings (id, key, value, category, data_type, label, description, created_at, updated_at)
+VALUES
+  ('st_001', 'site_name', 'Zablink', 'branding', 'string', 'ชื่อเว็บไซต์', 'ชื่อเว็บไซต์ที่แสดงในหัวข้อและโลโก้', NOW(), NOW()),
+  ('st_002', 'site_tagline', 'ค้นหาร้านอาหารและรีวิวที่ดีที่สุด', 'branding', 'string', 'คำขวัญ (Tagline)', 'คำอธิบายสั้นๆ เกี่ยวกับเว็บไซต์', NOW(), NOW()),
+  ('st_003', 'site_logo', '/images/logo.png', 'branding', 'image', 'โลโก้หลัก', 'โลโก้ที่แสดงใน navbar และ footer', NOW(), NOW()),
+  ('st_004', 'site_logo_dark', '/images/logo-dark.png', 'branding', 'image', 'โลโก้ (โหมดมืด)', 'โลโก้สำหรับ dark mode', NOW(), NOW()),
+  ('st_005', 'site_favicon', '/favicon.ico', 'branding', 'image', 'Favicon', 'ไอคอนที่แสดงในแท็บเบราว์เซอร์', NOW(), NOW()),
+  ('st_006', 'site_icon_192', '/images/icon-192.png', 'branding', 'image', 'App Icon 192x192', 'ไอคอนสำหรับ PWA และ mobile', NOW(), NOW()),
+  ('st_007', 'site_icon_512', '/images/icon-512.png', 'branding', 'image', 'App Icon 512x512', 'ไอคอนขนาดใหญ่สำหรับ PWA', NOW(), NOW()),
+  ('st_008', 'brand_primary_color', '#ea580c', 'branding', 'color', 'สีหลัก (Primary)', 'สีหลักของแบรนด์ (Orange)', NOW(), NOW()),
+  ('st_009', 'brand_secondary_color', '#dc2626', 'branding', 'color', 'สีรอง (Secondary)', 'สีรองของแบรนด์ (Red)', NOW(), NOW()),
+  ('st_010', 'brand_accent_color', '#f97316', 'branding', 'color', 'สีเน้น (Accent)', 'สีเน้นสำหรับปุ่มและไฮไลท์', NOW(), NOW()),
+  ('st_011', 'social_facebook', 'https://facebook.com/zablink', 'branding', 'string', 'Facebook URL', 'ลิงก์ Facebook Page', NOW(), NOW()),
+  ('st_012', 'social_instagram', 'https://instagram.com/zablink', 'branding', 'string', 'Instagram URL', 'ลิงก์ Instagram', NOW(), NOW()),
+  ('st_013', 'social_twitter', 'https://twitter.com/zablink', 'branding', 'string', 'Twitter/X URL', 'ลิงก์ Twitter/X', NOW(), NOW()),
+  ('st_014', 'social_line', '', 'branding', 'string', 'LINE ID', 'LINE Official Account ID', NOW(), NOW()),
+  ('st_015', 'social_tiktok', '', 'branding', 'string', 'TikTok URL', 'ลิงก์ TikTok', NOW(), NOW())
 ON CONFLICT (key) DO UPDATE 
 SET updated_at = NOW();
 

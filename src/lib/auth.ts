@@ -463,3 +463,6 @@ export async function getUserRole() {
   return (session.user as any).role || 'USER';
 }
 
+// Explicitly export requireOwnerOrAdmin and authOptions for use in API routes
+export { requireOwnerOrAdmin, authOptions };
+
