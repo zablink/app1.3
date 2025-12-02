@@ -173,11 +173,11 @@ export async function GET(
 // PUT - Update shop
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ shopId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
-    const shopId = (await params).id;
+    const shopId = (await params).shopId;
 
     if (!session?.user) {
       return NextResponse.json(

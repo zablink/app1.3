@@ -58,10 +58,10 @@ export async function GET(
 // POST new review (for future use)
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ shopId: string }> }
 ) {
   try {
-    const shopId = (await params).id;
+    const shopId = (await params).shopId;
     const body = await request.json();
     const { userName, rating, comment } = body;
 

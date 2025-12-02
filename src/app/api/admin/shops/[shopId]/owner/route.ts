@@ -1,4 +1,4 @@
-// src/app/api/shops/[shopId]/subscription/route.ts
+// /src/app/api/admin/shops/[shopId]/owner/route.ts
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { requireOwnerOrAdmin } from "@/lib/auth";
@@ -58,47 +58,12 @@ export async function POST(req: Request, { params }: { params: Promise<{ shopId:
       } else {
         await prisma.tokenWallet.update({
           where: { id: wallet.id },
-          data: { balance: wallet.balance + plan.tokenAmount },
+          data: { balance: { increment: plan.tokenAmount } },
         });
       }
-
-      await prisma.tokenPurchase.create({
-        data: {
-          wallet: { connect: { id: wallet.id } },
-          amount: plan.tokenAmount,
-          remaining: plan.tokenAmount,
-          price: plan.price,
-          provider: paymentProvider ?? "subscription",
-          providerRef: paymentRef ?? null,
-          expiresAt,
-        },
-      });
     }
 
     return NextResponse.json(sub);
-  } catch (err) {
-    console.error(err);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
-  }
-}
-
-export async function DELETE(req: Request, { params }: { params: Promise<{ shopId: string }> }) {
-  const shopId = (await params).shopId;
-  const authErr = await requireOwnerOrAdmin(req, shopId);
-  if (authErr) return authErr;
-
-  try {
-    const active = await prisma.shopSubscription.findFirst({
-      where: { shopId, status: "ACTIVE" },
-      orderBy: { expiresAt: "desc" },
-    });
-    if (!active) return NextResponse.json({ error: "No active subscription" }, { status: 404 });
-
-    const updated = await prisma.shopSubscription.update({
-      where: { id: active.id },
-      data: { status: "CANCELLED" },
-    });
-    return NextResponse.json(updated);
   } catch (err) {
     console.error(err);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
