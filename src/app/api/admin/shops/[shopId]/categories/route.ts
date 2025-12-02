@@ -1,14 +1,14 @@
-// src/app/api/admin/shops/[id]/categories/route.ts
+// src/app/api/admin/shops/[shopId]/categories/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
 // GET: ดูหมวดหมู่ของร้าน
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ shopId: string }> }
 ) {
   try {
-    const { id: shopId } = params;
+    const { shopId } = await params;
 
     const mappings = await prisma.shopCategoryMapping.findMany({
       where: { shopId },
@@ -33,10 +33,10 @@ export async function GET(
 // PUT: อัพเดทหมวดหมู่ของร้าน (replace all)
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ shopId: string }> }
 ) {
   try {
-    const { id: shopId } = params;
+    const { shopId } = await params;
     const body = await request.json();
     const { categoryIds } = body as { categoryIds: string[] };
 

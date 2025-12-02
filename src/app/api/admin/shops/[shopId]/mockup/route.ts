@@ -1,4 +1,4 @@
-// src/app/api/admin/shops/[id]/mockup/route.ts
+// src/app/api/admin/shops/[shopId]/mockup/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requireAdmin } from '@/lib/auth';
@@ -6,13 +6,13 @@ import { requireAdmin } from '@/lib/auth';
 // PATCH: Toggle mockup status
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ shopId: string }> }
 ) {
   const { error } = await requireAdmin();
   if (error) return error;
 
   try {
-    const { id: shopId } = params;
+    const { shopId } = await params;
     const body = await request.json();
     const { isMockup } = body as { isMockup: boolean };
 
