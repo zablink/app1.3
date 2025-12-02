@@ -1,4 +1,4 @@
-// src/app/api/shops/[id]/route.ts
+// src/app/api/shops/[shopId]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
@@ -6,10 +6,10 @@ import { prisma } from '@/lib/prisma';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ shopId: string }> }
 ) {
   try {
-    const shopId = (await params).id;
+    const shopId = (await params).shopId;
 
     if (!shopId) {
       return NextResponse.json(

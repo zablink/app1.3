@@ -1,11 +1,11 @@
-// src/app/api/shops/[id]/subscription/route.ts
+// src/app/api/shops/[shopId]/subscription/route.ts
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { requireOwnerOrAdmin } from "@/lib/auth";
 
-export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(req: Request, { params }: { params: Promise<{ shopId: string }> }) {
   try {
-    const shopId = (await params).id;
+    const shopId = (await params).shopId;
     const active = await prisma.shopSubscription.findFirst({
       where: { shopId, status: "ACTIVE" },
       include: { plan: true },
@@ -18,8 +18,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   }
 }
 
-export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const shopId = (await params).id;
+export async function POST(req: Request, { params }: { params: Promise<{ shopId: string }> }) {
+  const shopId = (await params).shopId;
   const authErr = await requireOwnerOrAdmin(req, shopId);
   if (authErr) return authErr;
 

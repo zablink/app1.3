@@ -1,4 +1,4 @@
-// src/app/api/shops/[id]/tokens/route.ts
+// src/app/api/shops/[shopId]/tokens/route.ts
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import Omise from "omise";
@@ -6,8 +6,8 @@ import { requireOwnerOrAdmin } from "@/lib/auth";
 
 const omise = new Omise({ secretKey: process.env.OMISE_SECRET_KEY || "" });
 
-export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const shopId = (await params).id;
+export async function POST(req: Request, { params }: { params: Promise<{ shopId: string }> }) {
+  const shopId = (await params).shopId;
   const authErr = await requireOwnerOrAdmin(req, shopId);
   if (authErr) return authErr;
 
