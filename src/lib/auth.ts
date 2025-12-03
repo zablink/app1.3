@@ -419,7 +419,7 @@ export async function isAuthenticated() {
   return !!session?.user;
 }
 
-/**
+/**.  
  * Check if user has specific role
  */
 export async function hasRole(role: string) {
