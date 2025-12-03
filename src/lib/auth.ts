@@ -464,5 +464,4 @@ export async function getUserRole() {
 }
 
 // Explicitly export requireOwnerOrAdmin and authOptions for use in API routes
-export { requireOwnerOrAdmin, authOptions };
 
