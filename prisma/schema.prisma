@@ -875,6 +875,7 @@ model PageView {
   @@map("page_views")
 }
 
+///*
 model ShopView {
   id          String    @id @default(cuid())
   shopId      String
