@@ -956,8 +956,8 @@ model ConversionFunnel {
   metadata    Json?
   createdAt   DateTime  @default(now())
 
-  shop        Shop?     @relation(fields: [shopId], references: [id], onDelete: Cascade)
-  category    Category? @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  shop        Shop?         @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  category    ShopCategory? @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
   @@index([sessionId, stepOrder])
   @@index([step, createdAt])
