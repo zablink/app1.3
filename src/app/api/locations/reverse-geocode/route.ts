@@ -37,9 +37,9 @@ export async function POST(request: NextRequest) {
           t.geom::geography,
           ST_GeomFromText($1, 4326)::geography
         ) as distance
-      FROM loc_tambons t
-      JOIN loc_amphures a ON t.amphure_id = a.id
-      JOIN loc_provinces p ON a.province_id = p.id
+      FROM th_subdistricts t
+      JOIN th_districts a ON t.amphure_id = a.id
+      JOIN th_provinces p ON a.province_id = p.id
       WHERE t.deleted_at IS NULL
         AND a.deleted_at IS NULL
         AND p.deleted_at IS NULL

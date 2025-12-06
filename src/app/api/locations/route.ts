@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
     const type = searchParams.get('type');
 
     if (type === 'provinces') {
-      const provinces = await prisma.loc_provinces.findMany({
+      const provinces = await prisma.th_provinces.findMany({
         orderBy: { name_th: 'asc' },
       });
       return NextResponse.json(provinces);
@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
 
     if (type === 'amphures') {
       const provinceId = searchParams.get('province_id');
-      const amphures = await prisma.loc_amphures.findMany({
+      const amphures = await prisma.th_districts.findMany({
         where: provinceId ? { province_id: parseInt(provinceId) } : undefined,
         orderBy: { name_th: 'asc' },
       });
@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
 
     if (type === 'tambons') {
       const amphureId = searchParams.get('amphure_id');
-      const tambons = await prisma.loc_tambons.findMany({
+      const tambons = await prisma.th_subdistricts.findMany({
         where: amphureId ? { amphure_id: parseInt(amphureId) } : undefined,
         orderBy: { name_th: 'asc' },
       });

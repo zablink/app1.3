@@ -63,8 +63,8 @@ async function updateShopLocations() {
             t.id as tambon_id,
             t.amphure_id as amphure_id,
             a.province_id as province_id
-          FROM loc_tambons t
-          LEFT JOIN loc_amphures a ON t.amphure_id = a.id
+          FROM th_subdistricts t
+          LEFT JOIN th_districts a ON t.amphure_id = a.id
           WHERE ST_Contains(t.geom, ST_SetSRID(ST_MakePoint(${shop.lng}, ${shop.lat}), 4326))
           LIMIT 1
         `;

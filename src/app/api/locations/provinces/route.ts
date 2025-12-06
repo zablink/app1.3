@@ -4,7 +4,7 @@ import prisma from "@/lib/prisma";
 
 export async function GET(request: NextRequest) {
   try {
-    const provinces = await prisma.loc_provinces.findMany({
+    const provinces = await prisma.th_provinces.findMany({
       select: {
         id: true,
         name_th: true,

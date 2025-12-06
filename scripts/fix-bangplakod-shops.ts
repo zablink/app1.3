@@ -25,9 +25,9 @@ async function fixBangplakodShops() {
         a.name_th as amphure_name,
         p.id as province_id,
         p.name_th as province_name
-      FROM loc_tambons t
-      LEFT JOIN loc_amphures a ON t.amphure_id = a.id
-      LEFT JOIN loc_provinces p ON a.province_id = p.id
+      FROM th_subdistricts t
+      LEFT JOIN th_districts a ON t.amphure_id = a.id
+      LEFT JOIN th_provinces p ON a.province_id = p.id
       WHERE t.name_th LIKE '%ในคลองบางปลากด%'
         AND a.name_th LIKE '%พระสมุทรเจดีย์%'
         AND p.name_th LIKE '%สมุทรปราการ%'
@@ -54,7 +54,7 @@ async function fixBangplakodShops() {
       SELECT 
         ST_Y(ST_Centroid(geom)) as lat,
         ST_X(ST_Centroid(geom)) as lng
-      FROM loc_tambons
+      FROM th_subdistricts
       WHERE id = ${targetTambon.id}
     `;
 

@@ -45,9 +45,9 @@ async function checkShopData() {
       a.name_th as district,
       t.name_th as subdistrict
     FROM "Shop" s
-    LEFT JOIN loc_provinces p ON s.province_id = p.id
-    LEFT JOIN loc_amphures a ON s.amphure_id = a.id
-    LEFT JOIN loc_tambons t ON s.tambon_id = t.id
+    LEFT JOIN th_provinces p ON s.province_id = p.id
+    LEFT JOIN th_districts a ON s.amphure_id = a.id
+    LEFT JOIN th_subdistricts t ON s.tambon_id = t.id
     LIMIT 5
   `;
 

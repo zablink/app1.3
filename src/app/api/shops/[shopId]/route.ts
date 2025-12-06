@@ -93,9 +93,9 @@ export async function GET(
             a.name_th as district,
             p.name_th as province
           FROM "Shop" s
-          LEFT JOIN loc_tambons t ON ST_Contains(t.geom, ST_SetSRID(ST_MakePoint(s.lng, s.lat), 4326))
-          LEFT JOIN loc_amphures a ON ST_Contains(a.geom, ST_SetSRID(ST_MakePoint(s.lng, s.lat), 4326))
-          LEFT JOIN loc_provinces p ON ST_Contains(p.geom, ST_SetSRID(ST_MakePoint(s.lng, s.lat), 4326))
+          LEFT JOIN th_subdistricts t ON ST_Contains(t.geom, ST_SetSRID(ST_MakePoint(s.lng, s.lat), 4326))
+          LEFT JOIN th_districts a ON ST_Contains(a.geom, ST_SetSRID(ST_MakePoint(s.lng, s.lat), 4326))
+          LEFT JOIN th_provinces p ON ST_Contains(p.geom, ST_SetSRID(ST_MakePoint(s.lng, s.lat), 4326))
           WHERE s.id = ${shopId}
           LIMIT 1
         `;        if (location && location.length > 0) {

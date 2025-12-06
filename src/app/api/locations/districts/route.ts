@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     }
 
     const districts = await prisma.$queryRawUnsafe<Array<{ id: number; name_th: string; name_en: string }>>(
-      `SELECT id, name_th, name_en FROM loc_amphures WHERE province_id = $1 ORDER BY name_th ASC`,
+      `SELECT id, name_th, name_en FROM th_districts WHERE province_id = $1 ORDER BY name_th ASC`,
       parseInt(provinceId)
     );
 

@@ -64,6 +64,9 @@ model Shop {
   shop_subscriptions   ShopSubscription[]
   token_wallets        TokenWallet?
   bookmarkedBy         UserBookmark[]
+  shopViews            ShopView[]
+  events               Event[]
+  conversionFunnels    ConversionFunnel[]
 
   @@index([amphure_id], map: "idx_shop_amphure_id")
   @@index([location], map: "idx_shop_location_gix", type: Gist)
@@ -88,14 +91,15 @@ model ShopReview {
 }
 
 model ShopCategory {
-  id          String                @id @default(cuid())
-  name        String                @unique
-  slug        String                @unique
-  icon        String?               // emoji or icon name
-  description String?
-  createdAt   DateTime              @default(now())
-  updatedAt   DateTime              @updatedAt
-  shops       ShopCategoryMapping[]
+  id                String                @id @default(cuid())
+  name              String                @unique
+  slug              String                @unique
+  icon              String?               // emoji or icon name
+  description       String?
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+  shops             ShopCategoryMapping[]
+  conversionFunnels ConversionFunnel[]
 }
 
 model ShopCategoryMapping {
@@ -315,6 +319,7 @@ model HeroBanner {
 
 
 
+/// Old banners table - ควรใช้ AdBanner แทน (deprecated)
 model banners {
   id         Int       @id @default(autoincrement())
   image      String
@@ -325,6 +330,73 @@ model banners {
   updated_at DateTime? @default(now()) @db.Timestamptz(6)
 
   @@index([order])
+}
+
+/// ระบบโฆษณาใหม่ - รองรับหลาย placement และ location-based targeting
+model AdBanner {
+  id              String   @id @default(dbgenerated("(gen_random_uuid())::text"))
+  
+  // ข้อมูลพื้นฐาน
+  title           String
+  description     String?
+  imageUrl        String   @map("image_url")
+  linkUrl         String?  @map("link_url")
+  
+  // ตำแหน่งแสดงโฆษณา (Placement)
+  // 'hero' | 'sidebar' | 'category_top' | 'category_bottom' | 'shop_detail' | 'search_results' | 'footer'
+  placement       String   @default("hero")
+  
+  // Location-based Targeting
+  targetAreaType  String?  @map("target_area_type")  // 'nationwide' | 'province' | 'amphure' | 'tambon'
+  targetAreaId    Int?     @map("target_area_id")     // FK to th_provinces, th_districts, or th_subdistricts
+  
+  // Priority & Scheduling
+  priority        Int      @default(0)                 // สูงกว่า = แสดงก่อน
+  startDate       DateTime? @map("start_date")
+  endDate         DateTime? @map("end_date")
+  
+  // Status & Performance
+  isActive        Boolean  @default(true)              @map("is_active")
+  viewCount       Int      @default(0)                 @map("view_count")      // จำนวนครั้งที่แสดง
+  clickCount      Int      @default(0)                 @map("click_count")     // จำนวนครั้งที่คลิก
+  
+  // Metadata
+  createdBy       String?  @map("created_by")          // Admin user ID
+  createdAt       DateTime @default(now())             @map("created_at")
+  updatedAt       DateTime @default(now()) @updatedAt  @map("updated_at")
+  
+  @@index([placement, isActive])
+  @@index([targetAreaType, targetAreaId])
+  @@index([priority(sort: Desc)])
+  @@index([startDate, endDate])
+  @@map("ad_banners")
+}
+
+/// บันทึกการแสดง/คลิกโฆษณา (สำหรับ Analytics)
+model AdImpression {
+  id         String   @id @default(dbgenerated("(gen_random_uuid())::text"))
+  bannerId   String   @map("banner_id")
+  
+  // User & Location Info
+  userId     String?  @map("user_id")                 // ถ้า login อยู่
+  sessionId  String?  @map("session_id")              // Anonymous session
+  tambonId   Int?     @map("tambon_id")               // ตำบลที่ user อยู่ตอนเห็นโฆษณา
+  amphureId  Int?     @map("amphure_id")
+  provinceId Int?     @map("province_id")
+  
+  // Event Info
+  eventType  String   @default("view")                // 'view' | 'click'
+  page       String?                                   // URL ที่แสดงโฆษณา
+  userAgent  String?  @map("user_agent")
+  ipAddress  String?  @map("ip_address")
+  
+  // Timestamp
+  createdAt  DateTime @default(now())                 @map("created_at")
+  
+  @@index([bannerId, eventType])
+  @@index([createdAt])
+  @@index([tambonId])
+  @@map("ad_impressions")
 }
 
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
@@ -772,4 +844,143 @@ enum SubscriptionTier {
   BASIC
   PRO
   PREMIUM
+}
+
+/// *
+///  * Analytics Models for Custom Statistics Tracking
+
+model PageView {
+  id          String    @id @default(cuid())
+  userId      String?
+  sessionId   String
+  pagePath    String
+  pageTitle   String?
+  referrer    String?
+  userAgent   String?
+  ipAddress   String?
+  deviceType  String?   // mobile, tablet, desktop
+  browser     String?
+  os          String?
+  tambonId    Int?
+  amphureId   Int?
+  provinceId  Int?
+  duration    Int?      // Time spent on page in seconds
+  createdAt   DateTime  @default(now())
+
+  @@index([sessionId])
+  @@index([userId])
+  @@index([pagePath])
+  @@index([createdAt])
+  @@index([tambonId])
+  @@map("page_views")
+}
+
+model ShopView {
+  id          String    @id @default(cuid())
+  shopId      String
+  userId      String?
+  sessionId   String
+  viewDuration Int?     // Seconds spent viewing shop
+  sourceType  String?   // search, category, featured, bookmark, direct
+  sourceId    String?   // Category ID, search query, etc.
+  userAgent   String?
+  deviceType  String?
+  tambonId    Int?
+  amphureId   Int?
+  provinceId  Int?
+  createdAt   DateTime  @default(now())
+
+  shop        Shop      @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@index([shopId, createdAt])
+  @@index([sessionId])
+  @@index([userId])
+  @@index([sourceType])
+  @@map("shop_views")
+}
+
+model UserSession {
+  id              String    @id @default(cuid())
+  sessionId       String    @unique
+  userId          String?
+  startTime       DateTime  @default(now())
+  endTime         DateTime?
+  lastActivity    DateTime  @default(now())
+  pageCount       Int       @default(0)
+  deviceType      String?
+  browser         String?
+  os              String?
+  ipAddress       String?
+  tambonId        Int?
+  amphureId       Int?
+  provinceId      Int?
+  utmSource       String?
+  utmMedium       String?
+  utmCampaign     String?
+
+  @@index([sessionId])
+  @@index([userId])
+  @@index([startTime])
+  @@map("user_sessions")
+}
+
+model Event {
+  id          String    @id @default(cuid())
+  eventType   String    // shop_call, shop_direction, shop_share, bookmark_add, search, etc.
+  eventData   Json?
+  userId      String?
+  sessionId   String
+  shopId      String?
+  tambonId    Int?
+  amphureId   Int?
+  provinceId  Int?
+  createdAt   DateTime  @default(now())
+
+  shop        Shop?     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@index([eventType, createdAt])
+  @@index([sessionId])
+  @@index([userId])
+  @@index([shopId])
+  @@map("events")
+}
+
+model ConversionFunnel {
+  id          String    @id @default(cuid())
+  sessionId   String
+  userId      String?
+  step        String    // homepage_view, category_view, shop_view, shop_call, etc.
+  stepOrder   Int
+  shopId      String?
+  categoryId  String?
+  metadata    Json?
+  createdAt   DateTime  @default(now())
+
+  shop        Shop?     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  category    Category? @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId, stepOrder])
+  @@index([step, createdAt])
+  @@map("conversion_funnel")
+}
+
+model DailyStats {
+  id                  String    @id @default(cuid())
+  date                DateTime  @db.Date
+  totalPageViews      Int       @default(0)
+  uniqueVisitors      Int       @default(0)
+  totalSessions       Int       @default(0)
+  totalShopViews      Int       @default(0)
+  avgSessionDuration  Float?
+  bounceRate          Float?
+  topPages            Json?     // Array of {path, views}
+  topShops            Json?     // Array of {shopId, views}
+  deviceBreakdown     Json?     // {mobile: X, desktop: Y, tablet: Z}
+  locationBreakdown   Json?     // {provinceId: {name, views}}
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  @@unique([date])
+  @@index([date])
+  @@map("daily_stats")
 }

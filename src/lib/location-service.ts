@@ -97,9 +97,9 @@ export async function getLocationFromCoordinates(
           t.geom::geography,
           ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326)::geography
         ) as distance_meters
-      FROM loc_tambons t
-      JOIN loc_amphures a ON t.amphure_id = a.id
-      JOIN loc_provinces p ON a.province_id = p.id
+      FROM th_subdistricts t
+      JOIN th_districts a ON t.amphure_id = a.id
+      JOIN th_provinces p ON a.province_id = p.id
       WHERE t.geom IS NOT NULL
         AND ST_Contains(
           t.geom,
@@ -123,9 +123,9 @@ export async function getLocationFromCoordinates(
             t.geom::geography,
             ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326)::geography
           ) as distance_meters
-        FROM loc_tambons t
-        JOIN loc_amphures a ON t.amphure_id = a.id
-        JOIN loc_provinces p ON a.province_id = p.id
+        FROM th_subdistricts t
+        JOIN th_districts a ON t.amphure_id = a.id
+        JOIN th_provinces p ON a.province_id = p.id
         WHERE t.geom IS NOT NULL
         ORDER BY t.geom <-> ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326)
         LIMIT 1
@@ -151,9 +151,9 @@ export async function getLocationFromCoordinates(
             t.geom::geography,
             ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326)::geography
           ) as distance_meters
-        FROM loc_tambons t
-        JOIN loc_amphures a ON t.amphure_id = a.id
-        JOIN loc_provinces p ON a.province_id = p.id
+        FROM th_subdistricts t
+        JOIN th_districts a ON t.amphure_id = a.id
+        JOIN th_provinces p ON a.province_id = p.id
         WHERE t.geom IS NOT NULL
           AND a.id = ${location.amphure_id}
         ORDER BY t.geom <-> ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326)

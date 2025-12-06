@@ -8,7 +8,7 @@ import { prisma } from '@/lib/prisma';
  */
 
 const KM = 1000;
-const VALID_AREA_TABLES = ['loc_tambons', 'loc_amphures', 'loc_provinces'] as const;
+const VALID_AREA_TABLES = ['th_subdistricts', 'th_districts', 'th_provinces'] as const;
 type AreaTable = (typeof VALID_AREA_TABLES)[number];
 
 // Helper: Validate Thailand coordinates
@@ -124,9 +124,9 @@ export async function GET(request: NextRequest) {
                 ELSE 4
               END as tier_rank
             FROM "Shop" s
-            LEFT JOIN loc_tambons lt ON s.tambon_id = lt.id
-            LEFT JOIN loc_amphures la ON s.amphure_id = la.id
-            LEFT JOIN loc_provinces lp ON s.province_id = lp.id
+            LEFT JOIN th_subdistricts lt ON s.tambon_id = lt.id
+            LEFT JOIN th_districts la ON s.amphure_id = la.id
+            LEFT JOIN th_provinces lp ON s.province_id = lp.id
             LEFT JOIN shop_subscriptions ss ON ss.shop_id = s.id 
               AND ss.status = 'ACTIVE' 
               AND ss.end_date > NOW()
@@ -164,9 +164,9 @@ export async function GET(request: NextRequest) {
               WHERE scm.shop_id = s.id
             ) as categories
           FROM "Shop" s
-          LEFT JOIN loc_tambons lt ON s.tambon_id = lt.id
-          LEFT JOIN loc_amphures la ON s.amphure_id = la.id
-          LEFT JOIN loc_provinces lp ON s.province_id = lp.id
+          LEFT JOIN th_subdistricts lt ON s.tambon_id = lt.id
+          LEFT JOIN th_districts la ON s.amphure_id = la.id
+          LEFT JOIN th_provinces lp ON s.province_id = lp.id
           ${whereClause}
           ORDER BY RANDOM()
           LIMIT $${params.length};
@@ -184,18 +184,9 @@ export async function GET(request: NextRequest) {
     const latitude = parseFloat(lat);
     const longitude = parseFloat(lng);
 
-    const tambonId = await findAreaId('loc_tambons', longitude, latitude, radiiMeters);
-    let chosenLevel: 'tambon' | 'amphure' | 'province' | null = null;
-    let areaId: number | null = null;
-    if (tambonId) { chosenLevel = 'tambon'; areaId = tambonId; }
-    else {
-      const amphureId = await findAreaId('loc_amphures', longitude, latitude, radiiMeters);
-      if (amphureId) { chosenLevel = 'amphure'; areaId = amphureId; }
-      else {
-        const provinceId = await findAreaId('loc_provinces', longitude, latitude, radiiMeters);
-        if (provinceId) { chosenLevel = 'province'; areaId = provinceId; }
-      }
-    }
+    // ⚡ เปลี่ยนเป็น distance-based query เท่านั้น (ไม่ต้องหา geometry area อีกต่อไป)
+    // เพราะมี 52 ตำบลที่ไม่มี geometry ทำให้ GPS บางจุดหา area ไม่เจอ
+    console.log('[api/shops] Using distance-based query (no geometry lookup)');
 
     const pointExprParams = [longitude, latitude];
 
@@ -229,74 +220,8 @@ export async function GET(request: NextRequest) {
     else selectCols.push('NULL as distance');
     const selectList = selectCols.join(', ');
 
-    // Area-based query (use LEFT JOIN to not drop shops without category)
-    if (areaId && chosenLevel) {
-      const params: any[] = [longitude, latitude];
-      const areaConditions: string[] = [];
-      if (chosenLevel === 'tambon' && hasTambonCol) { params.push(areaId); areaConditions.push(`s.tambon_id = $${params.length}`); }
-      else if (chosenLevel === 'amphure' && hasAmphureCol) { params.push(areaId); areaConditions.push(`s.amphure_id = $${params.length}`); }
-      else if (chosenLevel === 'province' && hasProvinceCol) { params.push(areaId); areaConditions.push(`s.province_id = $${params.length}`); }
-
-      const smallRadius = 5 * KM;
-      if (hasLocationCol) { params.push(smallRadius); areaConditions.push(`ST_DWithin(s.location::geography, ST_SetSRID(ST_MakePoint($1,$2),4326)::geography, $${params.length})`); }
-
-      const whereParts: string[] = [];
-      if (hasStatusCol) whereParts.push(`s.status = 'APPROVED'`);
-      if (areaConditions.length > 0) whereParts.push(`(${areaConditions.join(' OR ')})`);
-      // categoryId filter removed
-      params.push(limit);
-
-      const selectFields = [
-        'id', 'name', 'description', 'address', 'has_physical_store', '"createdAt"', 'image', '"isMockup"',
-        'lat', 'lng', 'subdistrict', 'district', 'province', '"subscriptionTier"', 'categories',
-        ...(hasAmphureCol ? ['amphure_id'] : []),
-        ...(hasTambonCol ? ['tambon_id'] : []),
-        ...(hasProvinceCol ? ['province_id'] : []),
-        'distance'
-      ];
-      const sql = `
-        WITH ranked_shops AS (
-          SELECT DISTINCT ON (s.id) ${selectList},
-            CASE sp.tier
-              WHEN 'PREMIUM' THEN 1
-              WHEN 'PRO' THEN 2
-              WHEN 'BASIC' THEN 3
-              ELSE 4
-            END as tier_rank
-          FROM "Shop" s
-          LEFT JOIN loc_tambons lt ON s.tambon_id = lt.id
-          LEFT JOIN loc_amphures la ON s.amphure_id = la.id
-          LEFT JOIN loc_provinces lp ON s.province_id = lp.id
-          LEFT JOIN shop_subscriptions ss ON ss.shop_id = s.id 
-            AND ss.status = 'ACTIVE' 
-            AND ss.end_date > NOW()
-          LEFT JOIN subscription_packages sp ON ss.package_id = sp.id
-          ${whereParts.length > 0 ? `WHERE ${whereParts.join(' AND ')}` : ''}
-          ORDER BY s.id, ss.start_date DESC NULLS LAST, ss.created_at DESC NULLS LAST
-        )
-        SELECT ${selectFields.join(', ')}
-        FROM ranked_shops
-        ORDER BY tier_rank ASC,
-          ${ (sortBy === 'distance' && hasLocationCol) ? 'distance ASC NULLS LAST' : (sortBy === 'name' ? 'name ASC' : '"createdAt" DESC') }
-        LIMIT $${params.length};
-      `;
-      console.log('[api/shops] SQL (area):', sql, params);
-      const shopsRes = await prisma.$queryRawUnsafe(sql, ...params);
-      const elapsed = Date.now() - startTime;
-      console.log(`[api/shops] area query rows: ${shopsRes.length}, chosenLevel: ${chosenLevel}, areaId: ${areaId}, time: ${elapsed}ms`);
-      if (shopsRes && shopsRes.length > 0) {
-        return NextResponse.json({
-          success: true,
-          shops: shopsRes.map((r: any) => ({ ...r, distance: r.distance != null ? parseFloat(Number(r.distance).toFixed(2)) : null })),
-          hasLocation: hasLocationCol,
-          area: { level: chosenLevel, id: areaId },
-          userLocation: { lat: latitude, lng: longitude },
-          queryTime: elapsed,
-        });
-      }
-    }
-
-    // Distance-only progressive
+    // ⚡ ใช้ Distance-based query เท่านั้น (ไม่ต้องหา area/geometry)
+    // หาร้านที่ใกล้ที่สุดภายในรัศมีที่กำหนด
     if (hasLocationCol) {
       for (const r of radiiMeters) {
         const params = [longitude, latitude, r, limit];
@@ -314,9 +239,9 @@ export async function GET(request: NextRequest) {
                 ELSE 4
               END as tier_rank
             FROM "Shop" s
-            LEFT JOIN loc_tambons lt ON s.tambon_id = lt.id
-            LEFT JOIN loc_amphures la ON s.amphure_id = la.id
-            LEFT JOIN loc_provinces lp ON s.province_id = lp.id
+            LEFT JOIN th_subdistricts lt ON s.tambon_id = lt.id
+            LEFT JOIN th_districts la ON s.amphure_id = la.id
+            LEFT JOIN th_provinces lp ON s.province_id = lp.id
             LEFT JOIN shop_subscriptions ss ON ss.shop_id = s.id 
               AND ss.status = 'ACTIVE' 
               AND ss.end_date > NOW()
@@ -364,9 +289,9 @@ export async function GET(request: NextRequest) {
             ELSE 4
           END as tier_rank
         FROM "Shop" s
-        LEFT JOIN loc_tambons lt ON s.tambon_id = lt.id
-        LEFT JOIN loc_amphures la ON s.amphure_id = la.id
-        LEFT JOIN loc_provinces lp ON s.province_id = lp.id
+        LEFT JOIN th_subdistricts lt ON s.tambon_id = lt.id
+        LEFT JOIN th_districts la ON s.amphure_id = la.id
+        LEFT JOIN th_provinces lp ON s.province_id = lp.id
         LEFT JOIN shop_subscriptions ss ON ss.shop_id = s.id 
           AND ss.status = 'ACTIVE' 
           AND ss.end_date > NOW()

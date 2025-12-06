@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const tambons = await prisma.loc_tambons.findMany({
+    const tambons = await prisma.th_subdistricts.findMany({
       where: {
         amphure_id: parseInt(amphureId),
         deleted_at: null

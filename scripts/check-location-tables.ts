@@ -4,7 +4,7 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function checkTables() {
-  const tables = ['loc_provinces', 'loc_amphures', 'loc_tambons'];
+  const tables = ['th_provinces', 'th_districts', 'th_subdistricts'];
   
   for (const table of tables) {
     console.log(`\n📋 Table: ${table}`);

@@ -6,7 +6,7 @@ import prisma from '@/lib/prisma';
 
 export async function GET() {
   try {
-    const provinces = await prisma.loc_provinces.findMany({
+    const provinces = await prisma.th_provinces.findMany({
       where: { deleted_at: null },
       orderBy: { name_th: 'asc' },
       select: {
