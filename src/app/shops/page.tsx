@@ -81,11 +81,9 @@ export default function ShopsListingPage() {
     fetchShops(lat, lng);
   };
 
-  // Auto-load with user location on component mount
+  // Auto-load with user location on component mount (only once)
   useEffect(() => {
-    if (locationMethod === "auto") {
-      getUserLocation();
-    }
+    getUserLocation();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -210,11 +208,15 @@ export default function ShopsListingPage() {
                         <h3 className="font-semibold text-lg text-gray-800">
                           {shop.name}
                         </h3>
-                        {shop.packageType !== "free" && (
-                          <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full">
-                            {shop.packageType.toUpperCase()}
-                          </span>
-                        )}
+                        <span className={`px-2 py-1 text-xs rounded-full ${
+                          shop.packageType === "special" ? "bg-purple-100 text-purple-800" :
+                          shop.packageType === "pro3" ? "bg-yellow-100 text-yellow-800" :
+                          shop.packageType === "pro2" ? "bg-orange-100 text-orange-800" :
+                          shop.packageType === "pro1" ? "bg-blue-100 text-blue-800" :
+                          "bg-gray-100 text-gray-600"
+                        }`}>
+                          {shop.packageType.toUpperCase()}
+                        </span>
                       </div>
                       
                       <div className="space-y-1 text-sm text-gray-600">
