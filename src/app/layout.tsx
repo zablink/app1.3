@@ -11,13 +11,13 @@ const prompt = Prompt({
 });
 
 export const metadata: Metadata = {
-  title: 'Zablink - Coming Soon',
-  description: 'ช่วยเติมฝันและลมหายใจของคุณ',
+  title: 'Zablink - ค้นหาร้านอาหารใกล้คุณ',
+  description: 'ค้นหาร้านอาหารและเครื่องดื่มในพื้นที่ของคุณ - ช่วยเติมฝันและลมหายใจของคุณ',
   
   // ⭐ เพิ่มส่วนนี้!
   openGraph: {
-    title: 'Zablink - Coming Soon',
-    description: 'ช่วยเติมฝันและลมหายใจของคุณ',
+    title: 'Zablink - ค้นหาร้านอาหารใกล้คุณ',
+    description: 'ค้นหาร้านอาหารและเครื่องดื่มในพื้นที่ของคุณ',
     url: 'https://zablink.vercel.app', // เปลี่ยนเป็น URL จริง
     siteName: 'Zablink',
     images: [
@@ -35,8 +35,8 @@ export const metadata: Metadata = {
   // ⭐ สำหรับ Twitter
   twitter: {
     card: 'summary_large_image',
-    title: 'Zablink - Coming Soon',
-    description: 'ช่วยเติมฝันและลมหายใจของคุณ',
+    title: 'Zablink - ค้นหาร้านอาหารใกล้คุณ',
+    description: 'ค้นหาร้านอาหารและเครื่องดื่มในพื้นที่ของคุณ',
     images: ['/og-image.png'],
   },
   
@@ -56,7 +56,7 @@ export default function RootLayout({
   return (
     <html lang="th" className={prompt.variable}>
       <body className={`${prompt.className} antialiased`}>
-        {children}
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

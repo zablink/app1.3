@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-// import prisma from "@/lib/prisma"; // remark ออก (ยังไม่ใช้ DB)
+import { prisma } from "@/lib/prisma";
 
 type Shop = {
   id: string;
@@ -13,7 +13,7 @@ type Shop = {
   distance?: number;
 };
 
-// mock data สำหรับ dev เท่านั้น
+// mock data สำหรับกรณีที่ไม่มี database connection
 const mockShops: Shop[] = [
   {
     id: "1",
@@ -34,13 +34,91 @@ const mockShops: Shop[] = [
 ];
 
 export async function GET(req: Request) {
-  const { searchParams } = new URL(req.url);
-  const lat = parseFloat(searchParams.get("lat") || "");
-  const lng = parseFloat(searchParams.get("lng") || "");
-  const subdistrict = searchParams.get("subdistrict");
-  const district = searchParams.get("district");
-  const province = searchParams.get("province");
+  try {
+    const { searchParams } = new URL(req.url);
+    const lat = parseFloat(searchParams.get("lat") || "");
+    const lng = parseFloat(searchParams.get("lng") || "");
+    const subdistrict = searchParams.get("subdistrict");
+    const district = searchParams.get("district");
+    const province = searchParams.get("province");
 
+    let shops: Shop[] = [];
+
+    // ตรวจสอบว่ามี DATABASE_URL หรือไม่
+    const isDatabaseConfigured = process.env.DATABASE_URL !== undefined;
+
+    if (isDatabaseConfigured) {
+      // ใช้ database จริง
+      try {
+        const dbShops = await prisma.shop.findMany({
+          where: {
+            AND: [
+              lat && lng && !isNaN(lat) && !isNaN(lng)
+                ? {
+                    lat: { not: null },
+                    lng: { not: null },
+                  }
+                : {},
+            ],
+          },
+          include: {
+            category: true,
+            adPackage: true,
+          },
+          take: 100, // จำกัดจำนวนร้านเพื่อประสิทธิภาพ
+        });
+
+        // แปลงข้อมูลจาก database
+        shops = dbShops
+          .filter((shop) => shop.lat !== null && shop.lng !== null)
+          .map((shop) => {
+            const distance =
+              !isNaN(lat) && !isNaN(lng)
+                ? getDistanceFromLatLonInKm(lat, lng, shop.lat!, shop.lng!)
+                : undefined;
+
+            return {
+              id: shop.id,
+              name: shop.name,
+              latitude: shop.lat!,
+              longitude: shop.lng!,
+              packageType: shop.adPackage?.name.toLowerCase() || "free",
+              subdistrict: undefined, // TODO: เชื่อมกับ Tambon model
+              district: undefined, // TODO: เชื่อมกับ Amphure model
+              province: undefined, // TODO: เชื่อมกับ Province model
+              distance,
+            };
+          })
+          .filter((s) => !s.distance || s.distance <= 10) // กรองเฉพาะในระยะ 10 กม.
+          .sort(sortByPackageAndDistance);
+      } catch (dbError) {
+        console.error("Database error, falling back to mock data:", dbError);
+        // ถ้า database error ให้ใช้ mock data แทน
+        shops = getMockShops(lat, lng, subdistrict, district, province);
+      }
+    } else {
+      // ใช้ mock data
+      shops = getMockShops(lat, lng, subdistrict, district, province);
+    }
+
+    return NextResponse.json(shops);
+  } catch (error) {
+    console.error("API error:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch shops" },
+      { status: 500 }
+    );
+  }
+}
+
+// ฟังก์ชันสำหรับดึง mock data
+function getMockShops(
+  lat: number,
+  lng: number,
+  subdistrict?: string | null,
+  district?: string | null,
+  province?: string | null
+): Shop[] {
   let shops: Shop[] = [];
 
   // 1. ถ้ามี location → คำนวณหาร้านในระยะ 10 กม.
@@ -69,7 +147,7 @@ export async function GET(req: Request) {
     shops = mockShops.filter((s) => s.province === province).sort(sortByPackageAndDistance);
   }
 
-  return NextResponse.json(shops);
+  return shops;
 }
 
 // Haversine formula คำนวณระยะทาง

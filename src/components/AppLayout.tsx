@@ -44,18 +44,22 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const menuItems: Record<string, { href: string; label: string }[]> = {
     guest: [
       { href: "/", label: "Home" },
+      { href: "/shops", label: "ร้านค้า" },
       { href: "/auth/login", label: "Login" },
     ],
     user: [
       { href: "/", label: "Home" },
+      { href: "/shops", label: "ร้านค้า" },
       { href: "/profile", label: "Profile" },
     ],
     shop: [
       { href: "/", label: "Home" },
+      { href: "/shops", label: "ร้านค้า" },
       { href: "/dashboard/shop", label: "Shop Dashboard" },
     ],
     admin: [
       { href: "/", label: "Home" },
+      { href: "/shops", label: "ร้านค้า" },
       { href: "/admin", label: "Admin Panel" },
     ],
   };
