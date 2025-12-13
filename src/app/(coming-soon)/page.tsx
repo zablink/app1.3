@@ -33,12 +33,20 @@ export default function HomePage() {
     try {
       const response = await fetch(`/api/shops?lat=${lat}&lng=${lng}`);
       if (!response.ok) {
-        throw new Error("Failed to fetch shops");
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `HTTP ${response.status}: Failed to fetch shops`);
       }
       const data = await response.json();
+      
+      // Check if data has an error property
+      if (data.error) {
+        throw new Error(data.error);
+      }
+      
       setShops(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
+      console.error("Error fetching shops:", err);
+      setError(err instanceof Error ? err.message : "ไม่สามารถโหลดข้อมูลร้านค้าได้ กรุณาลองใหม่อีกครั้ง");
       setShops([]);
     } finally {
       setLoading(false);
