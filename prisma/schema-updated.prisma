@@ -1,0 +1,996 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ========================================
+// 🎖️ OG CAMPAIGN NOTE
+// ========================================
+// "OG" = "Original Gangs" = "สมาชิกผู้ก่อตั้ง"
+// Special campaign: สมัครก่อน 25 ธ.ค. 2025
+// Benefits:
+// - รับเหรียญ (tokens) 2x เป็นเวลา 2 ปี
+// - ลดค่าใช้เหรียญ 30% เป็นเวลา 2 ปี  
+// - OG Badge ตลอดชีพ
+// ========================================
+
+// ========================================
+// USER & AUTH MODELS
+// ========================================
+
+model User {
+  id            String         @id @default(cuid())
+  email         String?        @unique
+  emailVerified DateTime?
+  name          String?
+  createdAt     DateTime       @default(now())
+  image         String?
+  password      String?
+  role          Role           @default(USER)
+  updatedAt     DateTime       @updatedAt
+  
+  // 🎖️ OG (Original Gangs / สมาชิกผู้ก่อตั้ง) Membership
+  isOGMember        Boolean   @default(false)   @map("is_og_member")
+  ogJoinedAt        DateTime? @map("og_joined_at")              // วันที่สมัคร OG
+  ogBenefitsUntil   DateTime? @map("og_benefits_until")         // สิทธิพิเศษหมดเมื่อ (joinedAt + 2 ปี)
+  ogBadgeEnabled    Boolean   @default(true)    @map("og_badge_enabled") // แสดง badge ไหม
+  
+  // Relations
+  accounts      Account[]
+  sessions      Session[]
+  bookmarks     UserBookmark[]
+  shops         Shop[]
+
+  @@map("users")
+}
+
+model Shop {
+  id                   String                   @id @default(cuid())
+  ownerId              String
+  name                 String
+  description          String?
+  createdAt            DateTime                 @default(now())
+  updatedAt            DateTime                 @updatedAt
+  adPackageId          String?
+  address              String?
+  image                String?
+  location             Unsupported("geometry")?
+  has_physical_store   Boolean                  @default(false)
+  show_location_on_map Boolean                  @default(false)
+  tambon_id            Int?
+  amphure_id           Int?
+  province_id          Int?
+  status               String?                  @db.VarChar
+  lat                  Float?
+  lng                  Float?
+  lineManUrl           String?                  @map("lineman_url")
+  grabFoodUrl          String?                  @map("grabfood_url")
+  foodPandaUrl         String?                  @map("foodpanda_url")
+  shopeeUrl            String?                  @map("shopee_url")
+  isMockup             Boolean                  @default(false) @map("is_mockup")
+  owner                User                     @relation(fields: [ownerId], references: [id])
+  analytics            Analytics[]
+  adPackage            AdPackage?               @relation(fields: [adPackageId], references: [id])
+  categories           ShopCategoryMapping[]
+  campaigns            campaigns[]
+  shop_daily_hours     shop_daily_hours[]
+  shop_gallery         shop_gallery[]
+  shop_hours           shop_hours?
+  shop_links           shop_links[]
+  reviews              ShopReview[]
+  shop_special_hours   shop_special_hours[]
+  shop_stats           shop_stats[]
+  shop_subscriptions   ShopSubscription[]
+  token_wallets        TokenWallet?
+  bookmarkedBy         UserBookmark[]
+  shopViews            ShopView[]
+  events               Event[]
+  conversionFunnels    ConversionFunnel[]
+
+  @@index([amphure_id], map: "idx_shop_amphure_id")
+  @@index([location], map: "idx_shop_location_gix", type: Gist)
+  @@index([province_id], map: "idx_shop_province_id")
+  @@index([tambon_id], map: "idx_shop_tambon_id")
+  @@index([location], map: "shops_location_gix", type: Gist)
+}
+
+model ShopReview {
+  id        String   @id @default(cuid())
+  shopId    String   @map("shop_id")
+  userName  String   @map("user_name")
+  rating    Int
+  comment   String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  shop      Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@index([shopId])
+  @@index([rating])
+  @@map("shop_reviews")
+}
+
+model ShopCategory {
+  id                String                @id @default(cuid())
+  name              String                @unique
+  slug              String                @unique
+  icon              String?               // emoji or icon name
+  description       String?
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+  shops             ShopCategoryMapping[]
+  conversionFunnels ConversionFunnel[]
+}
+
+model ShopCategoryMapping {
+  id         String       @id @default(cuid())
+  shopId     String       @map("shop_id")
+  categoryId String       @map("category_id")
+  createdAt  DateTime     @default(now()) @map("created_at")
+  shop       Shop         @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  category   ShopCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([shopId, categoryId])
+  @@index([shopId])
+  @@index([categoryId])
+  @@map("shop_category_mapping")
+}
+
+model Menu {
+  id        String   @id @default(cuid())
+  name      String
+  price     Float
+  image     String?
+  shopId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AdPackage {
+  id        String   @id @default(cuid())
+  name      String
+  scope     AdScope
+  priority  Int
+  price     Float    @default(0.0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  shops     Shop[]
+}
+
+model Analytics {
+  id     String   @id @default(cuid())
+  shopId String
+  date   DateTime @default(now())
+  views  Int      @default(0)
+  clicks Int      @default(0)
+  shop   Shop     @relation(fields: [shopId], references: [id])
+}
+
+// ========================================
+// AUTH MODELS
+// ========================================
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id])
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+// ========================================
+// SUBSCRIPTION & PAYMENT MODELS
+// ========================================
+
+model SubscriptionPackage {
+  id                         String             @id @default(dbgenerated("(gen_random_uuid())::text"))
+  name                       String
+  price_monthly              Decimal            @db.Decimal(10, 2)
+  display_order              Int
+  display_weight             Int
+  badge_text                 String?
+  badge_emoji                String?
+  max_images                 Int?               @default(1)
+  max_menu_items             Int?               @default(5)
+  max_delivery_links         Int?               @default(1)
+  max_promotions             Int?               @default(0)
+  analytics_retention_days   Int?               @default(0)
+  has_advanced_analytics     Boolean?           @default(false)
+  can_pin_on_map             Boolean?           @default(false)
+  can_reply_reviews          Boolean?           @default(false)
+  can_set_special_hours      Boolean?           @default(false)
+  can_create_coupons         Boolean?           @default(false)
+  has_verified_badge         Boolean?           @default(false)
+  has_social_integration     Boolean?           @default(false)
+  monthly_commission_tokens  Int?               @default(0)      // จำนวนเหรียญที่ได้รับต่อเดือน
+  banner_ad_discount_percent Decimal?           @default(0) @db.Decimal(5, 2)
+  support_level              String?            @default("EMAIL")
+  is_active                  Boolean?           @default(true)
+  created_at                 DateTime?          @default(now()) @db.Timestamptz(6)
+  updated_at                 DateTime?          @default(now()) @db.Timestamptz(6)
+  price                      Float              @default(0)
+  period_days                Int                @default(30)
+  token_amount               Int?                                // เหรียญที่ได้รับ
+  features                   String?
+  tier                       SubscriptionTier?
+  
+  // 🎁 Multi-Month Pricing
+  price_3_months             Decimal?           @db.Decimal(10, 2) @map("price_3_months")   // ราคา 3 เดือน (ส่วนลด 10%)
+  price_6_months             Decimal?           @db.Decimal(10, 2) @map("price_6_months")   // ราคา 6 เดือน (ส่วนลด 15%)
+  price_12_months            Decimal?           @db.Decimal(10, 2) @map("price_12_months")  // ราคา 12 เดือน (ส่วนลด 20%)
+  
+  shop_subscriptions         ShopSubscription[]
+
+  @@index([tier], map: "idx_subscription_packages_tier")
+  @@map("subscription_packages")
+}
+
+model ShopSubscription {
+  id                       String              @id @default(dbgenerated("(gen_random_uuid())::text"))
+  shop_id                  String
+  package_id               String
+  start_date               DateTime            @db.Date
+  end_date                 DateTime            @db.Date
+  original_price           Decimal             @db.Decimal(10, 2)
+  discount_amount          Decimal?            @default(0) @db.Decimal(10, 2)
+  final_price              Decimal             @db.Decimal(10, 2)
+  payment_status           String?             @default("PENDING")
+  paid_at                  DateTime?           @db.Timestamptz(6)
+  auto_renew               Boolean?            @default(true)
+  cancelled_at             DateTime?           @db.Timestamptz(6)
+  cancellation_reason      String?
+  parent_subscription_id   String?
+  renewal_count            Int?                @default(1)
+  created_at               DateTime?           @default(now()) @db.Timestamptz(6)
+  updated_at               DateTime?           @default(now()) @db.Timestamptz(6)
+  plan_id                  String?
+  status                   SubscriptionStatus  @default(ACTIVE)
+  
+  // 🎁 Multi-Month Billing
+  billing_cycle            Int                 @default(1)        @map("billing_cycle")          // 1, 3, 6, 12 เดือน
+  
+  // 🎖️ OG Benefits
+  is_og_subscription       Boolean             @default(false)    @map("is_og_subscription")     // สมัครในช่วง OG campaign
+  og_token_multiplier      Float               @default(1.0)      @map("og_token_multiplier")    // 2.0 สำหรับ OG (2 ปีแรก)
+  og_usage_discount        Float               @default(0.0)      @map("og_usage_discount")      // 0.30 สำหรับ OG (30% off)
+  
+  subscription_packages    SubscriptionPackage @relation(fields: [package_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  shop_subscriptions       ShopSubscription?   @relation("shop_subscriptionsToshop_subscriptions", fields: [parent_subscription_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  other_shop_subscriptions ShopSubscription[]  @relation("shop_subscriptionsToshop_subscriptions")
+  Shop                     Shop                @relation(fields: [shop_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([status], map: "idx_shop_subscriptions_status")
+  @@index([start_date, end_date], map: "shop_subscriptions_dates_idx")
+  @@index([package_id], map: "shop_subscriptions_package_idx")
+  @@index([shop_id], map: "shop_subscriptions_shop_idx")
+  @@index([is_og_subscription], map: "idx_shop_subscriptions_og")
+  @@map("shop_subscriptions")
+}
+
+// ========================================
+// TOKEN (เหรียญ) WALLET SYSTEM
+// ========================================
+
+model TokenWallet {
+  id         String    @id @default(dbgenerated("(gen_random_uuid())::text"))
+  shop_id    String    @unique
+  balance    Int       @default(0)                      // ยอดเหรียญคงเหลือ
+  created_at DateTime? @default(now()) @db.Timestamptz(6)
+  updated_at DateTime? @default(now()) @db.Timestamptz(6)
+  Shop       Shop      @relation(fields: [shop_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@map("token_wallets")
+}
+
+// ========================================
+// SITE SETTINGS
+// ========================================
+
+model SiteSetting {
+  id          String               @id @default(dbgenerated("(gen_random_uuid())::text"))
+  key         String               @unique
+  value       String
+  category    String
+  dataType    String               @default("string") @map("data_type")
+  label       String
+  description String?
+  updatedBy   String?              @map("updated_by")
+  createdAt   DateTime             @default(now()) @map("created_at")
+  updatedAt   DateTime             @default(now()) @updatedAt @map("updated_at")
+  history     SiteSettingHistory[]
+
+  @@index([category], map: "idx_site_settings_category")
+  @@index([key], map: "idx_site_settings_key")
+  @@map("site_settings")
+}
+
+model SiteSettingHistory {
+  id         String      @id @default(dbgenerated("(gen_random_uuid())::text"))
+  settingKey String      @map("setting_key")
+  oldValue   String      @map("old_value")
+  newValue   String      @map("new_value")
+  changedBy  String      @map("changed_by")
+  reason     String?
+  createdAt  DateTime    @default(now()) @map("created_at")
+  setting    SiteSetting @relation(fields: [settingKey], references: [key], onDelete: Cascade, onUpdate: NoAction)
+
+  @@map("site_setting_history")
+}
+
+// ========================================
+// BANNER & AD SYSTEM
+// ========================================
+
+model HeroBanner {
+  id            String    @id @default(dbgenerated("(gen_random_uuid())::text"))
+  title         String
+  subtitle      String?
+  ctaLabel      String?   @map("cta_label")
+  ctaLink       String?   @map("cta_link")
+  imageUrl      String    @map("image_url")
+  priority      Int       @default(0)
+  isActive      Boolean   @default(true) @map("is_active")
+  startDate     DateTime? @map("start_date")
+  endDate       DateTime? @map("end_date")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @default(now()) @updatedAt @map("updated_at")
+  enableOverlay Boolean?  @default(true) @map("enable_overlay")
+  link          String?
+
+  @@index([isActive], map: "idx_hero_banners_active")
+  @@index([priority(sort: Desc)], map: "idx_hero_banners_priority")
+  @@map("hero_banners")
+}
+
+/// Old banners table - ควรใช้ AdBanner แทน (deprecated)
+model banners {
+  id         Int       @id @default(autoincrement())
+  image      String
+  link       String?
+  order      Int?      @default(0)
+  is_active  Boolean?  @default(true)
+  created_at DateTime? @default(now()) @db.Timestamptz(6)
+  updated_at DateTime? @default(now()) @db.Timestamptz(6)
+
+  @@index([order])
+}
+
+/// ระบบโฆษณาใหม่ - รองรับหลาย placement และ location-based targeting
+model AdBanner {
+  id              String   @id @default(dbgenerated("(gen_random_uuid())::text"))
+  
+  // ข้อมูลพื้นฐาน
+  title           String
+  description     String?
+  imageUrl        String   @map("image_url")
+  linkUrl         String?  @map("link_url")
+  
+  // ตำแหน่งแสดงโฆษณา (Placement)
+  placement       String   @default("hero")
+  
+  // Location-based Targeting
+  targetAreaType  String?  @map("target_area_type")  // 'nationwide' | 'province' | 'amphure' | 'tambon'
+  targetAreaId    Int?     @map("target_area_id")     // FK to th_provinces, th_districts, or th_subdistricts
+  
+  // Priority & Scheduling
+  priority        Int      @default(0)
+  startDate       DateTime? @map("start_date")
+  endDate         DateTime? @map("end_date")
+  
+  // Status & Performance
+  isActive        Boolean  @default(true)              @map("is_active")
+  viewCount       Int      @default(0)                 @map("view_count")
+  clickCount      Int      @default(0)                 @map("click_count")
+  
+  // Metadata
+  createdBy       String?  @map("created_by")
+  createdAt       DateTime @default(now())             @map("created_at")
+  updatedAt       DateTime @default(now()) @updatedAt  @map("updated_at")
+  
+  @@index([placement, isActive])
+  @@index([targetAreaType, targetAreaId])
+  @@index([priority(sort: Desc)])
+  @@index([startDate, endDate])
+  @@map("ad_banners")
+}
+
+model AdImpression {
+  id         String   @id @default(dbgenerated("(gen_random_uuid())::text"))
+  bannerId   String   @map("banner_id")
+  
+  userId     String?  @map("user_id")
+  sessionId  String?  @map("session_id")
+  tambonId   Int?     @map("tambon_id")
+  amphureId  Int?     @map("amphure_id")
+  provinceId Int?     @map("province_id")
+  
+  eventType  String   @default("view")
+  page       String?
+  userAgent  String?  @map("user_agent")
+  ipAddress  String?  @map("ip_address")
+  
+  createdAt  DateTime @default(now())                 @map("created_at")
+  
+  @@index([bannerId, eventType])
+  @@index([createdAt])
+  @@index([tambonId])
+  @@map("ad_impressions")
+}
+
+// ========================================
+// CAMPAIGN & CREATOR SYSTEM
+// ========================================
+
+model campaign_jobs {
+  id                 String    @id
+  campaignId         String
+  creatorId          String
+  agreedPrice        Int
+  status             String?   @default("PENDING")
+  tokensPaid         Int?
+  platformCommission Int?
+  creatorEarning     Int?
+  reviewLink         String?
+  reviewNotes        String?
+  createdAt          DateTime  @default(now())
+  acceptedAt         DateTime?
+  startedAt          DateTime?
+  submittedAt        DateTime?
+  completedAt        DateTime?
+  rejectedAt         DateTime?
+  cancelledAt        DateTime?
+  paidAt             DateTime?
+  campaigns          campaigns @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  creators           creators  @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+
+  @@index([campaignId])
+  @@index([creatorId, completedAt])
+  @@index([creatorId])
+  @@index([creatorId, status])
+  @@index([status])
+}
+
+model campaigns {
+  id                     String          @id
+  shopId                 String
+  title                  String
+  description            String?
+  creatorPriceAtCreation Int?
+  totalBudget            Int
+  remainingBudget        Int
+  targetReviewers        Int?            @default(1)
+  startDate              DateTime
+  endDate                DateTime
+  status                 String?         @default("DRAFT")
+  createdAt              DateTime        @default(now())
+  updatedAt              DateTime        @default(now())
+  campaign_jobs          campaign_jobs[]
+  Shop                   Shop            @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@index([shopId])
+  @@index([startDate, endDate])
+  @@index([status])
+}
+
+model creator_coverage_areas {
+  id         String   @id
+  creatorId  String
+  provinceId Int?
+  amphureId  Int?
+  tambonId   Int?
+  createdAt  DateTime @default(now())
+
+  @@index([amphureId])
+  @@index([creatorId])
+  @@index([provinceId])
+  @@index([tambonId])
+}
+
+model creator_price_history {
+  id            String    @id
+  creatorId     String
+  priceMin      Int
+  priceMax      Int
+  effectiveFrom DateTime  @default(now())
+  effectiveTo   DateTime?
+  changedBy     String
+  reason        String?
+  createdAt     DateTime  @default(now())
+  creators      creators  @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+
+  @@index([creatorId, effectiveFrom])
+  @@index([creatorId, effectiveTo])
+}
+
+model creators {
+  id                    String                  @id
+  userId                String                  @unique
+  displayName           String
+  bio                   String?
+  phone                 String?
+  youtubeUrl            String?
+  youtubeSubscribers    Int?
+  facebookUrl           String?
+  facebookFollowers     Int?
+  instagramUrl          String?
+  instagramFollowers    Int?
+  tiktokUrl             String?
+  tiktokFollowers       Int?
+  coverageLevel         String                  @default("tambon")
+  totalReviews          Int                     @default(0)
+  completedReviews      Int                     @default(0)
+  rating                Float                   @default(0.0)
+  totalEarnings         Float                   @default(0.0)
+  availableBalance      Float                   @default(0.0)
+  totalWithdrawn        Float                   @default(0.0)
+  status                String                  @default("pending")
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime
+  hasExperience         Boolean?                @default(true)
+  priceRangeMin         Int?
+  priceRangeMax         Int?
+  currentPriceMin       Int?
+  currentPriceMax       Int?
+  applicationStatus     String?                 @default("PENDING")
+  rejectReason          String?
+  appliedAt             DateTime?               @default(now())
+  approvedAt            DateTime?
+  rejectedAt            DateTime?
+  campaign_jobs         campaign_jobs[]
+  creator_price_history creator_price_history[]
+  earnings              earnings[]
+  withdrawals           withdrawals[]
+
+  @@index([applicationStatus])
+  @@index([coverageLevel])
+  @@index([currentPriceMin, currentPriceMax])
+  @@index([status])
+  @@index([userId])
+}
+
+model earnings {
+  id            String    @id
+  creatorId     String
+  campaignJobId String    @unique
+  amount        Float
+  status        String?   @default("PENDING")
+  earnedAt      DateTime  @default(now())
+  availableAt   DateTime?
+  createdAt     DateTime  @default(now())
+  creators      creators  @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+
+  @@index([creatorId])
+  @@index([earnedAt])
+  @@index([status])
+}
+
+// ========================================
+// 🗺️ THAILAND GEOGRAPHIC DATA (UPDATED!)
+// Changed from loc_* to th_* to match actual database
+// ========================================
+
+model th_geographies {
+  id            Int             @id
+  name          String
+  th_provinces  th_provinces[]
+
+  @@map("th_geographies")
+}
+
+model th_provinces {
+  id              Int             @id
+  name_th         String
+  name_en         String
+  geography_id    Int
+  created_at      DateTime?       @db.Timestamp(6)
+  updated_at      DateTime?       @db.Timestamp(6)
+  deleted_at      DateTime?       @db.Timestamp(6)
+  th_districts    th_districts[]
+  th_geographies  th_geographies  @relation(fields: [geography_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("th_provinces")
+}
+
+model th_districts {
+  id              Int               @id
+  name_th         String
+  name_en         String
+  province_id     Int
+  created_at      DateTime?         @db.Timestamp(6)
+  updated_at      DateTime?         @db.Timestamp(6)
+  deleted_at      DateTime?         @db.Timestamp(6)
+  th_provinces    th_provinces      @relation(fields: [province_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  th_subdistricts th_subdistricts[]
+
+  @@map("th_districts")
+}
+
+model th_subdistricts {
+  id           Int                      @id
+  zip_code     String?
+  name_th      String
+  name_en      String
+  amphure_id   Int
+  created_at   DateTime?                @db.Timestamp(6)
+  updated_at   DateTime?                @db.Timestamp(6)
+  deleted_at   DateTime?                @db.Timestamp(6)
+  geom         Unsupported("geometry")?
+  th_districts th_districts             @relation(fields: [amphure_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([geom], map: "geom_idx", type: Gist)
+  @@map("th_subdistricts")
+}
+
+// ========================================
+// SHOP DETAILS
+// ========================================
+
+model shop_daily_hours {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  shop_id      String
+  day_of_week  Int
+  is_closed    Boolean   @default(false)
+  open_time    DateTime? @db.Time(6)
+  close_time   DateTime? @db.Time(6)
+  open_time_2  DateTime? @db.Time(6)
+  close_time_2 DateTime? @db.Time(6)
+  created_at   DateTime  @default(now()) @db.Timestamptz(6)
+  Shop         Shop      @relation(fields: [shop_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([shop_id, day_of_week], map: "shop_daily_hours_unique")
+  @@index([day_of_week], map: "shop_daily_hours_day_idx")
+  @@index([shop_id])
+  @@map("shop_daily_hours")
+}
+
+model shop_gallery {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  shop_id     String
+  image_url   String
+  is_featured Boolean   @default(false)
+  uploaded_at DateTime? @default(now()) @db.Timestamptz(6)
+  Shop        Shop      @relation(fields: [shop_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@map("shop_gallery")
+}
+
+model shop_hours {
+  id                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  shop_id            String    @unique
+  is_24_hours        Boolean   @default(false)
+  is_same_daily      Boolean   @default(true)
+  is_closed          Boolean   @default(false)
+  default_open_time  DateTime? @db.Time(6)
+  default_close_time DateTime? @db.Time(6)
+  created_at         DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at         DateTime  @default(now()) @db.Timestamptz(6)
+  Shop               Shop      @relation(fields: [shop_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([shop_id])
+  @@map("shop_hours")
+}
+
+model shop_links {
+  id      String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  shop_id String
+  type    String
+  url     String
+  Shop    Shop   @relation(fields: [shop_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@map("shop_links")
+}
+
+model shop_special_hours {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  shop_id      String
+  special_date DateTime  @db.Date
+  is_closed    Boolean   @default(false)
+  reason       String?
+  open_time    DateTime? @db.Time(6)
+  close_time   DateTime? @db.Time(6)
+  created_at   DateTime  @default(now()) @db.Timestamptz(6)
+  Shop         Shop      @relation(fields: [shop_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([shop_id, special_date], map: "shop_special_hours_unique")
+  @@index([special_date], map: "shop_special_hours_date_idx")
+  @@index([shop_id])
+  @@map("shop_special_hours")
+}
+
+model shop_stats {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  shop_id    String
+  event_type String
+  user_id    String?
+  session_id String?
+  created_at DateTime? @default(now()) @db.Timestamptz(6)
+  Shop       Shop      @relation(fields: [shop_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@map("shop_stats")
+}
+
+// ========================================
+// BOOKMARKS
+// ========================================
+
+model UserBookmark {
+  id        String   @id @default(cuid())
+  userId    String
+  shopId    String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shop      Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, shopId])
+  @@index([userId])
+  @@index([shopId])
+  @@index([createdAt])
+  @@map("user_bookmarks")
+}
+
+model withdrawals {
+  id              String    @id
+  creatorId       String
+  amount          Float
+  fee             Float?    @default(0.0)
+  netAmount       Float
+  bankName        String
+  bankAccount     String
+  accountName     String
+  status          String?   @default("PENDING")
+  requestedAt     DateTime  @default(now())
+  processedAt     DateTime?
+  completedAt     DateTime?
+  rejectedAt      DateTime?
+  rejectionReason String?
+  slipUrl         String?
+  createdAt       DateTime  @default(now())
+  creators        creators  @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+
+  @@index([creatorId])
+  @@index([requestedAt])
+  @@index([status])
+}
+
+// ========================================
+// ANALYTICS & TRACKING
+// ========================================
+
+model PageView {
+  id          String    @id @default(cuid())
+  userId      String?
+  sessionId   String
+  pagePath    String
+  pageTitle   String?
+  referrer    String?
+  userAgent   String?
+  ipAddress   String?
+  deviceType  String?
+  browser     String?
+  os          String?
+  tambonId    Int?
+  amphureId   Int?
+  provinceId  Int?
+  duration    Int?
+  createdAt   DateTime  @default(now())
+
+  @@index([sessionId])
+  @@index([userId])
+  @@index([pagePath])
+  @@index([createdAt])
+  @@index([tambonId])
+  @@map("page_views")
+}
+
+model ShopView {
+  id          String    @id @default(cuid())
+  shopId      String
+  userId      String?
+  sessionId   String
+  viewDuration Int?
+  sourceType  String?
+  sourceId    String?
+  userAgent   String?
+  deviceType  String?
+  tambonId    Int?
+  amphureId   Int?
+  provinceId  Int?
+  createdAt   DateTime  @default(now())
+
+  shop        Shop      @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@index([shopId, createdAt])
+  @@index([sessionId])
+  @@index([userId])
+  @@index([sourceType])
+  @@map("shop_views")
+}
+
+model UserSession {
+  id              String    @id @default(cuid())
+  sessionId       String    @unique
+  userId          String?
+  startTime       DateTime  @default(now())
+  endTime         DateTime?
+  lastActivity    DateTime  @default(now())
+  pageCount       Int       @default(0)
+  deviceType      String?
+  browser         String?
+  os              String?
+  ipAddress       String?
+  tambonId        Int?
+  amphureId       Int?
+  provinceId      Int?
+  utmSource       String?
+  utmMedium       String?
+  utmCampaign     String?
+
+  @@index([sessionId])
+  @@index([userId])
+  @@index([startTime])
+  @@map("user_sessions")
+}
+
+model Event {
+  id          String    @id @default(cuid())
+  eventType   String
+  eventData   Json?
+  userId      String?
+  sessionId   String
+  shopId      String?
+  tambonId    Int?
+  amphureId   Int?
+  provinceId  Int?
+  createdAt   DateTime  @default(now())
+
+  shop        Shop?     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@index([eventType, createdAt])
+  @@index([sessionId])
+  @@index([userId])
+  @@index([shopId])
+  @@map("events")
+}
+
+model ConversionFunnel {
+  id          String    @id @default(cuid())
+  sessionId   String
+  userId      String?
+  step        String
+  stepOrder   Int
+  shopId      String?
+  categoryId  String?
+  metadata    Json?
+  createdAt   DateTime  @default(now())
+
+  shop        Shop?         @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  category    ShopCategory? @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId, stepOrder])
+  @@index([step, createdAt])
+  @@map("conversion_funnel")
+}
+
+model DailyStats {
+  id                  String    @id @default(cuid())
+  date                DateTime  @db.Date
+  totalPageViews      Int       @default(0)
+  uniqueVisitors      Int       @default(0)
+  totalSessions       Int       @default(0)
+  totalShopViews      Int       @default(0)
+  avgSessionDuration  Float?
+  bounceRate          Float?
+  topPages            Json?
+  topShops            Json?
+  deviceBreakdown     Json?
+  locationBreakdown   Json?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  @@unique([date])
+  @@index([date])
+  @@map("daily_stats")
+}
+
+// ========================================
+// ENUMS
+// ========================================
+
+enum Role {
+  USER
+  SHOP
+  CREATOR
+  MCN_MANAGER
+  AD_MANAGER
+  ADMIN
+}
+
+enum ShopStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+enum CreatorStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+  REJECTED
+}
+
+enum PackageType {
+  FREE
+  PRO1
+  PRO2
+  SPECIAL
+}
+
+enum AdScope {
+  SUBDISTRICT
+  DISTRICT
+  PROVINCE
+  NATIONWIDE
+}
+
+enum CreatorTier {
+  BRONZE
+  SILVER
+  GOLD
+  PLATINUM
+}
+
+enum ReviewStatus {
+  PENDING
+  ACCEPTED
+  IN_PROGRESS
+  SUBMITTED
+  COMPLETED
+  REJECTED
+  CANCELLED
+}
+
+enum WithdrawalStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  REJECTED
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  EXPIRED
+  CANCELLED
+  SUSPENDED
+}
+
+enum SubscriptionTier {
+  FREE
+  BASIC
+  PRO
+  PREMIUM
+}
