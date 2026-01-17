@@ -374,55 +374,56 @@ export default function ShopCampaignsPage() {
               </p>
             </div>
           ) : (
-            <div className="space-y-4">
-              {campaigns.map((campaign) => {
-                const statusBadge = getStatusBadge(campaign);
-                const assignedCount = campaign.campaign_jobs?.length || 0;
-                return (
-                  <Link
-                    key={campaign.id}
-                    href={`/dashboard/shop/campaigns/${campaign.id}`}
-                    className="block border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition"
-                  >
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <h3 className="font-bold text-gray-900">{campaign.title}</h3>
-                          <span
-                            className={`px-2 py-1 rounded-full text-xs font-medium ${statusBadge.color}`}
-                          >
-                            {statusBadge.text}
-                          </span>
-                        </div>
-                        {campaign.description && (
-                          <p className="text-sm text-gray-600 mb-3">{campaign.description}</p>
-                        )}
-                        <div className="flex items-center gap-4 text-sm text-gray-600">
-                          <div className="flex items-center gap-1">
-                            <DollarSign className="w-4 h-4" />
-                            <span>
-                              {campaign.remainingBudget.toLocaleString()} /{" "}
-                              {campaign.totalBudget.toLocaleString()} tokens
+            <>
+              <div className="space-y-4">
+                {paginatedCampaigns.map((campaign) => {
+                  const statusBadge = getStatusBadge(campaign);
+                  const assignedCount = campaign.campaign_jobs?.length || 0;
+                  return (
+                    <Link
+                      key={campaign.id}
+                      href={`/dashboard/shop/campaigns/${campaign.id}`}
+                      className="block border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition"
+                    >
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <h3 className="font-bold text-gray-900">{campaign.title}</h3>
+                            <span
+                              className={`px-2 py-1 rounded-full text-xs font-medium ${statusBadge.color}`}
+                            >
+                              {statusBadge.text}
                             </span>
                           </div>
-                          <div className="flex items-center gap-1">
-                            <Users className="w-4 h-4" />
-                            <span>
-                              {assignedCount} / {campaign.targetReviewers} Creator
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Calendar className="w-4 h-4" />
-                            <span>
-                              {new Date(campaign.startDate).toLocaleDateString("th-TH")} -{" "}
-                              {new Date(campaign.endDate).toLocaleDateString("th-TH")}
-                            </span>
+                          {campaign.description && (
+                            <p className="text-sm text-gray-600 mb-3">{campaign.description}</p>
+                          )}
+                          <div className="flex items-center gap-4 text-sm text-gray-600">
+                            <div className="flex items-center gap-1">
+                              <DollarSign className="w-4 h-4" />
+                              <span>
+                                {campaign.remainingBudget.toLocaleString()} /{" "}
+                                {campaign.totalBudget.toLocaleString()} tokens
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Users className="w-4 h-4" />
+                              <span>
+                                {assignedCount} / {campaign.targetReviewers} Creator
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Calendar className="w-4 h-4" />
+                              <span>
+                                {new Date(campaign.startDate).toLocaleDateString("th-TH")} -{" "}
+                                {new Date(campaign.endDate).toLocaleDateString("th-TH")}
+                              </span>
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  </Link>
-                );
+                    </Link>
+                  );
                 })}
               </div>
               {totalPages > 1 && (
