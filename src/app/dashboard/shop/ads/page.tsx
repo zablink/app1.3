@@ -16,6 +16,8 @@ import {
   MousePointerClick,
   AlertCircle,
   CheckCircle,
+  Search,
+  Filter,
 } from "lucide-react";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import Pagination from "@/components/Pagination";
@@ -360,8 +362,37 @@ export default function ShopAdsPage() {
 
         {/* Ads List */}
         <div className="bg-white rounded-lg shadow-sm p-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">โฆษณาทั้งหมด</h2>
-          {ads.length === 0 ? (
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold text-gray-900">โฆษณาทั้งหมด</h2>
+            <div className="flex items-center gap-3">
+              {/* Search */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="ค้นหา..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+              {/* Filter */}
+              <div className="relative">
+                <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white"
+                >
+                  <option value="all">ทั้งหมด</option>
+                  <option value="active">กำลังใช้งาน</option>
+                  <option value="upcoming">รอเริ่ม</option>
+                  <option value="expired">หมดอายุ</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          {filteredAds.length === 0 ? (
             <div className="text-center py-12">
               <TrendingUp className="w-16 h-16 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-600">ยังไม่มีโฆษณา</p>
@@ -370,42 +401,43 @@ export default function ShopAdsPage() {
               </p>
             </div>
           ) : (
-            <div className="space-y-4">
-              {filteredAds.map((ad) => {
-                const statusBadge = getStatusBadge(ad);
-                const scopeLabel = AD_SCOPES.find((s) => s.value === ad.scope)?.label || ad.scope;
-                return (
-                  <div
-                    key={ad.id}
-                    className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition"
-                  >
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <h3 className="font-bold text-gray-900">{scopeLabel}</h3>
-                          <span
-                            className={`px-2 py-1 rounded-full text-xs font-medium ${statusBadge.color}`}
-                          >
-                            {statusBadge.text}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-4 text-sm text-gray-600">
-                          <div className="flex items-center gap-1">
-                            <Clock className="w-4 h-4" />
-                            <span>
-                              {new Date(ad.startAt).toLocaleDateString("th-TH")} -{" "}
-                              {new Date(ad.endAt).toLocaleDateString("th-TH")}
+            <>
+              <div className="space-y-4">
+                {paginatedAds.map((ad) => {
+                  const statusBadge = getStatusBadge(ad);
+                  const scopeLabel = AD_SCOPES.find((s) => s.value === ad.scope)?.label || ad.scope;
+                  return (
+                    <div
+                      key={ad.id}
+                      className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition"
+                    >
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <h3 className="font-bold text-gray-900">{scopeLabel}</h3>
+                            <span
+                              className={`px-2 py-1 rounded-full text-xs font-medium ${statusBadge.color}`}
+                            >
+                              {statusBadge.text}
                             </span>
                           </div>
-                          <div className="flex items-center gap-1">
-                            <Coins className="w-4 h-4" />
-                            <span>{ad.tokenCost.toLocaleString()} tokens</span>
+                          <div className="flex items-center gap-4 text-sm text-gray-600">
+                            <div className="flex items-center gap-1">
+                              <Clock className="w-4 h-4" />
+                              <span>
+                                {new Date(ad.startAt).toLocaleDateString("th-TH")} -{" "}
+                                {new Date(ad.endAt).toLocaleDateString("th-TH")}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Coins className="w-4 h-4" />
+                              <span>{ad.tokenCost.toLocaleString()} tokens</span>
+                            </div>
                           </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                );
+                  );
                 })}
               </div>
               {totalPages > 1 && (

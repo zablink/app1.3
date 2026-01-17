@@ -15,6 +15,8 @@ import {
   Clock,
   X,
   MapPin,
+  Search,
+  Filter,
 } from "lucide-react";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import Pagination from "@/components/Pagination";
