@@ -21,6 +21,11 @@ import {
   ChevronDown,
   Bell,
   Palette,
+  TrendingUp,
+  Users,
+  CreditCard,
+  Briefcase,
+  Coins,
 } from "lucide-react";
 
 interface Creator {
@@ -35,7 +40,9 @@ export default function UserMenu() {
   const { data: session, status } = useSession();
   const [isOpen, setIsOpen] = useState(false);
   const [creator, setCreator] = useState<Creator | null>(null);
+  const [shops, setShops] = useState<Shop[]>([]);
   const [isLoadingCreator, setIsLoadingCreator] = useState(false);
+  const [isLoadingShops, setIsLoadingShops] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Close dropdown when clicking outside
@@ -78,6 +85,31 @@ export default function UserMenu() {
       loadCreatorData();
     }
   }, [session, status, creator, isLoadingCreator]);
+
+  // Load shops data if user is SHOP or has shops
+  useEffect(() => {
+    const loadShopsData = async () => {
+      const userRole = session?.user?.role || "USER";
+      if ((userRole === "SHOP" || userRole === "ADMIN") && shops.length === 0 && !isLoadingShops) {
+        setIsLoadingShops(true);
+        try {
+          const res = await fetch("/api/user/shops");
+          if (res.ok) {
+            const data = await res.json();
+            setShops(data.shops || []);
+          }
+        } catch (error) {
+          console.error("Error loading shops data:", error);
+        } finally {
+          setIsLoadingShops(false);
+        }
+      }
+    };
+
+    if (status === "authenticated") {
+      loadShopsData();
+    }
+  }, [session, status, shops.length, isLoadingShops]);
 
   if (status === "loading") {
     return (
@@ -287,28 +319,64 @@ export default function UserMenu() {
             )}
 
             {/* Shop Menu Items */}
-            {userRole === "SHOP" && (
+            {(userRole === "SHOP" || shops.length > 0) && (
               <>
                 <div className="border-t border-gray-100 my-2"></div>
                 <div className="px-4 py-2">
                   <p className="text-xs font-semibold text-gray-500 uppercase">ร้านค้า</p>
                 </div>
                 <Link
-                  href="/shop/manage"
+                  href="/dashboard/shop"
                   className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                   onClick={() => setIsOpen(false)}
                 >
                   <Store className="w-4 h-4 text-gray-500" />
                   <span>จัดการร้านค้า</span>
                 </Link>
-                <Link
-                  href="/shop/campaigns"
-                  className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                  onClick={() => setIsOpen(false)}
-                >
-                  <FileText className="w-4 h-4 text-gray-500" />
-                  <span>แคมเปญของฉัน</span>
-                </Link>
+                {shops.length > 0 && (
+                  <>
+                    <Link
+                      href={`/dashboard/shop/ads?shopId=${shops[0].id}`}
+                      className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      <TrendingUp className="w-4 h-4 text-gray-500" />
+                      <span>โฆษณาร้าน</span>
+                    </Link>
+                    <Link
+                      href={`/dashboard/shop/campaigns?shopId=${shops[0].id}`}
+                      className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      <Users className="w-4 h-4 text-gray-500" />
+                      <span>จ้าง Creator</span>
+                    </Link>
+                    <Link
+                      href={`/dashboard/shop/reports?shopId=${shops[0].id}`}
+                      className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      <BarChart3 className="w-4 h-4 text-gray-500" />
+                      <span>รายงานและสถิติ</span>
+                    </Link>
+                    <Link
+                      href={`/payment/tokens?shopId=${shops[0].id}`}
+                      className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      <Coins className="w-4 h-4 text-gray-500" />
+                      <span>ซื้อ Token</span>
+                    </Link>
+                    <Link
+                      href={`/dashboard/shop/settings?shopId=${shops[0].id}`}
+                      className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      <Settings className="w-4 h-4 text-gray-500" />
+                      <span>ตั้งค่าร้าน</span>
+                    </Link>
+                  </>
+                )}
               </>
             )}
 

@@ -41,6 +41,8 @@ type Shop = {
   has_physical_store?: boolean;
   show_location_on_map?: boolean;
   isMockup?: boolean;
+  isOG?: boolean;
+  ogBadgeEnabled?: boolean;
 };
 
 type Review = {
@@ -447,10 +449,16 @@ export default function ShopDetailPage() {
             
             <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
               <div className="flex-1">
-                <div className="flex items-center gap-3 mb-3">
+                <div className="flex items-center gap-3 mb-3 flex-wrap">
                   <h1 className="text-3xl md:text-5xl font-bold">{shop.name}</h1>
                   {shop.package_tier && PACKAGE_BADGES[shop.package_tier]?.emoji && (
                     <span className="text-2xl md:text-3xl">{PACKAGE_BADGES[shop.package_tier]?.emoji}</span>
+                  )}
+                  {/* OG Badge */}
+                  {shop.isOG && shop.ogBadgeEnabled && (
+                    <span className="px-3 py-1 bg-gradient-to-r from-yellow-400 to-amber-500 text-white text-xs md:text-sm font-bold rounded-full flex items-center gap-1 shadow-lg">
+                      🎖️ OG
+                    </span>
                   )}
                 </div>
                 {shop.categories && shop.categories.length > 0 && (

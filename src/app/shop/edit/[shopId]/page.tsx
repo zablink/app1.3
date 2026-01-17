@@ -20,10 +20,10 @@ interface Category {
   name: string;
 }
 
-export default function ShopEditPage({ params }: { params: Promise<{ id: string }> }) {
+export default function ShopEditPage({ params }: { params: Promise<{ shopId: string }> }) {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const { id: shopId } = use(params);
+  const { shopId } = use(params);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);

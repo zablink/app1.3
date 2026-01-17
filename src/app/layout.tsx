@@ -1,6 +1,7 @@
 // src/app/layout.tsx
 import { Prompt } from "next/font/google";
 import { LocationProvider } from '@/contexts/LocationContext';
+import { ToastProvider } from '@/contexts/ToastContext';
 import SessionProvider from "@/components/SessionProvider";
 import { SiteSettingsProvider } from '@/hooks/useSiteSettings';
 import Navbar from "@/components/layout/Navbar";
@@ -39,8 +40,10 @@ export default function RootLayout({
         <SessionProvider>
           <SiteSettingsProvider>
             <LocationProvider>
-              <Navbar />
-              {children}
+              <ToastProvider>
+                <Navbar />
+                {children}
+              </ToastProvider>
             </LocationProvider>
           </SiteSettingsProvider>
         </SessionProvider>

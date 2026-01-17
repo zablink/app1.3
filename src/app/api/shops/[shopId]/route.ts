@@ -43,13 +43,29 @@ export async function GET(
       );
     }
 
-    // Get subscription tier using raw query (for complex join)
+    // Get subscription tier and OG status using raw query (for complex join)
     let packageTier = 'FREE';
+    let ogStatus: {
+      isOG: boolean;
+      badgeEnabled: boolean;
+    } = {
+      isOG: false,
+      badgeEnabled: false,
+    };
+
     try {
-      const tierResult = await prisma.$queryRaw<Array<{ tier: string }>>` 
-        SELECT sp.tier
+      const tierResult = await prisma.$queryRaw<Array<{ 
+        tier: string;
+        is_og_subscription: boolean;
+        owner_id: string;
+      }>>` 
+        SELECT 
+          sp.tier,
+          ss.is_og_subscription,
+          s.owner_id
         FROM shop_subscriptions ss
         JOIN subscription_packages sp ON ss.package_id = sp.id
+        JOIN "Shop" s ON ss.shop_id = s.id
         WHERE ss.shop_id = ${shopId}
           AND ss.status = 'ACTIVE'
           AND ss.end_date > NOW()
@@ -61,11 +77,32 @@ export async function GET(
             ELSE 4
           END
         LIMIT 1
-      `;      if (tierResult && tierResult.length > 0) {
+      `;
+      
+      if (tierResult && tierResult.length > 0) {
         packageTier = tierResult[0].tier;
+        
+        // Check if subscription is OG
+        if (tierResult[0].is_og_subscription) {
+          // Get user OG status
+          const userOG = await prisma.user.findUnique({
+            where: { id: tierResult[0].owner_id },
+            select: {
+              isOGMember: true,
+              ogBadgeEnabled: true,
+            },
+          });
+          
+          if (userOG?.isOGMember) {
+            ogStatus = {
+              isOG: true,
+              badgeEnabled: userOG.ogBadgeEnabled ?? true,
+            };
+          }
+        }
       }
     } catch (err) {
-      console.error('Error fetching tier:', err);
+      console.error('Error fetching tier and OG status:', err);
       // Continue with FREE tier
     }
 
@@ -155,6 +192,9 @@ export async function GET(
       shopeeUrl: shop.shopeeUrl,
       has_physical_store: shop.has_physical_store,
       show_location_on_map: shop.show_location_on_map,
+      // OG Campaign status
+      isOG: ogStatus.isOG,
+      ogBadgeEnabled: ogStatus.badgeEnabled,
       ...locationData
     });
 

@@ -20,6 +20,8 @@ interface Shop {
   isMockup?: boolean;
   activeSubscription?: any;
   subscriptionTier?: 'FREE' | 'BASIC' | 'PRO' | 'PREMIUM' | null;
+  isOG?: boolean;
+  ogBadgeEnabled?: boolean;
 }
 
 interface HeroBanner {
@@ -197,14 +199,23 @@ export default function HomePage() {
       className={`bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:scale-105 ${tierColor ? `ring-2 ${tierColor}` : ''} relative`}
       onClick={() => router.push(`/shop/${shop.id}`)}
     >
-      {shop.isMockup && (
-        <div className="absolute top-2 left-2 z-10 px-2 py-1 text-xs font-bold bg-orange-500 text-white rounded-full shadow-md flex items-center gap-1">
-          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M7 2a2 2 0 00-2 2v12a2 2 0 002 2h6a2 2 0 002-2V4a2 2 0 00-2-2H7zm3 14a1 1 0 100-2 1 1 0 000 2z" />
-          </svg>
-          DEMO
-        </div>
-      )}
+      {/* Badges Container */}
+      <div className="absolute top-2 left-2 z-10 flex flex-col gap-1.5">
+        {shop.isMockup && (
+          <div className="px-2 py-1 text-xs font-bold bg-orange-500 text-white rounded-full shadow-md flex items-center gap-1">
+            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M7 2a2 2 0 00-2 2v12a2 2 0 002 2h6a2 2 0 002-2V4a2 2 0 00-2-2H7zm3 14a1 1 0 100-2 1 1 0 000 2z" />
+            </svg>
+            DEMO
+          </div>
+        )}
+        {/* OG Badge */}
+        {shop.isOG && shop.ogBadgeEnabled && (
+          <div className="px-2 py-1 text-xs font-bold bg-gradient-to-r from-yellow-400 to-amber-500 text-white rounded-full shadow-md flex items-center gap-1">
+            🎖️ OG
+          </div>
+        )}
+      </div>
       <div className="w-full h-48 bg-gray-200 rounded-t-lg overflow-hidden">
         <img
           src={shopImage(shop)}
@@ -282,7 +293,7 @@ export default function HomePage() {
           </div>
         )}
 
-        {!isLoadingShops && shops.length > 0 && (
+        {!isLoadingShops && shopsToShow.length > 0 && (
           <div className="space-y-8">
             {/* Premium Group - Always show */}
             <div className="bg-gradient-to-br from-yellow-50 to-amber-50 p-6 rounded-xl border-2 border-yellow-300">
@@ -376,7 +387,7 @@ export default function HomePage() {
         )}
 
         {/* Load More Section */}
-        {!isLoadingShops && shops.length > 0 && (
+        {!isLoadingShops && shopsToShow.length > 0 && (
           <div className="mt-8 mb-12">
             {isLoadingMore && (
               <div className="flex justify-center items-center py-8">
@@ -394,20 +405,20 @@ export default function HomePage() {
                   โหลดร้านค้าเพิ่มเติม
                 </button>
                 <p className="text-sm text-gray-500">
-                  กำลังแสดง {shops.length} ร้าน • เลื่อนลงเพื่อโหลดอัตโนมัติ
+                  กำลังแสดง {shopsToShow.length} ร้าน • เลื่อนลงเพื่อโหลดอัตโนมัติ
                 </p>
               </div>
             )}
             
-            {!hasMoreShops && shops.length > SHOPS_PER_PAGE && (
+            {!hasMoreShops && shopsToShow.length > SHOPS_PER_PAGE && (
               <div className="text-center py-8">
-                <p className="text-gray-600">🎉 แสดงร้านค้าครบทั้งหมดแล้ว ({shops.length} ร้าน)</p>
+                <p className="text-gray-600">🎉 แสดงร้านค้าครบทั้งหมดแล้ว ({shopsToShow.length} ร้าน)</p>
               </div>
             )}
           </div>
         )}
 
-        {!isLoadingShops && shops.length === 0 && (
+        {!isLoadingShops && shopsToShow.length === 0 && (
           <div className="text-center py-12">
             <p className="text-gray-600">ไม่พบร้านค้า</p>
           </div>

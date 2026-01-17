@@ -15,6 +15,8 @@ interface ShopCardProps {
     phone?: string;
     website?: string;
     distance_km?: number;
+    isOG?: boolean;
+    ogBadgeEnabled?: boolean;
     activeSubscription?: {
       subscription_packages: {
         tier: string;
@@ -61,15 +63,24 @@ export default function ShopCard({ shop, tier }: ShopCardProps) {
   return (
     <Link href={`/shop/${shop.id}`}>
       <div className={`group relative ${styles.bg} ${styles.border} border rounded-xl p-5 hover:shadow-xl transition-all duration-300 cursor-pointer h-full`}>
-        {/* Tier Badge */}
-        {subscription && (
-          <div className={`absolute top-3 right-3 ${styles.badge} ${styles.badgeRing} px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1`}>
-            {subscription.subscription_packages.badge_emoji && (
-              <span>{subscription.subscription_packages.badge_emoji}</span>
-            )}
-            {subscription.subscription_packages.badge_text || subscription.subscription_packages.tier}
-          </div>
-        )}
+        {/* Badges Container */}
+        <div className="absolute top-3 right-3 flex flex-col gap-1.5 items-end">
+          {/* OG Badge */}
+          {shop.isOG && shop.ogBadgeEnabled && (
+            <div className="px-2 py-1 bg-gradient-to-r from-yellow-400 to-amber-500 text-white rounded-full text-xs font-bold flex items-center gap-1 shadow-md">
+              🎖️ OG
+            </div>
+          )}
+          {/* Tier Badge */}
+          {subscription && (
+            <div className={`${styles.badge} ${styles.badgeRing} px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1`}>
+              {subscription.subscription_packages.badge_emoji && (
+                <span>{subscription.subscription_packages.badge_emoji}</span>
+              )}
+              {subscription.subscription_packages.badge_text || subscription.subscription_packages.tier}
+            </div>
+          )}
+        </div>
 
         <div className="flex gap-4">
           {/* Logo */}

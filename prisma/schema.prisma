@@ -17,6 +17,13 @@ model User {
   password      String?
   role          Role           @default(USER)
   updatedAt     DateTime       @updatedAt
+  
+  // 🎖️ OG (Original Gangs / สมาชิกผู้ก่อตั้ง) Membership
+  isOGMember        Boolean   @default(false)   @map("is_og_member")
+  ogJoinedAt        DateTime? @map("og_joined_at")              // วันที่สมัคร OG
+  ogBenefitsUntil   DateTime? @map("og_benefits_until")         // สิทธิพิเศษหมดเมื่อ (joinedAt + 2 ปี)
+  ogBadgeEnabled    Boolean   @default(true)    @map("og_badge_enabled") // แสดง badge ไหม
+  
   accounts      Account[]
   sessions      Session[]
   bookmarks     UserBookmark[]
@@ -238,6 +245,12 @@ model ShopSubscription {
   updated_at               DateTime?           @default(now()) @db.Timestamptz(6)
   plan_id                  String?
   status                   SubscriptionStatus  @default(ACTIVE)
+  
+  // 🎖️ OG Campaign Benefits
+  is_og_subscription       Boolean             @default(false)    @map("is_og_subscription")     // สมัครในช่วง OG campaign
+  og_token_multiplier      Float               @default(1.0)      @map("og_token_multiplier")    // 2.0 สำหรับ OG (2 ปีแรก)
+  og_usage_discount        Float               @default(0.0)      @map("og_usage_discount")      // 0.30 สำหรับ OG (30% off)
+  
   subscription_packages    SubscriptionPackage @relation(fields: [package_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   shop_subscriptions       ShopSubscription?   @relation("shop_subscriptionsToshop_subscriptions", fields: [parent_subscription_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   other_shop_subscriptions ShopSubscription[]  @relation("shop_subscriptionsToshop_subscriptions")
@@ -247,6 +260,7 @@ model ShopSubscription {
   @@index([start_date, end_date], map: "shop_subscriptions_dates_idx")
   @@index([package_id], map: "shop_subscriptions_package_idx")
   @@index([shop_id], map: "shop_subscriptions_shop_idx")
+  @@index([is_og_subscription], map: "idx_shop_subscriptions_og")
   @@map("shop_subscriptions")
 }
 

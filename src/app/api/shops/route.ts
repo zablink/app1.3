@@ -111,6 +111,8 @@ export async function GET(request: NextRequest) {
               la.name_th as district,
               lp.name_th as province,
               COALESCE(sp.tier, 'FREE') as "subscriptionTier",
+              COALESCE(ss.is_og_subscription, false) as "isOG",
+              COALESCE(u.og_badge_enabled, false) as "ogBadgeEnabled",
               (
                 SELECT JSON_AGG(JSON_BUILD_OBJECT('id', sc.id, 'name', sc.name, 'slug', sc.slug, 'icon', sc.icon))
                 FROM shop_category_mapping scm
@@ -131,11 +133,12 @@ export async function GET(request: NextRequest) {
               AND ss.status = 'ACTIVE' 
               AND ss.end_date > NOW()
             LEFT JOIN subscription_packages sp ON ss.package_id = sp.id
+            LEFT JOIN users u ON s.owner_id = u.id
             ${whereClause}
             ORDER BY s.id, ss.start_date DESC NULLS LAST, ss.created_at DESC NULLS LAST
           )
           SELECT id, name, description, address, "createdAt", image, lat, lng, "isMockup",
-                 subdistrict, district, province, "subscriptionTier", categories
+                 subdistrict, district, province, "subscriptionTier", "isOG", "ogBadgeEnabled", categories
           FROM ranked_shops
           ORDER BY tier_rank ASC, "createdAt" DESC
           OFFSET $${params.length + 1}
@@ -205,6 +208,9 @@ export async function GET(request: NextRequest) {
       'lp.name_th as province',
       // Use LEFT JOIN result instead of subquery for better performance
       `COALESCE(sp.tier, 'FREE') as "subscriptionTier"`,
+      // OG Campaign status
+      `COALESCE(ss.is_og_subscription, false) as "isOG"`,
+      `COALESCE(u.og_badge_enabled, false) as "ogBadgeEnabled"`,
       // Include categories as JSON array
       `(
         SELECT JSON_AGG(JSON_BUILD_OBJECT('id', sc.id, 'name', sc.name, 'slug', sc.slug, 'icon', sc.icon))
@@ -246,6 +252,7 @@ export async function GET(request: NextRequest) {
               AND ss.status = 'ACTIVE' 
               AND ss.end_date > NOW()
             LEFT JOIN subscription_packages sp ON ss.package_id = sp.id
+            LEFT JOIN users u ON s.owner_id = u.id
             WHERE ${whereClauseParts.join(' AND ')}
             ORDER BY s.id, ss.start_date DESC NULLS LAST, ss.created_at DESC NULLS LAST
           )
@@ -292,10 +299,11 @@ export async function GET(request: NextRequest) {
         LEFT JOIN th_subdistricts lt ON s.tambon_id = lt.id
         LEFT JOIN th_districts la ON s.amphure_id = la.id
         LEFT JOIN th_provinces lp ON s.province_id = lp.id
-        LEFT JOIN shop_subscriptions ss ON ss.shop_id = s.id 
-          AND ss.status = 'ACTIVE' 
-          AND ss.end_date > NOW()
-        LEFT JOIN subscription_packages sp ON ss.package_id = sp.id
+            LEFT JOIN shop_subscriptions ss ON ss.shop_id = s.id 
+              AND ss.status = 'ACTIVE' 
+              AND ss.end_date > NOW()
+            LEFT JOIN subscription_packages sp ON ss.package_id = sp.id
+            LEFT JOIN users u ON s.owner_id = u.id
         ${whereFinal.length > 0 ? `WHERE ${whereFinal.join(' AND ')}` : ''}
         ORDER BY s.id, ss.start_date DESC NULLS LAST, ss.created_at DESC NULLS LAST
       )

@@ -31,6 +31,118 @@ interface ShopAnalytics {
   } | null;
 }
 
+// Token Wallet Component
+function TokenWalletSection({ shopId }: { shopId: string }) {
+  const [wallet, setWallet] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(`/api/shops/${shopId}/tokens/wallet`)
+      .then((res) => res.json())
+      .then((data) => {
+        setWallet(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("Error fetching wallet:", err);
+        setLoading(false);
+      });
+  }, [shopId]);
+
+  if (loading) {
+    return (
+      <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+        <div className="animate-pulse">
+          <div className="h-4 bg-gray-200 rounded w-1/4 mb-4"></div>
+          <div className="h-8 bg-gray-200 rounded w-1/2"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!wallet) {
+    return null;
+  }
+
+  return (
+    <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg shadow-sm p-6 mb-6 border border-blue-200">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
+            <Coins className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-gray-900">Token Wallet</h2>
+            <p className="text-sm text-gray-600">ยอด Token ที่ใช้ได้</p>
+          </div>
+        </div>
+        <Link
+          href={`/payment/tokens?shopId=${shopId}`}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-medium"
+        >
+          ซื้อ Token
+        </Link>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+        <div className="bg-white/60 backdrop-blur-sm rounded-lg p-4">
+          <p className="text-xs text-gray-600 mb-1">ยอด Token คงเหลือ</p>
+          <p className="text-3xl font-bold text-gray-900">
+            {wallet.wallet?.balance?.toLocaleString() || 0}
+          </p>
+        </div>
+        <div className="bg-white/60 backdrop-blur-sm rounded-lg p-4">
+          <p className="text-xs text-gray-600 mb-1">Token ที่จะหมดอายุเร็วๆ นี้</p>
+          <p className="text-3xl font-bold text-orange-600">
+            {wallet.expiringSoon?.amount?.toLocaleString() || 0}
+          </p>
+          {wallet.expiringSoon?.amount > 0 && (
+            <p className="text-xs text-gray-500 mt-1">
+              หมดอายุใน 30 วัน
+            </p>
+          )}
+        </div>
+        <div className="bg-white/60 backdrop-blur-sm rounded-lg p-4">
+          <p className="text-xs text-gray-600 mb-1">จำนวน Batches</p>
+          <p className="text-3xl font-bold text-gray-900">
+            {wallet.purchases?.length || 0}
+          </p>
+        </div>
+      </div>
+
+      {wallet.expiringSoon?.batches?.length > 0 && (
+        <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+          <div className="flex items-center gap-2 mb-2">
+            <AlertCircle className="w-4 h-4 text-orange-600" />
+            <p className="text-sm font-medium text-orange-800">Token ที่จะหมดอายุเร็วๆ นี้</p>
+          </div>
+          <div className="space-y-1">
+            {wallet.expiringSoon.batches.slice(0, 3).map((batch: any, idx: number) => (
+              <div key={idx} className="flex items-center justify-between text-xs">
+                <span className="text-gray-700">
+                  {batch.amount.toLocaleString()} tokens
+                </span>
+                <span className="text-orange-600">
+                  หมดอายุ: {new Date(batch.expiresAt).toLocaleDateString('th-TH')}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="mt-4 flex gap-2">
+        <Link
+          href={`/dashboard/shop/reports?shopId=${shopId}`}
+          className="flex-1 text-center px-4 py-2 bg-white text-blue-600 rounded-lg hover:bg-blue-50 transition text-sm font-medium"
+        >
+          ดูรายงาน
+        </Link>
+      </div>
+    </div>
+  );
+}
+
 export default function ShopDashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -303,6 +415,9 @@ export default function ShopDashboard() {
             </div>
           )}
 
+          {/* Token Wallet Section */}
+          <TokenWalletSection shopId={shop.id} />
+
           {/* Management Actions */}
           <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
             <h2 className="text-xl font-bold text-gray-900 mb-4">จัดการร้านค้า</h2>
@@ -317,6 +432,32 @@ export default function ShopDashboard() {
                 <div className="flex-1">
                   <h3 className="font-semibold text-gray-900">แก้ไขข้อมูลร้าน</h3>
                   <p className="text-sm text-gray-600">อัปเดตรายละเอียด รูปภาพ และข้อมูลร้านค้า</p>
+                </div>
+              </Link>
+
+              <Link
+                href={`/dashboard/shop/ads?shopId=${shop.id}`}
+                className="flex items-center gap-4 p-4 border rounded-lg hover:bg-gray-50 transition"
+              >
+                <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                  <TrendingUp className="w-6 h-6 text-purple-600" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-gray-900">โฆษณาร้าน</h3>
+                  <p className="text-sm text-gray-600">ลงโฆษณาเพื่อเพิ่มการมองเห็น</p>
+                </div>
+              </Link>
+
+              <Link
+                href={`/dashboard/shop/campaigns?shopId=${shop.id}`}
+                className="flex items-center gap-4 p-4 border rounded-lg hover:bg-gray-50 transition"
+              >
+                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                  <Users className="w-6 h-6 text-green-600" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-gray-900">จ้าง Creator</h3>
+                  <p className="text-sm text-gray-600">เลือกและจ้าง Content Creator เพื่อรีวิวร้าน</p>
                 </div>
               </Link>
 

@@ -2,6 +2,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { requireOwnerOrAdmin } from "@/lib/auth";
+import { calculateOGTokenCost } from "@/lib/og-campaign";
 
 /**
  * POST body:
@@ -71,7 +72,7 @@ export async function POST(req: Request) {
       orderBy: { createdAt: "asc" }, // FIFO
     });
 
-    let need = tokenCost;
+    let need = effectiveTokenCost;
     const usedBatchesForRaw: { purchase: any; take: number }[] = [];
     for (const p of candidateBatches) {
       if (need <= 0) break;
@@ -158,7 +159,17 @@ export async function POST(req: Request) {
       data: { referenceId: ad.id },
     });
 
-    return NextResponse.json({ ad, effectiveRequired, discountApplied: maxDiscount });
+    return NextResponse.json({
+      ad,
+      effectiveRequired,
+      discounts: {
+        ogDiscount: ogDiscountApplied > 0 ? ogDiscountApplied : null,
+        batchDiscount: maxBatchDiscount,
+        totalDiscount: ogDiscountApplied + maxBatchDiscount - (ogDiscountApplied * maxBatchDiscount), // Combined discount
+      },
+      originalCost: tokenCost,
+      finalCost: effectiveRequired,
+    });
   } catch (err) {
     console.error(err);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });

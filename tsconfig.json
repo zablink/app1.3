@@ -23,7 +23,7 @@
       "next-auth"
     ],
     "isolatedModules": true,
-    "jsx": "preserve",
+    "jsx": "react-jsx",
     "plugins": [
       {
         "name": "next"
@@ -36,7 +36,8 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     "src/types",
-    "src/types/**/*.d.ts"
+    "src/types/**/*.d.ts",
+    ".next/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"

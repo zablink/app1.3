@@ -67,3 +67,55 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+export async function PATCH(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session || !session.user) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    const userId = session.user.id;
+    const body = await request.json();
+    const { currentPriceMin, currentPriceMax } = body;
+
+    if (currentPriceMin === undefined || currentPriceMax === undefined) {
+      return NextResponse.json(
+        { error: "currentPriceMin and currentPriceMax are required" },
+        { status: 400 }
+      );
+    }
+
+    const creator = await prisma.creator.findUnique({
+      where: { userId },
+    });
+
+    if (!creator) {
+      return NextResponse.json(
+        { error: "Creator profile not found" },
+        { status: 404 }
+      );
+    }
+
+    // Update creator prices
+    const updatedCreator = await prisma.creator.update({
+      where: { userId },
+      data: {
+        currentPriceMin: parseInt(currentPriceMin),
+        currentPriceMax: parseInt(currentPriceMax),
+      },
+    });
+
+    return NextResponse.json(updatedCreator);
+  } catch (error) {
+    console.error("Error updating creator profile:", error);
+    return NextResponse.json(
+      { error: "Failed to update creator profile" },
+      { status: 500 }
+    );
+  }
+}

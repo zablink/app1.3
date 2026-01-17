@@ -2,6 +2,13 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { requireOwnerOrAdmin } from "@/lib/auth";
+import {
+  isOGEligible,
+  calculateOGBenefitsUntil,
+  calculateOGTokens,
+  getOGTokenMultiplier,
+  getOGUsageDiscount,
+} from "@/lib/og-campaign";
 
 export async function GET(req: Request, { params }: { params: Promise<{ shopId: string }> }) {
   try {
@@ -34,6 +41,18 @@ export async function POST(req: Request, { params }: { params: Promise<{ shopId:
     const startedAt = new Date();
     const expiresAt = new Date(startedAt.getTime() + plan.periodDays * 24 * 60 * 60 * 1000);
 
+    // Check if eligible for OG Campaign
+    const isOG = await isOGEligible(startedAt);
+    const ogBenefitsUntil = isOG ? await calculateOGBenefitsUntil(startedAt) : null;
+    const ogTokenMultiplier = isOG ? await getOGTokenMultiplier() : 1.0;
+    const ogUsageDiscount = isOG ? await getOGUsageDiscount() : 0.0;
+
+    // Get shop owner for OG member status
+    const shop = await prisma.shop.findUnique({
+      where: { id: shopId },
+      select: { ownerId: true },
+    });
+
     const sub = await prisma.shopSubscription.create({
       data: {
         shop: { connect: { id: shopId } },
@@ -44,38 +63,66 @@ export async function POST(req: Request, { params }: { params: Promise<{ shopId:
         autoRenew,
         paymentProvider,
         paymentRef,
+        // OG Campaign fields
+        is_og_subscription: isOG,
+        og_token_multiplier: ogTokenMultiplier,
+        og_usage_discount: ogUsageDiscount,
       },
       include: { plan: true },
     });
 
+    // Update user OG member status if eligible
+    if (isOG && shop?.ownerId) {
+      await prisma.user.update({
+        where: { id: shop.ownerId },
+        data: {
+          isOGMember: true,
+          ogJoinedAt: startedAt,
+          ogBenefitsUntil: ogBenefitsUntil,
+          ogBadgeEnabled: true,
+        },
+      });
+    }
+
     // If plan grants tokens, grant tokens and create token purchase batch
     if (plan.tokenAmount && plan.tokenAmount > 0) {
+      // Calculate token amount with OG multiplier
+      const finalTokenAmount = await calculateOGTokens(plan.tokenAmount, isOG);
+
       let wallet = await prisma.tokenWallet.findUnique({ where: { shopId } });
       if (!wallet) {
         wallet = await prisma.tokenWallet.create({
-          data: { shop: { connect: { id: shopId } }, balance: plan.tokenAmount },
+          data: { shop: { connect: { id: shopId } }, balance: finalTokenAmount },
         });
       } else {
         await prisma.tokenWallet.update({
           where: { id: wallet.id },
-          data: { balance: wallet.balance + plan.tokenAmount },
+          data: { balance: wallet.balance + finalTokenAmount },
         });
       }
 
       await prisma.tokenPurchase.create({
         data: {
           wallet: { connect: { id: wallet.id } },
-          amount: plan.tokenAmount,
-          remaining: plan.tokenAmount,
+          amount: finalTokenAmount,
+          remaining: finalTokenAmount,
           price: plan.price,
           provider: paymentProvider ?? "subscription",
           providerRef: paymentRef ?? null,
-          expiresAt,
+          expiresAt: ogBenefitsUntil || expiresAt, // Use OG benefits until date if OG
         },
       });
     }
 
-    return NextResponse.json(sub);
+    return NextResponse.json({
+      ...sub,
+      og: {
+        isOG,
+        tokenMultiplier: ogTokenMultiplier,
+        usageDiscount: ogUsageDiscount,
+        benefitsUntil: ogBenefitsUntil,
+      },
+    });
   } catch (err) {
     console.error(err);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });

@@ -4,14 +4,14 @@ import { requireAdmin } from '@/lib/auth';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ shopId: string }> }
 ) {
   const { error } = await requireAdmin();
   if (error) return error;
 
   try {
     const { ownerId } = await request.json();
-    const shopId = (await params).id;
+    const shopId = (await params).shopId;
 
     if (!ownerId) {
       return NextResponse.json(

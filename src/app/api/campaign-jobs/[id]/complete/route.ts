@@ -4,6 +4,7 @@ import { getServerSession } from 'next-auth';
 import { PrismaClient } from '@prisma/client';
 
 import prisma from '@/lib/prisma';
+import { calculateOGTokenCost } from '@/lib/og-campaign';
 
 // Platform commission rate (10%)
 const PLATFORM_COMMISSION_RATE = 0.10;
@@ -62,8 +63,28 @@ export async function POST(
       );
     }
 
-    // คำนวณค่าคอมมิชชั่นและรายได้
-    const agreedPriceInBaht = job.agreedPrice * TOKEN_TO_BAHT;
+    // Get shop's active subscription for OG discount
+    const activeSubscription = await prisma.shopSubscription.findFirst({
+      where: {
+        shop_id: job.campaign.shopId,
+        status: 'ACTIVE',
+      },
+      orderBy: { start_date: 'desc' },
+    });
+
+    // Calculate token cost with OG discount if applicable
+    const ogCostResult = await calculateOGTokenCost(job.agreedPrice, {
+      is_og_subscription: activeSubscription?.is_og_subscription ?? false,
+      start_date: activeSubscription?.start_date ?? undefined,
+      end_date: activeSubscription?.end_date ?? undefined,
+    });
+
+    // Use OG discounted cost for payment calculation
+    const effectiveTokenCost = ogCostResult.finalCost;
+    const ogDiscountApplied = ogCostResult.discountApplied;
+
+    // คำนวณค่าคอมมิชชั่นและรายได้ (ใช้ effectiveTokenCost แทน agreedPrice)
+    const agreedPriceInBaht = effectiveTokenCost * TOKEN_TO_BAHT;
     const platformCommission = Math.round(agreedPriceInBaht * PLATFORM_COMMISSION_RATE);
     const creatorEarning = agreedPriceInBaht - platformCommission;
 
@@ -75,7 +96,7 @@ export async function POST(
         data: {
           status: 'COMPLETED',
           completedAt: new Date(),
-          tokensPaid: job.agreedPrice,
+          tokensPaid: effectiveTokenCost, // Use effective cost after OG discount
           platformCommission,
           creatorEarning
         },
@@ -138,10 +159,17 @@ export async function POST(
         availableAt: result.earning.availableAt
       },
       financial: {
-        tokensPaid: job.agreedPrice,
+        originalTokenCost: job.agreedPrice,
+        effectiveTokenCost: effectiveTokenCost,
+        tokensPaid: effectiveTokenCost,
         agreedPriceInBaht,
         platformCommission,
-        creatorEarning
+        creatorEarning,
+        ogDiscount: ogDiscountApplied > 0 ? {
+          applied: true,
+          discountPercent: ogDiscountApplied,
+          savedTokens: job.agreedPrice - effectiveTokenCost,
+        } : null,
       }
     });
   } catch (error) {

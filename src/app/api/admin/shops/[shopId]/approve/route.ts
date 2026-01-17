@@ -4,14 +4,14 @@ import { requireAdmin } from '@/lib/auth';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ shopId: string }> }
 ) {
   const { error } = await requireAdmin();
   if (error) return error;
 
   try {
     const shop = await prisma.shop.update({
-      where: { id: (await params).id },
+      where: { id: (await params).shopId },
       data: { status: 'APPROVED' },
     });
 

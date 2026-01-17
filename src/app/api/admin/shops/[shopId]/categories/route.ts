@@ -87,10 +87,10 @@ export async function PUT(
 // POST: เพิ่มหมวดหมู่ให้ร้าน (add without removing existing)
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ shopId: string }> }
 ) {
   try {
-    const { id: shopId } = params;
+    const { shopId } = await params;
     const body = await request.json();
     const { categoryId } = body as { categoryId: string };
 
@@ -131,10 +131,10 @@ export async function POST(
 // DELETE: ลบหมวดหมู่ออกจากร้าน
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ shopId: string }> }
 ) {
   try {
-    const { id: shopId } = params;
+    const { shopId } = await params;
     const { searchParams } = new URL(request.url);
     const categoryId = searchParams.get('categoryId');
 
