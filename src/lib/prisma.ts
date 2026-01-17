@@ -8,44 +8,53 @@ declare global {
   var prisma: PrismaClient | undefined;
 }
 
-// Helper function to get database URL with connection pooling for production
+// Helper function to get database URL and log connection info
 function getDatabaseUrl(): string {
   const dbUrl = process.env.DATABASE_URL;
   
   if (!dbUrl) {
-    throw new Error('DATABASE_URL environment variable is not set');
+    console.error('[prisma] ❌ DATABASE_URL is not set!');
+    throw new Error('DATABASE_URL environment variable is not set. Please configure it in Vercel environment variables.');
   }
   
-  // In production (Vercel), use connection pooler if available
-  // Supabase connection pooler uses port 6543 or pooler subdomain
-  if (process.env.VERCEL && dbUrl.includes('supabase.co')) {
-    // Check if already using pooler
-    if (dbUrl.includes(':6543') || dbUrl.includes('pooler')) {
-      return dbUrl;
+  // Log connection info (without password)
+  const safeUrl = dbUrl.replace(/:[^:@]+@/, ':****@');
+  const hasPooler = dbUrl.includes(':6543') || dbUrl.includes('pooler');
+  const hasDirect = dbUrl.includes(':5432') && !hasPooler;
+  
+  console.log('[prisma] Database URL (safe):', safeUrl);
+  if (process.env.VERCEL) {
+    if (hasPooler) {
+      console.log('[prisma] ✅ Using connection pooler (port 6543)');
+    } else if (hasDirect) {
+      console.warn('[prisma] ⚠️ Using direct connection (port 5432) - May not work in Vercel production!');
+      console.warn('[prisma] 💡 Recommendation: Use connection pooler (port 6543) in Vercel environment variables');
     }
-    
-    // Convert direct connection to pooler connection
-    // Replace port 5432 with 6543 for connection pooler
-    const poolerUrl = dbUrl.replace(':5432/', ':6543/');
-    console.log('[prisma] Using connection pooler for production');
-    return poolerUrl;
   }
   
   return dbUrl;
 }
 
 // Create Prisma client with connection pooling configuration
-const prismaClientOptions = {
-  log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
-  datasources: {
-    db: {
-      url: getDatabaseUrl(),
-    },
-  },
-};
+let prismaClient: PrismaClient;
+
+try {
+  const prismaClientOptions = {
+    log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+  };
+  
+  // Validate DATABASE_URL before creating client
+  getDatabaseUrl(); // This will throw if DATABASE_URL is not set
+  
+  prismaClient = new PrismaClient(prismaClientOptions);
+  console.log('[prisma] ✅ Prisma Client initialized');
+} catch (error) {
+  console.error('[prisma] ❌ Failed to initialize Prisma Client:', error);
+  throw error;
+}
 
 // named export (existing code in repo expects `prisma`)
-export const prisma = globalThis.prisma ?? new PrismaClient(prismaClientOptions);
+export const prisma = globalThis.prisma ?? prismaClient;
 
 // cache on global in dev
 if (process.env.NODE_ENV !== "production") globalThis.prisma = prisma;

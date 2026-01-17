@@ -47,10 +47,18 @@ async function findAreaId(areaTable: AreaTable, pointLng: number, pointLat: numb
 }
 
 async function tableHasColumn(tableName: string, columnName: string) {
-  const q = `SELECT 1 FROM information_schema.columns WHERE table_name ILIKE $1 AND column_name = $2 LIMIT 1;`;
-  console.log('[api/shops] SQL (tableHasColumn):', q, tableName, columnName);
-  const res: any[] = await prisma.$queryRawUnsafe(q, tableName, columnName);
-  return Array.isArray(res) && res.length > 0;
+  try {
+    const q = `SELECT 1 FROM information_schema.columns WHERE table_name ILIKE $1 AND column_name = $2 LIMIT 1;`;
+    console.log('[api/shops] Checking column:', tableName, columnName);
+    const res: any[] = await prisma.$queryRawUnsafe(q, tableName, columnName);
+    const exists = Array.isArray(res) && res.length > 0;
+    console.log('[api/shops] Column check result:', tableName, columnName, exists);
+    return exists;
+  } catch (error) {
+    console.error(`[api/shops] Error checking column ${tableName}.${columnName}:`, error);
+    // Return false if check fails (safer than crashing)
+    return false;
+  }
 }
 
 export async function GET(request: NextRequest) {
@@ -58,6 +66,26 @@ export async function GET(request: NextRequest) {
   
   try {
     console.log('[api/shops] ========== REQUEST STARTED ==========');
+    
+    // Check database connection first
+    try {
+      await prisma.$queryRaw`SELECT 1`;
+      console.log('[api/shops] ✅ Database connection OK');
+    } catch (dbError) {
+      console.error('[api/shops] ❌ Database connection failed:', dbError);
+      const elapsed = Date.now() - startTime;
+      return NextResponse.json({
+        success: false,
+        shops: [],
+        hasLocation: false,
+        queryTime: elapsed,
+        error: 'Database connection failed',
+        errorType: dbError instanceof Error ? dbError.name : 'Unknown',
+        errorDetails: dbError instanceof Error ? dbError.message : 'Unknown error',
+        hint: 'Please check DATABASE_URL environment variable in Vercel'
+      }, { status: 500 });
+    }
+    
     const sp = request.nextUrl.searchParams;
     const latStr = sp.get('lat');
     const lngStr = sp.get('lng');
@@ -160,7 +188,16 @@ export async function GET(request: NextRequest) {
         params.push(limit);
         console.log('[api/shops] Executing main query...');
         console.log('[api/shops] SQL (random):', sql.substring(0, 500), '...', 'params:', params);
-        const rows = await prisma.$queryRawUnsafe(sql, ...params);
+        
+        let rows;
+        try {
+          rows = await prisma.$queryRawUnsafe(sql, ...params);
+        } catch (queryError) {
+          console.error('[api/shops] ❌ Query execution failed:', queryError);
+          console.error('[api/shops] SQL:', sql.substring(0, 1000));
+          console.error('[api/shops] Params:', params);
+          throw queryError;
+        }
         const elapsed = Date.now() - startTime;
         const shopsCount = Array.isArray(rows) ? rows.length : 0;
         console.log(`[api/shops] ✅ Query successful - rows: ${shopsCount}, offset: ${offset}, time: ${elapsed}ms`);
