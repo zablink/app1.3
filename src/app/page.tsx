@@ -129,8 +129,19 @@ export default function HomePage() {
         success: data.success,
         shopsCount: data.shops?.length || 0,
         hasLocation: data.hasLocation,
-        queryTime: data.queryTime
+        queryTime: data.queryTime,
+        error: data.error,
+        errorType: data.errorType
       });
+      
+      if (!data.success) {
+        console.error('[page.tsx] ❌ API returned error:', data.error);
+      }
+      
+      if (data.shops && data.shops.length === 0) {
+        console.warn('[page.tsx] ⚠️ No shops returned from API');
+      }
+      
       setShopsDefault(Array.isArray(data.shops) ? data.shops : []);
       setHasMoreShops((data.shops?.length || 0) >= SHOPS_PER_PAGE);
       setCurrentPage(1);

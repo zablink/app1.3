@@ -57,6 +57,7 @@ export async function GET(request: NextRequest) {
   const startTime = Date.now();
   
   try {
+    console.log('[api/shops] ========== REQUEST STARTED ==========');
     const sp = request.nextUrl.searchParams;
     const latStr = sp.get('lat');
     const lngStr = sp.get('lng');
@@ -68,7 +69,7 @@ export async function GET(request: NextRequest) {
     const sortBy = (sortByParam?.split(':')[0] || 'createdAt') as 'distance' | 'name' | 'createdAt';
     const radiiMeters = [2 * KM, 5 * KM, 20 * KM, 50 * KM];
     
-    console.log(`[api/shops] Request started - lat: ${latStr}, lng: ${lngStr}, limit: ${limit}, offset: ${offset}`);
+    console.log(`[api/shops] Request params - lat: ${latStr}, lng: ${lngStr}, limit: ${limit}, offset: ${offset}, sortBy: ${sortBy}`);
     
     // Validate and parse lat/lng
     let lat: string | null = null;
@@ -104,9 +105,13 @@ export async function GET(request: NextRequest) {
       if (hasStatusCol) {
         // Use COALESCE to include shops with NULL status as well
         whereParts.push(`(s.status = 'APPROVED' OR s.status IS NULL)`);
+        console.log('[api/shops] Filtering by status: APPROVED or NULL');
+      } else {
+        console.log('[api/shops] No status column - including all shops');
       }
       // Category filter removed - now using many-to-many
       const whereClause = whereParts.length > 0 ? `WHERE ${whereParts.join(' AND ')}` : '';
+      console.log('[api/shops] WHERE clause:', whereClause || 'NONE (all shops)');
       
       try {
         // Optimized query using window function to get latest subscription per shop
@@ -153,42 +158,70 @@ export async function GET(request: NextRequest) {
         `;
         params.push(offset);
         params.push(limit);
+        console.log('[api/shops] Executing main query...');
         console.log('[api/shops] SQL (random):', sql.substring(0, 500), '...', 'params:', params);
         const rows = await prisma.$queryRawUnsafe(sql, ...params);
         const elapsed = Date.now() - startTime;
-        console.log(`[api/shops] random rows: ${Array.isArray(rows) ? rows.length : 'not array'}, offset: ${offset}, time: ${elapsed}ms`);
+        const shopsCount = Array.isArray(rows) ? rows.length : 0;
+        console.log(`[api/shops] ✅ Query successful - rows: ${shopsCount}, offset: ${offset}, time: ${elapsed}ms`);
+        if (shopsCount === 0) {
+          console.log('[api/shops] ⚠️ WARNING: No shops returned! This might indicate:');
+          console.log('[api/shops]   1. No shops in database');
+          console.log('[api/shops]   2. All shops filtered out by WHERE clause');
+          console.log('[api/shops]   3. Database connection issue');
+        }
         return NextResponse.json({ success: true, shops: Array.isArray(rows) ? rows : [], hasLocation: false, queryTime: elapsed });
       } catch (sqlError) {
-        console.error('[api/shops] SQL error:', sqlError);
-        // Fallback: try without subscriptionTier and status filter
-        const simpleSql = `
-          SELECT s.id, s.name, s.description, s.address, s."createdAt", s.image, s.lat, s.lng, s.is_mockup as "isMockup",
-            lt.name_th as subdistrict,
-            la.name_th as district,
-            lp.name_th as province,
-            'FREE' as "subscriptionTier",
-            false as "isOG",
-            false as "ogBadgeEnabled",
-            (
-              SELECT JSON_AGG(JSON_BUILD_OBJECT('id', sc.id, 'name', sc.name, 'slug', sc.slug, 'icon', sc.icon))
-              FROM shop_category_mapping scm
-              JOIN "ShopCategory" sc ON scm.category_id = sc.id
-              WHERE scm.shop_id = s.id
-            ) as categories
-          FROM "Shop" s
-          LEFT JOIN th_subdistricts lt ON s.tambon_id = lt.id
-          LEFT JOIN th_districts la ON s.amphure_id = la.id
-          LEFT JOIN th_provinces lp ON s.province_id = lp.id
-          ORDER BY s."createdAt" DESC
-          LIMIT $1
-          OFFSET $2;
-        `;
-        const fallbackParams = [limit, offset];
-        console.log('[api/shops] SQL (fallback random):', simpleSql.substring(0, 300), '...', 'params:', fallbackParams);
-        const rows = await prisma.$queryRawUnsafe(simpleSql, ...fallbackParams);
-        const elapsed = Date.now() - startTime;
-        console.log(`[api/shops] fallback random rows: ${Array.isArray(rows) ? rows.length : 0}, time: ${elapsed}ms`);
-        return NextResponse.json({ success: true, shops: Array.isArray(rows) ? rows : [], hasLocation: false, queryTime: elapsed });
+        console.error('[api/shops] ❌ SQL error in main query:', sqlError);
+        console.error('[api/shops] Error details:', {
+          message: sqlError instanceof Error ? sqlError.message : 'Unknown error',
+          stack: sqlError instanceof Error ? sqlError.stack : undefined
+        });
+        
+        // Fallback: try simple query without any filters
+        try {
+          console.log('[api/shops] Trying fallback query (no filters)...');
+          const simpleSql = `
+            SELECT s.id, s.name, s.description, s.address, s."createdAt", s.image, s.lat, s.lng, s.is_mockup as "isMockup",
+              lt.name_th as subdistrict,
+              la.name_th as district,
+              lp.name_th as province,
+              'FREE' as "subscriptionTier",
+              false as "isOG",
+              false as "ogBadgeEnabled",
+              (
+                SELECT JSON_AGG(JSON_BUILD_OBJECT('id', sc.id, 'name', sc.name, 'slug', sc.slug, 'icon', sc.icon))
+                FROM shop_category_mapping scm
+                JOIN "ShopCategory" sc ON scm.category_id = sc.id
+                WHERE scm.shop_id = s.id
+              ) as categories
+            FROM "Shop" s
+            LEFT JOIN th_subdistricts lt ON s.tambon_id = lt.id
+            LEFT JOIN th_districts la ON s.amphure_id = la.id
+            LEFT JOIN th_provinces lp ON s.province_id = lp.id
+            ORDER BY s."createdAt" DESC
+            LIMIT $1
+            OFFSET $2;
+          `;
+          const fallbackParams = [limit, offset];
+          console.log('[api/shops] Fallback SQL:', simpleSql.substring(0, 300), '...', 'params:', fallbackParams);
+          const rows = await prisma.$queryRawUnsafe(simpleSql, ...fallbackParams);
+          const elapsed = Date.now() - startTime;
+          const shopsCount = Array.isArray(rows) ? rows.length : 0;
+          console.log(`[api/shops] ✅ Fallback query successful - rows: ${shopsCount}, time: ${elapsed}ms`);
+          return NextResponse.json({ success: true, shops: Array.isArray(rows) ? rows : [], hasLocation: false, queryTime: elapsed });
+        } catch (fallbackError) {
+          console.error('[api/shops] ❌ Fallback query also failed:', fallbackError);
+          const elapsed = Date.now() - startTime;
+          return NextResponse.json({
+            success: false,
+            error: 'Database query failed',
+            message: fallbackError instanceof Error ? fallbackError.message : 'Unknown error',
+            shops: [],
+            hasLocation: false,
+            queryTime: elapsed
+          }, { status: 500 });
+        }
       }
     }
 
@@ -334,20 +367,23 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     const elapsed = Date.now() - startTime;
-    console.error(`[api/shops] Error after ${elapsed}ms:`, error);
+    console.error(`[api/shops] ❌❌❌ FATAL ERROR after ${elapsed}ms:`, error);
     if (typeof error === 'object' && error && 'query' in error) {
       // Prisma error object may have .query
       console.error('[api/shops] Last SQL:', (error as any).query);
     }
+    console.error('[api/shops] Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+    console.error('[api/shops] Error name:', error instanceof Error ? error.name : 'Unknown');
     
     // Return empty array instead of error to prevent page crash
     // Log error for debugging but don't break the page
     return NextResponse.json({
-      success: true,
+      success: false,
       shops: [],
       hasLocation: false,
       queryTime: elapsed,
-      error: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : 'Unknown error') : undefined
-    });
+      error: error instanceof Error ? error.message : 'Unknown error',
+      errorType: error instanceof Error ? error.name : 'Unknown'
+    }, { status: 500 });
   }
 }
