@@ -1,6 +1,6 @@
 // app/api/settings/route.ts
 
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 
 /**
@@ -9,6 +9,18 @@ import prisma from '@/lib/prisma';
  * ดึง Settings ทั้งหมด
  */
 export const revalidate = 300; // Cache 5 minutes
+
+// Handle OPTIONS request for CORS
+export async function OPTIONS(request: NextRequest) {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+    },
+  });
+}
 
 export async function GET() {
   try {
@@ -27,6 +39,10 @@ export async function GET() {
     return NextResponse.json({
       success: true,
       settings: settings || []
+    }, {
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+      },
     });
   } catch (error) {
     console.error('Error fetching public settings:', error);
@@ -35,6 +51,10 @@ export async function GET() {
     return NextResponse.json({
       success: true,
       settings: []
+    }, {
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+      },
     });
   }
 }

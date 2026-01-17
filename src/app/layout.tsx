@@ -21,11 +21,21 @@ const prompt = Prompt({
 
 // Dynamic metadata from database settings
 export async function generateMetadata() {
-  const metadata = await getSiteMetadata();
-  return {
-    metadataBase: new URL('https://www.zablink.com'),
-    ...metadata,
-  };
+  try {
+    const metadata = await getSiteMetadata();
+    return {
+      metadataBase: new URL('https://www.zablink.com'),
+      ...metadata,
+    };
+  } catch (error) {
+    console.error('Error generating metadata:', error);
+    // Return default metadata if database fails
+    return {
+      metadataBase: new URL('https://www.zablink.com'),
+      title: 'Zablink',
+      description: 'แพลตฟอร์มเชื่อมต่อร้านอาหารและนักรีวิว',
+    };
+  }
 }
 
 export default function RootLayout({

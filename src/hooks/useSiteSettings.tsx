@@ -107,9 +107,16 @@ export function SiteSettingsProvider({ children }: { children: ReactNode }) {
     try {
       // เรียก Public API (ไม่ต้อง auth)
       const response = await fetch('/api/settings');
+      
+      if (!response.ok) {
+        console.error('Failed to load settings:', response.status);
+        setSettings({});
+        return;
+      }
+      
       const data = await response.json();
       
-      if (data.success) {
+      if (data.success && Array.isArray(data.settings)) {
         // แปลงจาก Array เป็น Object
         const settingsObj = data.settings.reduce((acc: any, setting: any) => {
           // Parse JSON values
@@ -128,9 +135,12 @@ export function SiteSettingsProvider({ children }: { children: ReactNode }) {
         }, {});
         
         setSettings(settingsObj);
+      } else {
+        setSettings({});
       }
     } catch (error) {
       console.error('Error loading settings:', error);
+      setSettings({});
     } finally {
       setLoading(false);
     }
