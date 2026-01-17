@@ -125,6 +125,65 @@ https://dev.zablink.com/api/debug/prisma
 
 ## 🐛 Troubleshooting
 
+### Problem: `connectionStatus: "failed"` with Connection Pooler
+
+**อาการ:** ใช้ connection pooler (port 6543) แล้ว แต่ยัง connection ล้มเหลว
+
+**Error message:**
+```
+Can't reach database server at db.xxx.supabase.co:6543
+```
+
+**สาเหตุที่เป็นไปได้:**
+
+1. **Local Development ใช้ Pooler (ไม่ควร)**
+   - Connection pooler (port 6543) ถูกออกแบบมาสำหรับ serverless (Vercel)
+   - Local development ควรใช้ direct connection (port 5432)
+
+2. **Supabase Project ถูก Pause**
+   - Supabase free tier อาจจะ pause project ถ้าไม่ใช้งาน
+   - ตรวจสอบ Supabase Dashboard → Project status
+
+3. **Network/Firewall Block**
+   - Firewall หรือ network settings block port 6543
+   - VPN อาจจะ block connection
+
+4. **DATABASE_URL ไม่ถูกต้อง**
+   - Password ผิด
+   - Hostname หรือ port ผิด
+
+**วิธีแก้ไข:**
+
+#### สำหรับ Local Development:
+```bash
+# เปลี่ยน DATABASE_URL ใน .env จาก:
+postgresql://postgres:****@db.xxx.supabase.co:6543/postgres?pgbouncer=true
+
+# เป็น (ใช้ direct connection):
+postgresql://postgres:****@db.xxx.supabase.co:5432/postgres
+```
+
+#### สำหรับ Vercel Production:
+1. ตรวจสอบ Supabase Dashboard:
+   - ไปที่ [Supabase Dashboard](https://supabase.com/dashboard)
+   - เลือก Project
+   - ตรวจสอบว่า Project status เป็น **Active** (ไม่ใช่ Paused)
+
+2. ตรวจสอบ Connection String:
+   - ไปที่ **Settings** → **Database**
+   - Copy **Connection string** จาก **Connection Pooling** section
+   - ใช้ connection string ที่มี `pooler` หรือ port `6543`
+
+3. ตรวจสอบ Vercel Environment Variables:
+   - ไปที่ Vercel Dashboard → Project → Settings → Environment Variables
+   - ตรวจสอบว่า `DATABASE_URL` ถูกตั้งค่าแล้ว
+   - ตรวจสอบว่าใช้ port 6543 และมี `?pgbouncer=true`
+
+4. ลองใช้ Pooler Subdomain:
+   ```
+   postgresql://postgres:****@pooler.xxx.supabase.co:5432/postgres?pgbouncer=true
+   ```
+
 ### Problem: `connectionStatus: "failed"`
 
 **สาเหตุที่เป็นไปได้:**

@@ -134,12 +134,49 @@ export async function GET() {
     }
 
     // 8. Check connection pooler recommendation
+    const recommendations: string[] = [];
+    
     if (process.env.VERCEL && debugInfo.database.urlType === 'direct-connection') {
-      debugInfo.recommendations = [
-        '⚠️ Using direct connection (port 5432) in Vercel production',
-        '💡 Recommendation: Use connection pooler (port 6543)',
-        '📝 Update DATABASE_URL in Vercel to use port 6543',
-      ];
+      recommendations.push('⚠️ Using direct connection (port 5432) in Vercel production');
+      recommendations.push('💡 Recommendation: Use connection pooler (port 6543)');
+      recommendations.push('📝 Update DATABASE_URL in Vercel to use port 6543');
+    }
+    
+    // 9. If connection failed with pooler, suggest alternatives
+    if (debugInfo.database.connectionStatus === 'failed' && debugInfo.database.urlType === 'connection-pooler') {
+      if (!process.env.VERCEL) {
+        recommendations.push('⚠️ Connection failed with pooler (port 6543)');
+        recommendations.push('💡 For local development, try direct connection (port 5432)');
+        recommendations.push('📝 Update DATABASE_URL to use port 5432 instead of 6543');
+      } else {
+        recommendations.push('⚠️ Connection failed with pooler (port 6543)');
+        recommendations.push('💡 Check Supabase Dashboard → Settings → Database → Connection Pooling');
+        recommendations.push('💡 Verify Supabase project is not paused or suspended');
+        recommendations.push('💡 Check network connectivity and firewall settings');
+        recommendations.push('💡 Try using pooler subdomain: pooler.gysckclnnitkgafvdkno.supabase.co:5432');
+      }
+    }
+    
+    if (recommendations.length > 0) {
+      debugInfo.recommendations = recommendations;
+    }
+    
+    // 10. Add troubleshooting info
+    if (debugInfo.database.connectionStatus === 'failed') {
+      debugInfo.troubleshooting = {
+        isVercel: !!process.env.VERCEL,
+        isLocal: !process.env.VERCEL,
+        urlType: debugInfo.database.urlType,
+        suggestedActions: [
+          '1. Check Supabase Dashboard → Project status (not paused)',
+          '2. Verify DATABASE_URL password is correct',
+          '3. Test connection from Supabase SQL Editor',
+          '4. Check network/firewall settings',
+          !process.env.VERCEL 
+            ? '5. For local dev, try direct connection (port 5432)'
+            : '5. For Vercel, ensure using pooler (port 6543)',
+        ],
+      };
     }
 
     return NextResponse.json(debugInfo, {

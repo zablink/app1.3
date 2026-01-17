@@ -73,6 +73,17 @@ export async function GET() {
         ],
         example: 'https://dev.zablink.com/api/shops/debug',
       },
+      {
+        path: '/api/debug/network',
+        method: 'GET',
+        description: 'Network connectivity test for database server',
+        tests: [
+          'Prisma client creation',
+          'Database connection with timeout',
+          'Error analysis',
+        ],
+        example: 'https://dev.zablink.com/api/debug/network',
+      },
     ],
     quickStart: {
       step1: 'Check environment variables: /api/debug/env',
