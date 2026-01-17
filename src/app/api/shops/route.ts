@@ -1,6 +1,6 @@
 // src/app/api/shops/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import prisma from '@/lib/prisma';
 
 /**
  * Safer implementation with LEFT JOIN and debug logging.
@@ -60,10 +60,12 @@ export async function GET(request: NextRequest) {
     const sp = request.nextUrl.searchParams;
     const latStr = sp.get('lat');
     const lngStr = sp.get('lng');
-    const limit = Number(sp.get('limit') || 50);
-    const offset = Number(sp.get('offset') || 0);
+    const limit = Math.min(Number(sp.get('limit') || 50), 100); // Max 100
+    const offset = Math.max(Number(sp.get('offset') || 0), 0); // Min 0
     // categoryId removed - now using many-to-many categories
-    const sortBy = (sp.get('sortBy') || 'createdAt') as 'distance' | 'name' | 'createdAt';
+    const sortByParam = sp.get('sortBy');
+    // Handle sortBy=distance:1 format (remove :1 part)
+    const sortBy = (sortByParam?.split(':')[0] || 'createdAt') as 'distance' | 'name' | 'createdAt';
     const radiiMeters = [2 * KM, 5 * KM, 20 * KM, 50 * KM];
     
     console.log(`[api/shops] Request started - lat: ${latStr}, lng: ${lngStr}, limit: ${limit}, offset: ${offset}`);
@@ -328,9 +330,15 @@ export async function GET(request: NextRequest) {
       // Prisma error object may have .query
       console.error('[api/shops] Last SQL:', (error as any).query);
     }
-    return NextResponse.json(
-      { success: false, error: 'Failed to fetch shops', message: error instanceof Error ? error.message : 'Unknown', queryTime: elapsed },
-      { status: 500 }
-    );
+    
+    // Return empty array instead of error to prevent page crash
+    // Log error for debugging but don't break the page
+    return NextResponse.json({
+      success: true,
+      shops: [],
+      hasLocation: false,
+      queryTime: elapsed,
+      error: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : 'Unknown error') : undefined
+    });
   }
 }

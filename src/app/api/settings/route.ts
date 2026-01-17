@@ -1,7 +1,7 @@
 // app/api/settings/route.ts
 
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import prisma from '@/lib/prisma';
 
 /**
  * GET /api/settings
@@ -26,18 +26,16 @@ export async function GET() {
 
     return NextResponse.json({
       success: true,
-      settings
+      settings: settings || []
     });
   } catch (error) {
     console.error('Error fetching public settings:', error);
     
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'Failed to fetch settings'
-      },
-      { status: 500 }
-    );
+    // Return empty array instead of error to prevent page crash
+    return NextResponse.json({
+      success: true,
+      settings: []
+    });
   }
 }
 

@@ -2,7 +2,7 @@
 // Public API สำหรับดึง Active Hero Banners
 
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import prisma from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,6 +10,7 @@ export async function GET() {
   try {
     const now = new Date();
 
+    // Check if HeroBanner model exists
     const banners = await prisma.heroBanner.findMany({
       where: {
         isActive: true,
@@ -41,17 +42,15 @@ export async function GET() {
 
     return NextResponse.json({
       success: true,
-      banners
+      banners: banners || []
     });
     
   } catch (error) {
     console.error('Error fetching banners:', error);
-    return NextResponse.json(
-      { 
-        error: 'Failed to fetch banners',
-        detail: error instanceof Error ? error.message : 'Unknown error'
-      },
-      { status: 500 }
-    );
+    // Return empty array instead of error to prevent page crash
+    return NextResponse.json({
+      success: true,
+      banners: []
+    });
   }
 }

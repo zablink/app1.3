@@ -99,12 +99,18 @@ export default function HomePage() {
   const loadBanners = async () => {
     try {
       const res = await fetch('/api/banners');
+      if (!res.ok) {
+        console.error('Failed to load banners:', res.status);
+        return;
+      }
       const data = await res.json();
-      if (data.success && data.banners) {
+      if (data.success && Array.isArray(data.banners)) {
         setBanners(data.banners);
       }
     } catch (err) {
       console.error('Error loading banners:', err);
+      // Set empty array to prevent crash
+      setBanners([]);
     }
   };
 
@@ -112,12 +118,18 @@ export default function HomePage() {
     try {
       setIsLoadingShops(true);
       const res = await fetch(`/api/shops?limit=${SHOPS_PER_PAGE}`);
+      if (!res.ok) {
+        console.error('Failed to load shops:', res.status);
+        setShopsDefault([]);
+        return;
+      }
       const data = await res.json();
       setShopsDefault(Array.isArray(data.shops) ? data.shops : []);
       setHasMoreShops((data.shops?.length || 0) >= SHOPS_PER_PAGE);
       setCurrentPage(1);
     } catch (err) {
       console.error('Error loading shops:', err);
+      setShopsDefault([]);
     } finally {
       setIsLoadingShops(false);
     }
@@ -156,10 +168,15 @@ export default function HomePage() {
       setLocationState({ status: 'success', lat: latitude, lng: longitude });
       try {
         const resp = await fetch(`/api/shops?lat=${latitude}&lng=${longitude}&limit=50&sortBy=distance`);
+        if (!resp.ok) {
+          console.error('Failed to load nearby shops:', resp.status);
+          return;
+        }
         const data = await resp.json();
         setShopsNearby(Array.isArray(data.shops) ? data.shops : []);
       } catch (err) {
         console.error('Error updating shops with distance:', err);
+        setShopsNearby([]);
       }
     }, (error) => {
       setLocationState({ status: 'error', error: error.message || 'ไม่สามารถเข้าถึงตำแหน่งได้' });
