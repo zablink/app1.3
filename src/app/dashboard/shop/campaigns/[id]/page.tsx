@@ -108,13 +108,6 @@ export default function CampaignDetailPage() {
     }
   };
 
-  const [confirmDialog, setConfirmDialog] = useState<{
-    isOpen: boolean;
-    title: string;
-    message: string;
-    variant: "danger" | "warning" | "info";
-    onConfirm: () => void;
-  } | null>(null);
   const [rejectReason, setRejectReason] = useState("");
   const [showRejectDialog, setShowRejectDialog] = useState(false);
   const [rejectingJobId, setRejectingJobId] = useState<string | null>(null);
