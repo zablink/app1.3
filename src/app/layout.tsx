@@ -10,6 +10,7 @@ import { getSiteMetadata } from '@/lib/settings';
 import "./globals.css";
 
 // Force dynamic rendering เพราะใช้ database
+// Note: During build, metadata will use default values if database is unavailable
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 

@@ -16,6 +16,12 @@ const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 export const getSettings = unstable_cache(
   async (): Promise<Record<string, any>> => {
     try {
+      // During build, return empty object to prevent build failures
+      if (process.env.NEXT_PHASE === 'phase-production-build' && !process.env.DATABASE_URL) {
+        console.warn('[settings] ⚠️ DATABASE_URL not set during build - returning empty settings');
+        return {};
+      }
+      
       const now = Date.now();
       
       // Return cached data if still valid

@@ -35,29 +35,68 @@ function getDatabaseUrl(): string {
   return dbUrl;
 }
 
-// Create Prisma client with connection pooling configuration
-let prismaClient: PrismaClient;
+// Lazy initialization function for Prisma client
+function createPrismaClient(): PrismaClient {
+  try {
+    const prismaClientOptions = {
+      log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+    };
+    
+    // Check DATABASE_URL but don't throw if missing during build
+    const dbUrl = process.env.DATABASE_URL;
+    const isBuildTime = process.env.NEXT_PHASE === 'phase-production-build' || process.env.NODE_ENV === 'production';
+    
+    if (!dbUrl && isBuildTime) {
+      // During build, return a client that won't connect to database
+      // This prevents build failures when DATABASE_URL is not set
+      console.warn('[prisma] ⚠️ DATABASE_URL not set during build - using fallback');
+      return new PrismaClient(prismaClientOptions);
+    }
+    
+    // Validate DATABASE_URL before creating client (only in runtime)
+    if (!dbUrl) {
+      console.error('[prisma] ❌ DATABASE_URL is not set!');
+      throw new Error('DATABASE_URL environment variable is not set. Please configure it in Vercel environment variables.');
+    }
+    
+    getDatabaseUrl(); // This will log connection info
+    
+    const client = new PrismaClient(prismaClientOptions);
+    console.log('[prisma] ✅ Prisma Client initialized');
+    return client;
+  } catch (error) {
+    console.error('[prisma] ❌ Failed to initialize Prisma Client:', error);
+    // During build, don't throw - return a client that might fail later
+    const isBuildTime = process.env.NEXT_PHASE === 'phase-production-build' || process.env.NODE_ENV === 'production';
+    if (isBuildTime) {
+      console.warn('[prisma] ⚠️ Continuing build with fallback client');
+      return new PrismaClient({ log: ['error'] });
+    }
+    throw error;
+  }
+}
 
-try {
-  const prismaClientOptions = {
-    log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
-  };
+// Lazy initialization - only create when accessed
+function getPrismaClient(): PrismaClient {
+  if (globalThis.prisma) {
+    return globalThis.prisma;
+  }
   
-  // Validate DATABASE_URL before creating client
-  getDatabaseUrl(); // This will throw if DATABASE_URL is not set
+  const client = createPrismaClient();
   
-  prismaClient = new PrismaClient(prismaClientOptions);
-  console.log('[prisma] ✅ Prisma Client initialized');
-} catch (error) {
-  console.error('[prisma] ❌ Failed to initialize Prisma Client:', error);
-  throw error;
+  // Cache on global in dev
+  if (process.env.NODE_ENV !== "production") {
+    globalThis.prisma = client;
+  }
+  
+  return client;
 }
 
 // named export (existing code in repo expects `prisma`)
-export const prisma = globalThis.prisma ?? prismaClient;
+export const prisma = getPrismaClient();
 
 // cache on global in dev
 if (process.env.NODE_ENV !== "production") globalThis.prisma = prisma;
 
-// default export added so files that do `import prisma from "@/lib/prisma"` also work
+// default export
 export default prisma;
