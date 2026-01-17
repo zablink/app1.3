@@ -119,11 +119,18 @@ export default function HomePage() {
       setIsLoadingShops(true);
       const res = await fetch(`/api/shops?limit=${SHOPS_PER_PAGE}`);
       if (!res.ok) {
-        console.error('Failed to load shops:', res.status);
+        const errorText = await res.text();
+        console.error('Failed to load shops:', res.status, errorText);
         setShopsDefault([]);
         return;
       }
       const data = await res.json();
+      console.log('[page.tsx] Shops response:', {
+        success: data.success,
+        shopsCount: data.shops?.length || 0,
+        hasLocation: data.hasLocation,
+        queryTime: data.queryTime
+      });
       setShopsDefault(Array.isArray(data.shops) ? data.shops : []);
       setHasMoreShops((data.shops?.length || 0) >= SHOPS_PER_PAGE);
       setCurrentPage(1);

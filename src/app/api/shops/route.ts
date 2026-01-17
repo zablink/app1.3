@@ -99,7 +99,12 @@ export async function GET(request: NextRequest) {
     if (!lat || !lng) {
       const whereParts: string[] = [];
       const params: any[] = [];
-      if (hasStatusCol) whereParts.push(`s.status = 'APPROVED'`);
+      // Only filter by status if column exists AND shop has status = 'APPROVED'
+      // If status column doesn't exist or is null, include all shops
+      if (hasStatusCol) {
+        // Use COALESCE to include shops with NULL status as well
+        whereParts.push(`(s.status = 'APPROVED' OR s.status IS NULL)`);
+      }
       // Category filter removed - now using many-to-many
       const whereClause = whereParts.length > 0 ? `WHERE ${whereParts.join(' AND ')}` : '';
       
@@ -148,20 +153,22 @@ export async function GET(request: NextRequest) {
         `;
         params.push(offset);
         params.push(limit);
-        console.log('[api/shops] SQL (random):', sql, params);
+        console.log('[api/shops] SQL (random):', sql.substring(0, 500), '...', 'params:', params);
         const rows = await prisma.$queryRawUnsafe(sql, ...params);
         const elapsed = Date.now() - startTime;
         console.log(`[api/shops] random rows: ${Array.isArray(rows) ? rows.length : 'not array'}, offset: ${offset}, time: ${elapsed}ms`);
         return NextResponse.json({ success: true, shops: Array.isArray(rows) ? rows : [], hasLocation: false, queryTime: elapsed });
       } catch (sqlError) {
         console.error('[api/shops] SQL error:', sqlError);
-        // Fallback: try without subscriptionTier
+        // Fallback: try without subscriptionTier and status filter
         const simpleSql = `
-          SELECT s.id, s.name, s.description, s.address, s."createdAt", s.image, s.lat, s.lng,
+          SELECT s.id, s.name, s.description, s.address, s."createdAt", s.image, s.lat, s.lng, s.is_mockup as "isMockup",
             lt.name_th as subdistrict,
             la.name_th as district,
             lp.name_th as province,
             'FREE' as "subscriptionTier",
+            false as "isOG",
+            false as "ogBadgeEnabled",
             (
               SELECT JSON_AGG(JSON_BUILD_OBJECT('id', sc.id, 'name', sc.name, 'slug', sc.slug, 'icon', sc.icon))
               FROM shop_category_mapping scm
@@ -172,13 +179,12 @@ export async function GET(request: NextRequest) {
           LEFT JOIN th_subdistricts lt ON s.tambon_id = lt.id
           LEFT JOIN th_districts la ON s.amphure_id = la.id
           LEFT JOIN th_provinces lp ON s.province_id = lp.id
-          ${whereClause}
-          ORDER BY RANDOM()
-          LIMIT $${params.length};
+          ORDER BY s."createdAt" DESC
+          LIMIT $1
+          OFFSET $2;
         `;
-        const fallbackParams = params.slice(0, -1); // Remove the last param (limit) that was already added
-        fallbackParams.push(limit); // Add limit again
-        console.log('[api/shops] SQL (fallback random):', simpleSql, fallbackParams);
+        const fallbackParams = [limit, offset];
+        console.log('[api/shops] SQL (fallback random):', simpleSql.substring(0, 300), '...', 'params:', fallbackParams);
         const rows = await prisma.$queryRawUnsafe(simpleSql, ...fallbackParams);
         const elapsed = Date.now() - startTime;
         console.log(`[api/shops] fallback random rows: ${Array.isArray(rows) ? rows.length : 0}, time: ${elapsed}ms`);
@@ -285,7 +291,10 @@ export async function GET(request: NextRequest) {
     // Final fallback random
     const paramsFinal: any[] = [];
     const whereFinal: string[] = [];
-    if (hasStatusCol) whereFinal.push(`s.status = 'APPROVED'`);
+    if (hasStatusCol) {
+      // Include shops with NULL status as well
+      whereFinal.push(`(s.status = 'APPROVED' OR s.status IS NULL)`);
+    }
     // categoryId filter removed
     paramsFinal.push(limit);
     const sqlFinal = `
