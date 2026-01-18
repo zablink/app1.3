@@ -256,7 +256,18 @@ export default function HomePage() {
           src={shopImage(shop)}
           alt={shop.name || 'ร้านค้า'}
           className="w-full h-full object-cover transition-transform duration-300 hover:scale-110"
-          onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder.png'; }}
+          onError={(e) => {
+            const img = e.target as HTMLImageElement;
+            // Prevent infinite loop: if current src is already placeholder.png, hide image instead
+            // This stops the error loop when placeholder.png itself doesn't exist (404)
+            if (img.src.includes('/placeholder.png')) {
+              img.style.display = 'none';
+              return;
+            }
+            // If not placeholder yet, try to load placeholder (but will fail if it doesn't exist)
+            // This is okay because next error will hide the image
+            img.src = '/placeholder.png';
+          }}
           loading="lazy"
         />
       </div>
