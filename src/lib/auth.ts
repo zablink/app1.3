@@ -11,6 +11,7 @@ import bcrypt from 'bcryptjs';
 
 /**
  * NextAuth configuration options
+ * Using PrismaAdapter directly - prisma is lazy-initialized
  */
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
