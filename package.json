@@ -22,7 +22,8 @@
     "prebuild": "bash scripts/check-route-conflicts.sh",
     "prepare": "bash scripts/setup-git-hooks.sh",
     "postinstall": "prisma generate",
-    "vercel-build": "prisma generate && prisma db push && next build"
+    "vercel-build": "prisma generate && prisma db push && next build",
+    "generate:shop-images": "tsx scripts/generate-shop-images-commonjs.ts"
   },
   "dependencies": {
     "@next-auth/prisma-adapter": "^1.0.7",
