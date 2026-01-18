@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Hero from '@/components/Hero';
 import Notification from '@/components/Notification';
@@ -52,29 +52,13 @@ export default function HomePage() {
   const [showLocationNotif, setShowLocationNotif] = useState(true);
 
   const SHOPS_PER_PAGE = 24; // ลดลงจาก 50 เป็น 24 เพื่อโหลดเร็วขึ้น
-  
-  // Track if initial load has been done to prevent unnecessary refreshes
-  const hasLoadedShops = useRef(false);
-  const hasLoadedBanners = useRef(false);
-  const hasRequestedLocation = useRef(false);
 
-  // Initial load effects - only run once on mount
-  useEffect(() => { 
-    loadShops(); 
-  }, [loadShops]);
-  
-  useEffect(() => { 
-    loadBanners(); 
-  }, [loadBanners]);
-  
-  useEffect(() => { 
-    requestLocation(); 
-  }, [requestLocation]);
+  useEffect(() => { loadShops(); }, []);
+  useEffect(() => { loadBanners(); }, []);
+  useEffect(() => { requestLocation(); }, []);
 
   // Infinite scroll: auto-load when scrolling near bottom (with debounce)
   useEffect(() => {
-    if (isLoadingMore || !hasMoreShops || isLoadingShops) return;
-    
     let timeoutId: NodeJS.Timeout;
     
     const handleScroll = () => {
@@ -99,7 +83,7 @@ export default function HomePage() {
       clearTimeout(timeoutId);
       window.removeEventListener('scroll', handleScroll);
     };
-  }, [isLoadingMore, hasMoreShops, isLoadingShops, loadMoreShops]);
+  }, [isLoadingMore, hasMoreShops, isLoadingShops, currentPage]);
 
   // Auto-rotate banners every 5 seconds
   useEffect(() => {
@@ -112,11 +96,7 @@ export default function HomePage() {
     return () => clearInterval(timer);
   }, [banners.length]);
 
-  // Memoize loadBanners to prevent unnecessary re-renders
-  const loadBanners = useCallback(async () => {
-    if (hasLoadedBanners.current) return; // Prevent duplicate calls
-    hasLoadedBanners.current = true;
-    
+  const loadBanners = async () => {
     try {
       const res = await fetch('/api/banners');
       if (!res.ok) {
@@ -132,12 +112,9 @@ export default function HomePage() {
       // Set empty array to prevent crash
       setBanners([]);
     }
-  }, []);
+  };
 
-  const loadShops = useCallback(async () => {
-    if (hasLoadedShops.current) return; // Prevent duplicate calls
-    hasLoadedShops.current = true;
-    
+  const loadShops = async () => {
     try {
       setIsLoadingShops(true);
       const res = await fetch(`/api/shops?limit=${SHOPS_PER_PAGE}`);
@@ -174,9 +151,9 @@ export default function HomePage() {
     } finally {
       setIsLoadingShops(false);
     }
-  }, [SHOPS_PER_PAGE]);
+  };
 
-  const loadMoreShops = useCallback(async () => {
+  const loadMoreShops = async () => {
     if (isLoadingMore || !hasMoreShops) return;
     try {
       setIsLoadingMore(true);
@@ -196,12 +173,9 @@ export default function HomePage() {
     } finally {
       setIsLoadingMore(false);
     }
-  }, [isLoadingMore, hasMoreShops, currentPage, SHOPS_PER_PAGE]);
+  };
 
-  const requestLocation = useCallback(async () => {
-    if (hasRequestedLocation.current) return; // Prevent duplicate calls
-    hasRequestedLocation.current = true;
-    
+  const requestLocation = async () => {
     if (!navigator.geolocation) {
       setLocationState({ status: 'error', error: 'เบราว์เซอร์ไม่รองรับ Geolocation' });
       return;
@@ -225,7 +199,7 @@ export default function HomePage() {
     }, (error) => {
       setLocationState({ status: 'error', error: error.message || 'ไม่สามารถเข้าถึงตำแหน่งได้' });
     }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 });
-  }, []);
+  };
 
   // Helper to choose image: prefer image field, then logo, then placeholder
   const shopImage = (shop: Shop) => {
@@ -241,19 +215,18 @@ export default function HomePage() {
     return 'FREE';
   };
 
-  // เลือก source ที่จะแสดง: ถ้ามี location และมีร้าน nearby ให้ใช้, ไม่งั้น fallback เป็น default
-  const shopsToShow = useMemo(() => {
-    return shopsNearby && shopsNearby.length > 0 ? shopsNearby : shopsDefault;
-  }, [shopsNearby, shopsDefault]);
-
-  // Group shops by subscription tier (memoized to prevent recalculation)
-  const groupedShops = useMemo(() => {
-    const premium = shopsToShow.filter(s => normalizeTier(s.subscriptionTier) === 'PREMIUM').slice(0, 6);
-    const pro = shopsToShow.filter(s => normalizeTier(s.subscriptionTier) === 'PRO').slice(0, 3);
-    const basic = shopsToShow.filter(s => normalizeTier(s.subscriptionTier) === 'BASIC').slice(0, 3);
-    const free = shopsToShow.filter(s => normalizeTier(s.subscriptionTier) === 'FREE').slice(0, 12);
+  // Group shops by subscription tier (always robust)
+  const groupShopsByTier = (shops: Shop[]) => {
+    const premium = shops.filter(s => normalizeTier(s.subscriptionTier) === 'PREMIUM').slice(0, 6);
+    const pro = shops.filter(s => normalizeTier(s.subscriptionTier) === 'PRO').slice(0, 3);
+    const basic = shops.filter(s => normalizeTier(s.subscriptionTier) === 'BASIC').slice(0, 3);
+    const free = shops.filter(s => normalizeTier(s.subscriptionTier) === 'FREE').slice(0, 12);
     return { premium, pro, basic, free };
-  }, [shopsToShow]);
+  };
+
+  // เลือก source ที่จะแสดง: ถ้ามี location และมีร้าน nearby ให้ใช้, ไม่งั้น fallback เป็น default
+  const shopsToShow = shopsNearby && shopsNearby.length > 0 ? shopsNearby : shopsDefault;
+  const groupedShops = groupShopsByTier(shopsToShow);
 
   // Render shop card component
   const ShopCard = ({ shop, tierColor }: { shop: Shop; tierColor?: string }) => (
