@@ -4,7 +4,6 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Hero from '@/components/Hero';
 import Notification from '@/components/Notification';
 
 interface Shop {
@@ -53,8 +52,14 @@ export default function HomePage() {
 
   const SHOPS_PER_PAGE = 24; // ลดลงจาก 50 เป็น 24 เพื่อโหลดเร็วขึ้น
 
+  // Banner images จาก public/images/banner/
+  const bannerImages = [
+    '/images/banner/1.jpg',
+    '/images/banner/2.jpg',
+    '/images/banner/3.jpg',
+  ];
+
   useEffect(() => { loadShops(); }, []);
-  useEffect(() => { loadBanners(); }, []);
   useEffect(() => { requestLocation(); }, []);
 
   // Infinite scroll: auto-load when scrolling near bottom (with debounce)
@@ -85,34 +90,16 @@ export default function HomePage() {
     };
   }, [isLoadingMore, hasMoreShops, isLoadingShops, currentPage]);
 
-  // Auto-rotate banners every 5 seconds
+  // Auto-rotate banners every 5 seconds with smooth transition
   useEffect(() => {
-    if (banners.length <= 1) return;
+    if (bannerImages.length <= 1) return;
     
     const timer = setInterval(() => {
-      setCurrentBannerIndex((prev) => (prev + 1) % banners.length);
+      setCurrentBannerIndex((prev) => (prev + 1) % bannerImages.length);
     }, 5000);
 
     return () => clearInterval(timer);
-  }, [banners.length]);
-
-  const loadBanners = async () => {
-    try {
-      const res = await fetch('/api/banners');
-      if (!res.ok) {
-        console.error('Failed to load banners:', res.status);
-        return;
-      }
-      const data = await res.json();
-      if (data.success && Array.isArray(data.banners)) {
-        setBanners(data.banners);
-      }
-    } catch (err) {
-      console.error('Error loading banners:', err);
-      // Set empty array to prevent crash
-      setBanners([]);
-    }
-  };
+  }, [bannerImages.length]);
 
   const loadShops = async () => {
     try {
@@ -299,36 +286,54 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Hero Banner */}
-      {banners.length > 0 && (
-        <Hero 
-          title={banners[currentBannerIndex].title}
-          subtitle={banners[currentBannerIndex].subtitle || "ค้นหาร้านค้าและบริการที่คุณชื่นชอบได้ง่ายๆ ในพื้นที่ใกล้คุณ"}
-          ctaLabel={banners[currentBannerIndex].ctaLabel}
-          onCtaClick={banners[currentBannerIndex].ctaLink ? () => {
-            router.push(banners[currentBannerIndex].ctaLink!);
-          } : undefined}
-          backgroundImage={banners[currentBannerIndex].imageUrl}
-          enableOverlay={banners[currentBannerIndex].enableOverlay ?? true}
-          link={banners[currentBannerIndex].link}
-        />
-      )}
+      {/* Hero Banner - Full Width with Carousel */}
+      {bannerImages.length > 0 && (
+        <div className="relative w-full h-[600px] overflow-hidden bg-gray-900">
+          {/* Banner Slides Container */}
+          <div 
+            className="flex h-full transition-transform duration-1000 ease-in-out"
+            style={{
+              transform: `translateX(-${currentBannerIndex * 100}%)`,
+              width: `${bannerImages.length * 100}%`
+            }}
+          >
+            {bannerImages.map((imageUrl, index) => (
+              <div
+                key={index}
+                className="w-full h-full flex-shrink-0 relative"
+                style={{
+                  width: `${100 / bannerImages.length}%`
+                }}
+              >
+                <img
+                  src={imageUrl}
+                  alt={`Banner ${index + 1}`}
+                  className="w-full h-full object-cover"
+                  loading={index === 0 ? "eager" : "lazy"}
+                />
+                {/* Overlay gradient */}
+                <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/10 to-black/30"></div>
+              </div>
+            ))}
+          </div>
 
-      {/* Banner Indicators */}
-      {banners.length > 1 && (
-        <div className="flex justify-center gap-2 py-4 bg-gray-100">
-          {banners.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => setCurrentBannerIndex(index)}
-              className={`w-2 h-2 rounded-full transition-all ${
-                index === currentBannerIndex 
-                  ? 'bg-orange-600 w-8' 
-                  : 'bg-gray-400 hover:bg-gray-600'
-              }`}
-              aria-label={`Go to banner ${index + 1}`}
-            />
-          ))}
+          {/* Navigation Dots - Bottom Center */}
+          {bannerImages.length > 1 && (
+            <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex gap-3 z-10">
+              {bannerImages.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => setCurrentBannerIndex(index)}
+                  className={`transition-all duration-300 rounded-full ${
+                    index === currentBannerIndex 
+                      ? 'bg-white w-10 h-2.5 shadow-lg' 
+                      : 'bg-white/50 w-2.5 h-2.5 hover:bg-white/75'
+                  }`}
+                  aria-label={`Go to banner ${index + 1}`}
+                />
+              ))}
+            </div>
+          )}
         </div>
       )}
 
