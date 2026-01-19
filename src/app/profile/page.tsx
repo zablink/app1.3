@@ -1,16 +1,7 @@
 // src/app/profile/page.tsx
-<<<<<<< HEAD
-
-=======
->>>>>>> dev
 "use client";
 
 import { useState, useEffect } from "react";
-<<<<<<< HEAD
-import Link from "next/link"; // ⭐ เพิ่มบรรทัดนี้
-
-export const dynamic = 'force-dynamic';
-=======
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -31,7 +22,6 @@ import {
   Sparkles,
   ArrowRight,
 } from "lucide-react";
->>>>>>> dev
 
 interface UserProfile {
   id: string;
@@ -52,13 +42,6 @@ interface UserProfile {
 }
 
 export default function ProfilePage() {
-<<<<<<< HEAD
-  const sessionData = useSession();
-  const session = sessionData?.data;
-  const status = sessionData?.status || 'loading';
-  
-  const [role, setRole] = useState<Role>("user");
-=======
   const { data: session, status } = useSession();
   const router = useRouter();
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -75,7 +58,6 @@ export default function ProfilePage() {
     address: "",
     province: "",
   });
->>>>>>> dev
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -83,35 +65,6 @@ export default function ProfilePage() {
       return;
     }
 
-<<<<<<< HEAD
-  if (status === "loading") {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p>Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!session) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <p className="text-xl mb-4">กรุณาเข้าสู่ระบบก่อน</p>
-          {/* ⭐ เปลี่ยนจาก <a> เป็น <Link> */}
-          <Link 
-            href="/api/auth/signin" 
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition inline-block"
-          >
-            เข้าสู่ระบบ
-          </Link>
-        </div>
-      </div>
-    );
-  }
-=======
     if (status === "authenticated") {
       fetchProfile();
     }
@@ -132,7 +85,6 @@ export default function ProfilePage() {
           address: data.profile.address || "",
           province: data.profile.province || "",
         });
->>>>>>> dev
 
         // ถ้ายังไม่มีข้อมูลพื้นฐาน แสดง onboarding
         if (!data.profile.phone && !data.profile.bio) {
@@ -350,22 +302,6 @@ export default function ProfilePage() {
 
   // Normal Profile View
   return (
-<<<<<<< HEAD
-    <div className="p-6 max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4">โปรไฟล์ของคุณ</h1>
-      <div className="bg-white shadow rounded-lg p-6">
-        <p className="mb-2"><strong>ชื่อผู้ใช้:</strong> {session.user?.name}</p>
-        <p className="mb-2"><strong>อีเมล:</strong> {session.user?.email}</p>
-        <p className="mb-4"><strong>Role ปัจจุบัน:</strong> {role}</p>
-        {role === "user" && (
-          <button
-            onClick={upgradeToShop}
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-          >
-            อัปเกรดเป็น Shop
-          </button>
-        )}
-=======
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Profile Header */}
@@ -630,7 +566,6 @@ export default function ProfilePage() {
             </div>
           </div>
         </div>
->>>>>>> dev
       </div>
     </div>
   );
