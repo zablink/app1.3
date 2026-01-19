@@ -293,17 +293,13 @@ export default function HomePage() {
           <div 
             className="flex h-full transition-transform duration-1000 ease-in-out"
             style={{
-              transform: `translateX(-${currentBannerIndex * 100}%)`,
-              width: `${bannerImages.length * 100}%`
+              transform: `translateX(-${currentBannerIndex * 100}%)`
             }}
           >
             {bannerImages.map((imageUrl, index) => (
               <div
                 key={index}
-                className="w-full h-full flex-shrink-0 relative"
-                style={{
-                  width: `${100 / bannerImages.length}%`
-                }}
+                className="relative flex-shrink-0 w-full h-full"
               >
                 <img
                   src={imageUrl}
