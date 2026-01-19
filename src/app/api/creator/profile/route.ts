@@ -1,0 +1,121 @@
+// app/api/creator/profile/route.ts
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import prisma from "@/lib/prisma";
+import { authOptions } from "@/lib/auth";
+
+export async function GET(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session || !session.user) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    const userId = session.user.id;
+
+    const creator = await prisma.creator.findUnique({
+      where: { userId },
+      select: {
+        id: true,
+        displayName: true,
+        bio: true,
+        phone: true,
+        coverageLevel: true,
+        provinceId: true,
+        amphureId: true,
+        tambonId: true,
+        hasExperience: true,
+        priceRangeMin: true,
+        priceRangeMax: true,
+        currentPriceMin: true,
+        currentPriceMax: true,
+        socialMedia: true,
+        portfolioLinks: true,
+        totalReviews: true,
+        completedReviews: true,
+        rating: true,
+        totalEarnings: true,
+        availableBalance: true,
+        totalWithdrawn: true,
+        applicationStatus: true,
+        rejectReason: true,
+        appliedAt: true,
+        approvedAt: true,
+        rejectedAt: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    if (!creator) {
+      return NextResponse.json(
+        { error: "Creator profile not found" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(creator);
+  } catch (error) {
+    console.error("Error fetching creator profile:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch creator profile" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PATCH(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session || !session.user) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    const userId = session.user.id;
+    const body = await request.json();
+    const { currentPriceMin, currentPriceMax } = body;
+
+    if (currentPriceMin === undefined || currentPriceMax === undefined) {
+      return NextResponse.json(
+        { error: "currentPriceMin and currentPriceMax are required" },
+        { status: 400 }
+      );
+    }
+
+    const creator = await prisma.creator.findUnique({
+      where: { userId },
+    });
+
+    if (!creator) {
+      return NextResponse.json(
+        { error: "Creator profile not found" },
+        { status: 404 }
+      );
+    }
+
+    // Update creator prices
+    const updatedCreator = await prisma.creator.update({
+      where: { userId },
+      data: {
+        currentPriceMin: parseInt(currentPriceMin),
+        currentPriceMax: parseInt(currentPriceMax),
+      },
+    });
+
+    return NextResponse.json(updatedCreator);
+  } catch (error) {
+    console.error("Error updating creator profile:", error);
+    return NextResponse.json(
+      { error: "Failed to update creator profile" },
+      { status: 500 }
+    );
+  }
+}

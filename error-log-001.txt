@@ -1,0 +1,175 @@
+2025-12-02 09:15:18.526 [error] Unhandled Rejection: Error: You cannot use different slug names for the same dynamic path ('id' !== 'shopId').
+at i (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:14388)
+at rS._insert (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:15871)
+at rS._insert (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:15985)
+at rS._insert (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:15985)
+at rS._insert (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:15985)
+at rS.insert (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:12263)
+at /var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:18130
+at Array.forEach (<anonymous>)
+at /var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:18117
+at rD.reload (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:18152)
+[Error: You cannot use different slug names for the same dynamic path ('id' !== 'shopId').]
+Unhandled Rejection: Error: You cannot use different slug names for the same dynamic path ('id' !== 'shopId').
+at i (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:14388)
+at rS._insert (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:15871)
+at rS._insert (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:15985)
+at rS._insert (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:15985)
+at rS._insert (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:15985)
+at rS.insert (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:12263)
+at /var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:18130
+at Array.forEach (<anonymous>)
+at /var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:18117
+at rD.reload (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:18152)
+[Error: You cannot use different slug names for the same dynamic path ('id' !== 'shopId').]
+
+2025-12-02 09:15:18.392 [error] Unhandled Rejection: Error: You cannot use different slug names for the same dynamic path ('id' !== 'shopId').
+at i (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:14388)
+at rS._insert (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:15871)
+at rS._insert (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:15985)
+at rS._insert (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:15985)
+at rS._insert (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:15985)
+at rS.insert (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:12263)
+at /var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:18130
+at Array.forEach (<anonymous>)
+at /var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:18117
+at rD.reload (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:18152)
+[Error: You cannot use different slug names for the same dynamic path ('id' !== 'shopId').]
+Unhandled Rejection: Error: You cannot use different slug names for the same dynamic path ('id' !== 'shopId').
+at i (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:14388)
+at rS._insert (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:15871)
+at rS._insert (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:15985)
+at rS._insert (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:15985)
+at rS._insert (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:15985)
+at rS.insert (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:12263)
+at /var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:18130
+at Array.forEach (<anonymous>)
+at /var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:18117
+at rD.reload (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:18152)
+[Error: You cannot use different slug names for the same dynamic path ('id' !== 'shopId').]
+
+2025-12-02 09:15:18.423 [error] Unhandled Rejection: Error: You cannot use different slug names for the same dynamic path ('id' !== 'shopId').
+at i (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:14388)
+at rS._insert (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:15871)
+at rS._insert (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:15985)
+at rS._insert (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:15985)
+at rS._insert (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:15985)
+at rS.insert (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:12263)
+at /var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:18130
+at Array.forEach (<anonymous>)
+at /var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:18117
+at rD.reload (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:18152)
+[Error: You cannot use different slug names for the same dynamic path ('id' !== 'shopId').]
+Unhandled Rejection: Error: You cannot use different slug names for the same dynamic path ('id' !== 'shopId').
+at i (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:14388)
+at rS._insert (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:15871)
+at rS._insert (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:15985)
+at rS._insert (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:15985)
+at rS._insert (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:15985)
+at rS.insert (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:12263)
+at /var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:18130
+at Array.forEach (<anonymous>)
+at /var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:18117
+at rD.reload (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:18152)
+[Error: You cannot use different slug names for the same dynamic path ('id' !== 'shopId').]
+
+Unhandled Rejection: Error: You cannot use different slug names for the same dynamic path ('id' !== 'shopId').
+at i (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:14388)
+at rS._insert (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:15871)
+at rS._insert (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:15985)
+at rS._insert (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:15985)
+at rS._insert (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:15985)
+at rS.insert (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:12263)
+at /var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:18130
+at Array.forEach (<anonymous>)
+at /var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:18117
+at rD.reload (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:18152)
+[Error: You cannot use different slug names for the same dynamic path ('id' !== 'shopId').]
+Unhandled Rejection: Error: You cannot use different slug names for the same dynamic path ('id' !== 'shopId').
+at i (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:14388)
+at rS._insert (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:15871)
+at rS._insert (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:15985)
+at rS._insert (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:15985)
+at rS._insert (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:15985)
+at rS.insert (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:12263)
+at /var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:18130
+at Array.forEach (<anonymous>)
+at /var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:18117
+at rD.reload (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:18152)
+[Error: You cannot use different slug names for the same dynamic path ('id' !== 'shopId').]
+
+2025-12-02 09:15:18.536 [error] Unhandled Rejection: Error: You cannot use different slug names for the same dynamic path ('id' !== 'shopId').
+at i (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:14388)
+at rS._insert (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:15871)
+at rS._insert (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:15985)
+at rS._insert (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:15985)
+at rS._insert (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:15985)
+at rS.insert (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:12263)
+at /var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:18130
+at Array.forEach (<anonymous>)
+at /var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:18117
+at rD.reload (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:18152)
+[Error: You cannot use different slug names for the same dynamic path ('id' !== 'shopId').]
+Unhandled Rejection: Error: You cannot use different slug names for the same dynamic path ('id' !== 'shopId').
+at i (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:14388)
+at rS._insert (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:15871)
+at rS._insert (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:15985)
+at rS._insert (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:15985)
+at rS._insert (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:15985)
+at rS.insert (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:12263)
+at /var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:18130
+at Array.forEach (<anonymous>)
+at /var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:18117
+at rD.reload (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:18152)
+[Error: You cannot use different slug names for the same dynamic path ('id' !== 'shopId').]
+
+2025-12-02 09:14:07.354 [error] revalidating cache with key: async()=>{let a=Date.now();if(f&&a-g<3e5)return f;let b=(await d.z.siteSetting.findMany({select:{key:!0,value:!0,dataType:!0}})).reduce((a,b)=>{let c=b.value;if("json"===b.dataType)try{c=JSON.parse(b.value)}catch{c=b.value}else"boolean"===b.dataType?c="true"===b.value:"number"===b.dataType&&(c=parseFloat(b.value));return a[b.key]=c,a},{});return f=b,g=a,b}-site-settings-[] Error [PrismaClientInitializationError]: 
+Invalid `prisma.siteSetting.findMany()` invocation:
+
+
+Can't reach database server at `db.vygryagvxjewxdzgipea.supabase.co:5432`
+
+Please make sure your database server is running at `db.vygryagvxjewxdzgipea.supabase.co:5432`.
+    at async h.revalidate (.next/server/chunks/2996.js:14:7675) {
+  clientVersion: '6.16.2',
+  errorCode: undefined,
+  retryable: undefined
+}
+
+2025-12-02 09:15:18.395 [error] Unhandled Rejection: Error: You cannot use different slug names for the same dynamic path ('id' !== 'shopId').
+at i (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:14388)
+at rS._insert (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:15871)
+at rS._insert (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:15985)
+at rS._insert (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:15985)
+at rS._insert (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:15985)
+at rS.insert (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:12263)
+at /var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:18130
+at Array.forEach (<anonymous>)
+at /var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:18117
+at rD.reload (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:18152)
+[Error: You cannot use different slug names for the same dynamic path ('id' !== 'shopId').]
+Unhandled Rejection: Error: You cannot use different slug names for the same dynamic path ('id' !== 'shopId').
+at i (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:14388)
+at rS._insert (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:15871)
+at rS._insert (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:15985)
+at rS._insert (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:15985)
+at rS._insert (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:15985)
+at rS.insert (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:12263)
+at /var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:18130
+at Array.forEach (<anonymous>)
+at /var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:18117
+at rD.reload (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:18152)
+[Error: You cannot use different slug names for the same dynamic path ('id' !== 'shopId').]
+
+2025-12-02 09:16:20.154 [error] Unhandled Rejection: Error: You cannot use different slug names for the same dynamic path ('id' !== 'shopId').
+at i (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:14388)
+at rS._insert (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:15871)
+at rS._insert (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:15985)
+at rS._insert (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:15985)
+at rS._insert (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:15985)
+at rS.insert (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:12263)
+at /var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:18130
+at Array.forEach (<anonymous>)
+at /var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:18117
+at rD.reload (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:12:18152)
+[Error: You cannot use different slug names for the same dynamic path ('id' !== 'shopId').]

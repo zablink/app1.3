@@ -1,199 +1,204 @@
-// src/components/shop/ShopGalleryManager.tsx (Updated)
+// components/shop/ShopGalleryManager.tsx
+"use client";
 
-'use client';
+import { useState } from 'react';
+import Image from 'next/image';
+import { Upload, X, Star, Loader } from 'lucide-react';
 
-import React, { useState } from 'react';
-import { Upload, X, Loader2 } from 'lucide-react';
-import type { ShopImage } from '@/types/shop';
-import { uploadShopImage } from '@/lib/clientUploadHelper';
-import { validateImageFile, formatFileSize } from '@/utils/imageCompression';
+interface GalleryImage {
+  id: string;
+  image_url: string;
+  is_featured: boolean;
+  uploaded_at: string;
+}
 
 interface ShopGalleryManagerProps {
   shopId: string;
-  gallery: ShopImage[];
-  onImageUploaded: (url: string, isFeatured: boolean) => void;
-  onRemoveImage: (imageId: string) => void;
-  onSetFeatured: (imageId: string) => void;
+  initialImages?: GalleryImage[];
+  maxImages?: number;
 }
 
-export const ShopGalleryManager: React.FC<ShopGalleryManagerProps> = ({
-  shopId,
-  gallery,
-  onImageUploaded,
-  onRemoveImage,
-  onSetFeatured,
-}) => {
+export default function ShopGalleryManager({ 
+  shopId, 
+  initialImages = [],
+  maxImages = 10 
+}: ShopGalleryManagerProps) {
+  const [images, setImages] = useState<GalleryImage[]>(initialImages);
   const [uploading, setUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [uploadStatus, setUploadStatus] = useState<string>('');
+  const [error, setError] = useState<string | null>(null);
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    if (files.length === 0) return;
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
 
-    // Validate files
-    for (const file of files) {
-      const validation = validateImageFile(file);
-      if (!validation.valid) {
-        alert(validation.message);
-        return;
-      }
+    if (images.length + files.length > maxImages) {
+      setError(`สามารถอัปโหลดได้สูงสุด ${maxImages} รูป`);
+      return;
     }
 
     setUploading(true);
-    setUploadProgress(0);
-    setUploadStatus('กำลังเตรียมอัปโหลด...');
+    setError(null);
 
     try {
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        setUploadStatus(
-          `กำลังอัปโหลดรูปที่ ${i + 1}/${files.length} (${formatFileSize(file.size)})`
-        );
+      const uploadPromises = Array.from(files).map(async (file) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('shopId', shopId);
 
-        const result = await uploadShopImage(file, shopId, (progress) => {
-          setUploadProgress(progress);
+        const response = await fetch('/api/shop/upload-image', {
+          method: 'POST',
+          body: formData,
         });
 
-        if (result.success && result.url) {
-          // Auto-set first image as featured if no featured image exists
-          const isFeatured = gallery.length === 0 && i === 0;
-          onImageUploaded(result.url, isFeatured);
-
-          if (result.metadata) {
-            console.log(
-              `Compressed: ${formatFileSize(result.metadata.originalSize)} → ${formatFileSize(result.metadata.compressedSize)} (${result.metadata.compressionRatio.toFixed(1)}% saved)`
-            );
-          }
-        } else {
-          throw new Error(result.error || 'Upload failed');
+        if (!response.ok) {
+          throw new Error('Upload failed');
         }
+
+        return response.json();
+      });
+
+      const uploadedImages = await Promise.all(uploadPromises);
+      setImages([...images, ...uploadedImages]);
+    } catch (err) {
+      setError('ไม่สามารถอัปโหลดรูปภาพได้');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleDelete = async (imageId: string) => {
+    if (!confirm('คุณต้องการลบรูปภาพนี้หรือไม่?')) return;
+
+    try {
+      const response = await fetch(`/api/shop/upload-image?id=${imageId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Delete failed');
       }
 
-      setUploadStatus('อัปโหลดสำเร็จ!');
-      setTimeout(() => {
-        setUploading(false);
-        setUploadProgress(0);
-        setUploadStatus('');
-      }, 2000);
-    } catch (error) {
-      console.error('Upload error:', error);
-      alert('เกิดข้อผิดพลาดในการอัปโหลด: ' + (error as Error).message);
-      setUploading(false);
-      setUploadProgress(0);
-      setUploadStatus('');
+      setImages(images.filter(img => img.id !== imageId));
+    } catch (err) {
+      setError('ไม่สามารถลบรูปภาพได้');
     }
+  };
 
-    e.target.value = '';
+  const handleSetFeatured = async (imageId: string) => {
+    try {
+      const response = await fetch('/api/shop/upload-image', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: imageId, is_featured: true }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Update failed');
+      }
+
+      // Update local state
+      setImages(images.map(img => ({
+        ...img,
+        is_featured: img.id === imageId
+      })));
+    } catch (err) {
+      setError('ไม่สามารถตั้งรูปเด่นได้');
+    }
   };
 
   return (
-    <div className="space-y-6 border p-6 rounded-xl bg-pink-50">
-      <h2 className="text-2xl font-bold text-pink-800">
-        4. รูปภาพร้านค้า (Feature Image & Gallery)
-      </h2>
-      <p className="text-sm text-pink-600">
-        รูปภาพที่มีเครื่องหมาย ⭐ คือ ภาพหน้าปก (Feature Image)
-        ซึ่งจะใช้เป็นภาพหลักในการแชร์ไปยัง Social Media
-      </p>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <label className="block text-sm font-medium text-gray-700">
+          รูปภาพร้าน ({images.length}/{maxImages})
+        </label>
+      </div>
 
-      {/* Image Upload Area */}
-      <label
-        className={`flex flex-col items-center justify-center w-full h-32 border-2 border-pink-400 border-dashed rounded-lg cursor-pointer bg-pink-100/50 hover:bg-pink-100 transition ${
-          uploading ? 'opacity-50 cursor-not-allowed' : ''
-        }`}
-      >
-        <div className="flex flex-col items-center justify-center pt-5 pb-6">
-          {uploading ? (
-            <>
-              <Loader2 className="w-8 h-8 text-pink-500 animate-spin" />
-              <p className="mt-2 text-sm text-pink-700 font-semibold">
-                {uploadStatus}
-              </p>
-              <div className="w-64 h-2 bg-pink-200 rounded-full mt-2 overflow-hidden">
-                <div
-                  className="h-full bg-pink-600 transition-all duration-300"
-                  style={{ width: `${uploadProgress}%` }}
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+          {error}
+        </div>
+      )}
+
+      {/* Upload Area */}
+      {images.length < maxImages && (
+        <label className="block cursor-pointer">
+          <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-500 transition-colors">
+            {uploading ? (
+              <div className="flex flex-col items-center gap-2">
+                <Loader className="w-8 h-8 animate-spin text-blue-600" />
+                <p className="text-sm text-gray-600">กำลังอัปโหลด...</p>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center gap-2">
+                <Upload className="w-8 h-8 text-gray-400" />
+                <p className="text-sm text-gray-600">คลิกเพื่อเลือกรูปภาพ</p>
+                <p className="text-xs text-gray-500">PNG, JPG, WEBP (สูงสุด 5MB)</p>
+              </div>
+            )}
+          </div>
+          <input
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={handleUpload}
+            disabled={uploading}
+            className="hidden"
+          />
+        </label>
+      )}
+
+      {/* Image Grid */}
+      {images.length > 0 && (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {images.map((image) => (
+            <div key={image.id} className="relative group">
+              <div className="aspect-square relative rounded-lg overflow-hidden bg-gray-100">
+                <Image
+                  src={image.image_url}
+                  alt="Shop image"
+                  fill
+                  className="object-cover"
                 />
               </div>
-              <p className="text-xs text-pink-500 mt-1">{uploadProgress}%</p>
-            </>
-          ) : (
-            <>
-              <Upload className="w-8 h-8 text-pink-500" />
-              <p className="mb-2 text-sm text-pink-700">
-                <span className="font-semibold">คลิกเพื่ออัพโหลด</span>{' '}
-                หรือลากวางไฟล์ที่นี่
-              </p>
-              <p className="text-xs text-pink-500">
-                รองรับ JPG, PNG, WebP, GIF (สูงสุด 10MB)
-              </p>
-            </>
-          )}
-        </div>
-        <input
-          id="dropzone-file"
-          type="file"
-          className="hidden"
-          multiple
-          accept="image/*"
-          onChange={handleFileUpload}
-          disabled={uploading}
-        />
-      </label>
 
-      {/* Gallery Display Area */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        {gallery.map((img, index) => (
-          <div
-            key={img.id}
-            className="relative group overflow-hidden rounded-lg shadow-md border-2"
-            style={{ aspectRatio: '1 / 1' }}
-          >
-            <img
-              src={img.url}
-              alt={`Gallery Image ${index + 1}`}
-              className={`w-full h-full object-cover transition duration-300 ${
-                img.isFeatured
-                  ? 'border-4 border-green-500'
-                  : 'border-gray-200'
-              }`}
-            />
-
-            <div className="absolute inset-0 bg-black bg-opacity-30 flex flex-col justify-end p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              <div className="flex justify-between items-center text-xs space-x-1">
-                {img.isFeatured ? (
-                  <span className="bg-green-600 text-white font-bold px-2 py-1 rounded-full">
-                    ⭐ หน้าปก
-                  </span>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => onSetFeatured(img.id)}
-                    className="bg-indigo-600 text-white hover:bg-indigo-700 px-2 py-1 rounded-full transition"
-                  >
-                    ตั้งเป็นหน้าปก
-                  </button>
-                )}
+              {/* Overlay */}
+              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center gap-2">
                 <button
-                  type="button"
-                  onClick={() => onRemoveImage(img.id)}
-                  className="p-1 bg-red-600 text-white rounded-full hover:bg-red-700 transition"
-                  title="ลบรูปภาพ"
+                  onClick={() => handleSetFeatured(image.id)}
+                  className={`p-2 rounded-full ${
+                    image.is_featured 
+                      ? 'bg-yellow-500 text-white' 
+                      : 'bg-white text-gray-700 hover:bg-yellow-500 hover:text-white'
+                  } transition-colors`}
+                  title="ตั้งเป็นรูปเด่น"
+                >
+                  <Star className="w-4 h-4" />
+                </button>
+
+                <button
+                  onClick={() => handleDelete(image.id)}
+                  className="p-2 bg-red-600 text-white rounded-full hover:bg-red-700 transition-colors"
+                  title="ลบรูป"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
-            </div>
-          </div>
-        ))}
-      </div>
 
-      {gallery.length === 0 && (
-        <p className="text-center text-gray-500 py-4 border rounded-lg">
-          ยังไม่มีรูปภาพในแกลเลอรี่
-        </p>
+              {/* Featured Badge */}
+              {image.is_featured && (
+                <div className="absolute top-2 right-2 bg-yellow-500 text-white px-2 py-1 rounded text-xs font-medium flex items-center gap-1">
+                  <Star className="w-3 h-3" />
+                  รูปเด่น
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );
-};
+}
+
+// Named export for compatibility
+export { ShopGalleryManager };

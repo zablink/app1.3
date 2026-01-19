@@ -33,19 +33,19 @@ export interface ShopData {
   gallery: ShopImage[];
 }
 
-// Database types (matching Supabase schema)
+// Database types (matching PostgreSQL schema with snake_case)
 export interface ShopDbInsert {
   id: string;
-  ownerId: string;
+  owner_id: string;        // Changed from ownerId
   name: string;
   description: string | null;
   address: string | null;
-  categoryId: string;
+  category_id: string;     // Changed from categoryId
   image: string | null;
   has_physical_store: boolean;
   show_location_on_map: boolean;
-  updatedAt: string;
-  location: string; // PostGIS POINT
+  updated_at: string;      // Changed from updatedAt
+  location: string;        // PostGIS POINT
 }
 
 export interface ShopLinkDbInsert {

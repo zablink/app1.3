@@ -153,7 +153,7 @@ export default function LocationFinderPage() {
         {/* Credit/Source */}
         <div className="mt-12 pt-4 border-t border-gray-200 text-center text-sm text-gray-500">
           <p>
-            Powered by PostGIS & Supabase RPC | Data from loc_tambons table.
+            Powered by PostGIS & Supabase RPC | Data from th_subdistricts table.
           </p>
           <p className="text-xs mt-1">
             ไฟล์ทดสอบการค้นหาตำบล โดยลุงเว่อร์เองจ้า

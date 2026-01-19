@@ -1,24 +1,54 @@
-// src/middleware.ts
+// middleware.ts
+import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
 
+export default withAuth(
+  function middleware(req) {
+    const token = req.nextauth.token;
+    const path = req.nextUrl.pathname;
 
-export async function middleware(req: NextRequest) {
-const { cookies, nextUrl } = req;
-const role = cookies.get("next-auth.session-token-role")?.value;
-const path = nextUrl.pathname;
+    // Allow registration pages for authenticated users (any role)
+    if (path === "/shop/register" || path === "/creator/register") {
+      return NextResponse.next();
+    }
 
+    // Admin routes
+    if (path.startsWith("/admin")) {
+      if (token?.role !== "ADMIN") {
+        return NextResponse.redirect(new URL("/unauthorized", req.url));
+      }
+    }
 
-const requireShop = path.startsWith("/dashboard/shop");
-const requireAdmin = path.startsWith("/admin");
+    // Shop Owner routes
+    if (path.startsWith("/dashboard/shop")) {
+      if (token?.role !== "SHOP" && token?.role !== "ADMIN") {
+        return NextResponse.redirect(new URL("/unauthorized", req.url));
+      }
+    }
 
+    // Creator routes
+    if (path.startsWith("/dashboard/creator")) {
+      if (token?.role !== "CREATOR" && token?.role !== "ADMIN") {
+        return NextResponse.redirect(new URL("/unauthorized", req.url));
+      }
+    }
 
-if (requireAdmin && role !== "ADMIN") return NextResponse.redirect(new URL("/", req.url));
-if (requireShop && !(role === "SHOP" || role === "ADMIN")) return NextResponse.redirect(new URL("/dashboard/user", req.url));
-return NextResponse.next();
-}
-
+    return NextResponse.next();
+  },
+  {
+    callbacks: {
+      authorized: ({ token }) => !!token,
+    },
+  }
+);
 
 export const config = {
-matcher: ["/dashboard/:path*", "/admin/:path*"],
+  matcher: [
+    "/dashboard/:path*",
+    "/admin/:path*",
+    "/profile/:path*",
+    "/shop/edit/:path*",
+    "/shop/register",
+    "/creator/register",
+  ],
 };
