@@ -26,11 +26,45 @@ export async function POST(req: Request) {
       const providerRef = data.id;
 
       if (shopId && action === "subscription") {
-        // Mark PENDING subscriptions active (example)
-        await prisma.shopSubscription.updateMany({
-          where: { shopId, status: "PENDING" },
-          data: { paymentRef: providerRef, status: "ACTIVE" },
+        // Update subscription with payment reference
+        // Find subscription by paymentRef or the most recent subscription for this shop
+        const subscription = await prisma.shopSubscription.findFirst({
+          where: {
+            shopId,
+            OR: [
+              { paymentRef: providerRef },
+              { paymentRef: null },
+            ],
+          },
+          orderBy: { createdAt: "desc" },
         });
+
+        if (subscription) {
+          // Update paymentRef to confirm payment
+          await prisma.shopSubscription.update({
+            where: { id: subscription.id },
+            data: { 
+              paymentRef: providerRef,
+              status: "ACTIVE",
+            },
+          });
+        } else {
+          // If no subscription found, try to find by packageId from metadata
+          const packageId = metadata.packageId as string | undefined;
+          if (packageId) {
+            await prisma.shopSubscription.updateMany({
+              where: {
+                shopId,
+                packageId,
+                paymentRef: null,
+              },
+              data: {
+                paymentRef: providerRef,
+                status: "ACTIVE",
+              },
+            });
+          }
+        }
       } else if (shopId && action === "token_purchase") {
         const purchaseId = metadata.tokenPurchaseId as string | undefined;
         if (purchaseId) {

@@ -364,13 +364,29 @@ export default function ShopDashboard() {
                         </span>
                       )}
                     </h2>
-                    <p className="text-sm text-gray-600">
-                      หมดอายุ: {new Date(analytics.subscription.endDate).toLocaleDateString('th-TH', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                      })}
-                    </p>
+                    <div className="text-sm text-gray-600">
+                      <p>
+                        หมดอายุ: {new Date(analytics.subscription.endDate).toLocaleDateString('th-TH', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })}
+                      </p>
+                      {(() => {
+                        const endDate = new Date(analytics.subscription.endDate);
+                        const now = new Date();
+                        const daysRemaining = Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+                        return daysRemaining > 0 ? (
+                          <p className={`mt-1 font-semibold ${daysRemaining <= 7 ? 'text-red-600' : daysRemaining <= 30 ? 'text-orange-600' : 'text-green-600'}`}>
+                            เหลืออีก {daysRemaining} วัน
+                          </p>
+                        ) : (
+                          <p className="mt-1 font-semibold text-red-600">
+                            หมดอายุแล้ว
+                          </p>
+                        );
+                      })()}
+                    </div>
                   </div>
                 </div>
                 {analytics.subscription.features.hasVerifiedBadge && (
@@ -412,6 +428,23 @@ export default function ShopDashboard() {
                   </div>
                 )}
               </div>
+              
+              {/* Renewal Button */}
+              {(() => {
+                const endDate = new Date(analytics.subscription.endDate);
+                const now = new Date();
+                const daysRemaining = Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+                return daysRemaining <= 30 ? (
+                  <div className="mt-4 pt-4 border-t border-purple-200">
+                    <Link
+                      href={`/pricing/renewal?shopId=${shop.id}`}
+                      className="block w-full text-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-medium"
+                    >
+                      {daysRemaining > 0 ? 'ต่ออายุ Package' : 'ต่ออายุ Package (หมดอายุแล้ว)'}
+                    </Link>
+                  </div>
+                ) : null;
+              })()}
             </div>
           )}
 

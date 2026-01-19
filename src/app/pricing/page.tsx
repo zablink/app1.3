@@ -224,7 +224,7 @@ export default function PricingPage() {
                     </ul>
 
                     <Link
-                      href="/shop/register"
+                      href={`/pricing/cart/package?packageName=${pkg.name}`}
                       className={`block w-full text-center py-3 rounded-lg font-semibold transition-colors ${
                         pkg.popular
                           ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600'
@@ -279,9 +279,12 @@ export default function PricingPage() {
                   <div className="text-2xl font-bold text-blue-600 mb-4">
                     ฿{token.price}
                   </div>
-                  <button className="w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                  <Link
+                    href={`/pricing/cart/token?amount=${token.amount + token.bonus}&price=${token.price}&bonus=${token.bonus}`}
+                    className="block w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-center"
+                  >
                     ซื้อเลย
-                  </button>
+                  </Link>
                 </div>
               </div>
             ))}
