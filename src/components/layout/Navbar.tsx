@@ -33,6 +33,9 @@ export default function Navbar() {
                   width={32}
                   height={32}
                   className="w-8 h-8 object-contain"
+                  unoptimized={settings.site_logo?.startsWith('/') === false}
+                  key={settings.site_logo}
+                  priority
                 />
               ) : (
                 <Store className="w-8 h-8 text-blue-600" />

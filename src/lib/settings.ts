@@ -96,11 +96,26 @@ export function clearSettingsCache() {
 }
 
 /**
+ * Helper function to add cache-busting query string to URLs
+ */
+function addCacheBuster(url: string): string {
+  if (!url) return url;
+  // If URL already has query params, append with &
+  const separator = url.includes('?') ? '&' : '?';
+  // Use timestamp of last update or current timestamp
+  const timestamp = Date.now();
+  return `${url}${separator}v=${timestamp}`;
+}
+
+/**
  * Get metadata for SEO (title, description, etc.)
  */
 export async function getSiteMetadata() {
   try {
     const settings = await getSettings();
+
+    // Get timestamp for cache-busting (use updatedAt if available, otherwise current time)
+    const timestamp = Date.now();
 
     return {
       title: settings.seo_title || settings.site_name || 'Zablink',
@@ -109,7 +124,7 @@ export async function getSiteMetadata() {
       openGraph: {
         title: settings.og_title || settings.seo_title || settings.site_name,
         description: settings.og_description || settings.seo_description,
-        images: settings.og_image ? [settings.og_image] : [],
+        images: settings.og_image ? [addCacheBuster(settings.og_image)] : [],
         type: settings.og_type || 'website',
       },
       twitter: {
@@ -119,31 +134,31 @@ export async function getSiteMetadata() {
       icons: {
         icon: [
           {
-            url: settings.site_favicon_16 || settings.site_favicon || '/favicon-16x16.png',
+            url: addCacheBuster(settings.site_favicon_16 || settings.site_favicon || '/favicon-16x16.png'),
             sizes: '16x16',
             type: 'image/png',
           },
           {
-            url: settings.site_favicon_32 || settings.site_favicon || '/favicon-32x32.png',
+            url: addCacheBuster(settings.site_favicon_32 || settings.site_favicon || '/favicon-32x32.png'),
             sizes: '32x32',
             type: 'image/png',
           },
         ],
-        apple: settings.site_apple_touch_icon || '/apple-touch-icon.png',
+        apple: addCacheBuster(settings.site_apple_touch_icon || '/apple-touch-icon.png'),
         other: [
           {
             rel: 'icon',
-            url: settings.site_favicon || '/favicon.ico',
+            url: addCacheBuster(settings.site_favicon || '/favicon.ico'),
           },
           {
             rel: 'icon',
-            url: settings.site_icon_192 || '/icon-192x192.png',
+            url: addCacheBuster(settings.site_icon_192 || '/icon-192x192.png'),
             sizes: '192x192',
             type: 'image/png',
           },
           {
             rel: 'icon',
-            url: settings.site_icon_512 || '/icon-512x512.png',
+            url: addCacheBuster(settings.site_icon_512 || '/icon-512x512.png'),
             sizes: '512x512',
             type: 'image/png',
           },
