@@ -4,24 +4,10 @@ module.exports = {
     './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
     './src/components/**/*.{js,ts,jsx,tsx,mdx}',
     './src/app/**/*.{js,ts,jsx,tsx,mdx}',
-<<<<<<< HEAD
-=======
-    './app/**/*.{js,ts,jsx,tsx,mdx}',
-    './pages/**/*.{js,ts,jsx,tsx,mdx}',
-    './components/**/*.{js,ts,jsx,tsx,mdx}',
->>>>>>> dev
   ],
   theme: {
     extend: {
       fontFamily: {
-<<<<<<< HEAD
-        prompt: ['var(--font-prompt)', 'sans-serif'],
-      },
-    },
-  },
-  plugins: [],
-}
-=======
         sans: ['var(--font-prompt)', 'sans-serif'],
         prompt: ['var(--font-prompt)', 'sans-serif'],
       },
@@ -68,4 +54,3 @@ module.exports = {
   },
   plugins: [],
 }
->>>>>>> dev
