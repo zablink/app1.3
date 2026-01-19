@@ -220,6 +220,7 @@ model SubscriptionPackage {
   features                   String?
   tier                       SubscriptionTier?
   shop_subscriptions         ShopSubscription[]
+  promotion_campaigns        PromotionCampaign[]
 
   @@index([tier], map: "idx_subscription_packages_tier")
   @@map("subscription_packages")
@@ -277,6 +278,50 @@ model TokenWallet {
   Shop       Shop      @relation(fields: [shop_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@map("token_wallets")
+}
+
+/// *
+///  * ---------------------------
+///  * PROMOTION CAMPAIGN models
+///  * ---------------------------
+model PromotionCampaign {
+  id             String    @id @default(dbgenerated("(gen_random_uuid())::text"))
+  name           String
+  description    String?
+  campaignType   String    @map("campaign_type") // PACKAGE, TOKEN, RENEWAL
+  
+  // Package specific
+  packageTier    String?   @map("package_tier") // FREE, BASIC, PRO, PREMIUM
+  packageId      String?   @map("package_id")
+  
+  // Discount/Benefit
+  discountType   String    @map("discount_type") // PERCENTAGE, FIXED_AMOUNT, TOKEN_MULTIPLIER, FREE_TOKENS
+  discountValue  Decimal?  @map("discount_value") @db.Decimal(10, 2)
+  tokenMultiplier Decimal? @map("token_multiplier") @db.Decimal(5, 2) @default(1.0)
+  freeTokens     Int?      @map("free_tokens") @default(0)
+  
+  // Date range
+  startDate      DateTime  @map("start_date") @db.Timestamptz(6)
+  endDate        DateTime  @map("end_date") @db.Timestamptz(6)
+  
+  // Status
+  isActive       Boolean   @map("is_active") @default(true)
+  maxUses        Int?      @map("max_uses")
+  currentUses    Int       @map("current_uses") @default(0)
+  
+  // Metadata
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdBy      String?   @map("created_by")
+  
+  package        SubscriptionPackage? @relation(fields: [packageId], references: [id], onDelete: SetNull)
+  
+  @@index([campaignType], map: "idx_promotion_campaigns_type")
+  @@index([startDate, endDate], map: "idx_promotion_campaigns_dates")
+  @@index([isActive, startDate, endDate], map: "idx_promotion_campaigns_active")
+  @@index([packageId], map: "idx_promotion_campaigns_package")
+  @@index([packageTier], map: "idx_promotion_campaigns_tier")
+  @@map("promotion_campaigns")
 }
 
 model SiteSetting {
