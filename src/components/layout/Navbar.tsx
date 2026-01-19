@@ -1,140 +1,384 @@
-// src/components/layout/Navbar.tsx
+// components/layout/Navbar.tsx
 "use client";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useState } from "react";
-import { useSession, signIn, signOut } from "next-auth/react";
-import { Menu, ChevronDown } from "lucide-react";
-import MobileMenu from "./MobileMenu";
+
+import { useState } from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
+import { useSession, signOut } from 'next-auth/react';
+import { useLocation } from '@/contexts/LocationContext';
+import { useSiteSettings } from '@/hooks/useSiteSettings';
+import { MapPin, Menu, X, User, LogOut, Store, LayoutDashboard, Grid3x3, Info, DollarSign, Search, Star } from 'lucide-react';
+import LocationModal from '@/components/location/LocationModal';
 
 export default function Navbar() {
-  const pathname = usePathname();
   const { data: session } = useSession();
-  const [open, setOpen] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
+  const { location } = useLocation();
+  const { settings, loading: settingsLoading } = useSiteSettings();
+  const [showLocationModal, setShowLocationModal] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
 
-  const role = (session?.user as { role?: string })?.role;
-
-  const links = [
-    { href: "/", label: "หน้าแรก" },
-    { href: "/dashboard", label: "Dashboard" },
-    ...(role === "ADMIN" ? [{ href: "/admin", label: "Admin" }] : []),
-  ];
+  const userRole = (session?.user as any)?.role || 'USER';
 
   return (
-    <header className="sticky top-0 z-50 border-b bg-background/70 backdrop-blur">
-      <div className="mx-auto max-w-6xl px-4 py-3 flex items-center justify-between">
-        <Link href="/" className="font-bold text-xl">FoodFinder</Link>
-
-        <nav className="hidden md:flex gap-6 text-sm">
-          {links.map((l) => (
-            <Link
-              key={l.href}
-              href={l.href}
-              aria-current={pathname === l.href ? "page" : undefined}
-              className={[
-                "hover:opacity-80 transition",
-                pathname === l.href ? "font-semibold underline underline-offset-4" : "",
-              ].join(" ")}
-            >
-              {l.label}
+    <>
+      <nav className="bg-white border-b sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            {/* Logo */}
+            <Link href="/" className="flex items-center gap-2">
+              {settings.site_logo ? (
+                <Image
+                  src={settings.site_logo}
+                  alt={settings.site_name || 'Zablink'}
+                  width={32}
+                  height={32}
+                  className="w-8 h-8 object-contain"
+                  unoptimized={settings.site_logo?.startsWith('/') === false}
+                  key={settings.site_logo}
+                  priority
+                />
+              ) : (
+                <Store className="w-8 h-8 text-blue-600" />
+              )}
+              <span className="text-xl font-bold text-gray-900">
+                {settings.site_name || 'Zablink'}
+              </span>
             </Link>
-          ))}
-        </nav>
 
-        <div className="hidden md:flex items-center gap-3">
-          {!session ? (
-            <button onClick={() => signIn()} className="px-3 py-2 rounded-lg border">
-              เข้าสู่ระบบ
-            </button>
-          ) : (
-            <div className="relative">
-              <button
-                className="flex items-center gap-2 px-3 py-2 rounded-lg border"
-                onClick={() => setMenuOpen((v) => !v)}
-                aria-haspopup="menu"
-                aria-expanded={menuOpen}
-              >
-                <Avatar name={session.user?.name || "User"} image={session.user?.image} />
-                <ChevronDown className="h-4 w-4" />
-              </button>
-              {menuOpen && (
-                <div
-                  role="menu"
-                  className="absolute right-0 mt-2 w-48 rounded-xl border bg-background shadow-md p-1"
+            {/* Desktop Menu */}
+            <div className="hidden md:flex items-center gap-6">
+              {/* Navigation Links */}
+              <Link href="/" className="text-gray-700 hover:text-blue-600 transition-colors">
+                หน้าแรก
+              </Link>
+              
+              <Link href="/categories" className="text-gray-700 hover:text-blue-600 transition-colors flex items-center gap-1">
+                <Grid3x3 className="w-4 h-4" />
+                <span>หมวดหมู่</span>
+              </Link>
+              
+              <Link href="/search" className="text-gray-700 hover:text-blue-600 transition-colors flex items-center gap-1">
+                <Search className="w-4 h-4" />
+                <span>ค้นหา</span>
+              </Link>
+
+              <Link href="/pricing" className="text-gray-700 hover:text-blue-600 transition-colors flex items-center gap-1">
+                <span>฿</span>
+                <span>แพ็คเกจ</span>
+              </Link>
+
+              <Link href="/about" className="text-gray-700 hover:text-blue-600 transition-colors flex items-center gap-1">
+                <Info className="w-4 h-4" />
+                <span>เกี่ยวกับเรา</span>
+              </Link>
+
+              {/* Location Icon with Tooltip */}
+              <div className="relative group">
+                <button
+                  onClick={() => setShowLocationModal(true)}
+                  className="flex items-center justify-center w-10 h-10 text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                  title="เลือกพื้นที่"
                 >
-                  <MenuItem href="/dashboard" onClick={() => setMenuOpen(false)}>
-                    Dashboard
-                  </MenuItem>
-                  {role === "ADMIN" && (
-                    <MenuItem href="/admin" onClick={() => setMenuOpen(false)}>
-                      Admin
-                    </MenuItem>
+                  <MapPin className="w-5 h-5" />
+                </button>
+                
+                {/* Tooltip Bubble */}
+                <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-50 pointer-events-none">
+                  {location ? (
+                    <span>
+                      {location.tambonName && `${location.tambonName}, `}
+                      {location.amphureName}
+                    </span>
+                  ) : (
+                    <span>เลือกพื้นที่</span>
                   )}
-                  <MenuItem href="/dashboard/user" onClick={() => setMenuOpen(false)}>
-                    โปรไฟล์
-                  </MenuItem>
-                  <button
-                    className="w-full text-left px-3 py-2 rounded-lg hover:bg-muted"
-                    onClick={() => {
-                      setMenuOpen(false);
-                      signOut();
-                    }}
+                  <div className="absolute left-1/2 -translate-x-1/2 -top-1 w-2 h-2 bg-gray-900 rotate-45"></div>
+                </div>
+              </div>
+
+              {/* Dashboard Icon with Tooltip */}
+              {session && (
+                <div className="relative group">
+                  <Link
+                    href="/dashboard"
+                    className="flex items-center justify-center w-10 h-10 text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                    title="Dashboard"
                   >
-                    ออกจากระบบ
-                  </button>
+                    <LayoutDashboard className="w-5 h-5" />
+                  </Link>
+                  
+                  {/* Tooltip */}
+                  <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-50 pointer-events-none">
+                    <span>Dashboard</span>
+                    <div className="absolute left-1/2 -translate-x-1/2 -top-1 w-2 h-2 bg-gray-900 rotate-45"></div>
+                  </div>
                 </div>
               )}
+
+              {session ? (
+                <>
+                  <div className="relative group">
+                    <button className="flex items-center gap-2 text-gray-700 hover:text-blue-600">
+                      {session.user?.image ? (
+                        <Image
+                          src={session.user.image}
+                          alt={session.user.name || 'User'}
+                          width={20}
+                          height={20}
+                          className="w-5 h-5 rounded-full object-cover"
+                        />
+                      ) : (
+                        <User className="w-5 h-5" />
+                      )}
+                      <span className="text-sm">{session.user?.name || 'User'}</span>
+                    </button>
+
+                    {/* Dropdown */}
+                    <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
+                      <Link
+                        href="/profile"
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                      >
+                        โปรไฟล์
+                      </Link>
+                      
+                      <Link
+                        href="/bookmarks"
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                      >
+                        <Star className="w-4 h-4 text-yellow-500" fill="#FCD34D" />
+                        บุ๊คมาร์คของฉัน
+                      </Link>
+                      
+                      {userRole === 'USER' && (
+                        <>
+                          <div className="border-t my-1"></div>
+                          <div className="px-4 py-1 text-xs text-gray-500 font-semibold">
+                            สมัครเป็น
+                          </div>
+                          <Link
+                            href="/shop/register"
+                            className="block px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 flex items-center gap-2"
+                          >
+                            <Store className="w-4 h-4" />
+                            สมัครเป็นร้านค้า
+                          </Link>
+                          <Link
+                            href="/creator/register"
+                            className="block px-4 py-2 text-sm text-green-600 hover:bg-green-50 flex items-center gap-2"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                            </svg>
+                            สมัครเป็น Content Reviewer
+                          </Link>
+                        </>
+                      )}
+                      
+                      {userRole === 'SHOP' && (
+                        <Link
+                          href="/dashboard/shop"
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                        >
+                          จัดการร้าน
+                        </Link>
+                      )}
+
+                      {userRole === 'CREATOR' && (
+                        <Link
+                          href="/dashboard/creator"
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                        >
+                          จัดการรีวิว
+                        </Link>
+                      )}
+
+                      {userRole === 'ADMIN' && (
+                        <>
+                          <Link
+                            href="/admin"
+                            className="block px-4 py-2 text-sm text-purple-600 hover:bg-purple-50 font-medium"
+                          >
+                            Admin Dashboard
+                          </Link>
+                          <Link
+                            href="/admin/settings"
+                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                          >
+                            การตั้งค่าเว็บไซต์
+                          </Link>
+                        </>
+                      )}
+
+                      <button
+                        onClick={() => signOut({ callbackUrl: '/' })}
+                        className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        ออกจากระบบ
+                      </button>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <Link
+                  href="/signin"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  เข้าสู่ระบบ
+                </Link>
+              )}
+            </div>
+
+            {/* Mobile Menu Button */}
+            <button
+              onClick={() => setShowMobileMenu(!showMobileMenu)}
+              className="md:hidden text-gray-700"
+            >
+              {showMobileMenu ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
+          </div>
+
+          {/* Mobile Menu */}
+          {showMobileMenu && (
+            <div className="md:hidden py-4 border-t">
+              <div className="space-y-2">
+                <Link
+                  href="/"
+                  className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
+                  onClick={() => setShowMobileMenu(false)}
+                >
+                  หน้าแรก
+                </Link>
+
+                <Link
+                  href="/categories"
+                  className="block px-4 py-2 text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                  onClick={() => setShowMobileMenu(false)}
+                >
+                  <Grid3x3 className="w-4 h-4" />
+                  <span>หมวดหมู่</span>
+                </Link>
+
+                <Link
+                  href="/search"
+                  className="block px-4 py-2 text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                  onClick={() => setShowMobileMenu(false)}
+                >
+                  <Search className="w-4 h-4" />
+                  <span>ค้นหา</span>
+                </Link>
+
+                <Link
+                  href="/pricing"
+                  className="block px-4 py-2 text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                  onClick={() => setShowMobileMenu(false)}
+                >
+                  <span>฿</span>
+                  <span>แพ็คเกจ</span>
+                </Link>
+
+                <Link
+                  href="/about"
+                  className="block px-4 py-2 text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                  onClick={() => setShowMobileMenu(false)}
+                >
+                  <Info className="w-4 h-4" />
+                  <span>เกี่ยวกับเรา</span>
+                </Link>
+
+                <button
+                  onClick={() => {
+                    setShowLocationModal(true);
+                    setShowMobileMenu(false);
+                  }}
+                  className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                >
+                  <MapPin className="w-4 h-4" />
+                  <span className="text-sm">
+                    {location ? `${location.tambonName}, ${location.amphureName}` : 'เลือกพื้นที่'}
+                  </span>
+                </button>
+
+                {session ? (
+                  <>
+                    <Link
+                      href="/dashboard"
+                      className="block px-4 py-2 text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                      onClick={() => setShowMobileMenu(false)}
+                    >
+                      <LayoutDashboard className="w-4 h-4" />
+                      <span>Dashboard</span>
+                    </Link>
+
+                    <Link
+                      href="/profile"
+                      className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
+                      onClick={() => setShowMobileMenu(false)}
+                    >
+                      โปรไฟล์
+                    </Link>
+
+                    <Link
+                      href="/bookmarks"
+                      className="block px-4 py-2 text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                      onClick={() => setShowMobileMenu(false)}
+                    >
+                      <Star className="w-4 h-4 text-yellow-500" fill="#FCD34D" />
+                      บุ๊คมาร์คของฉัน
+                    </Link>
+
+                    {userRole === 'ADMIN' && (
+                      <>
+                        <div className="border-t border-gray-200 my-2"></div>
+                        <Link
+                          href="/admin"
+                          className="block px-4 py-2 text-purple-600 hover:bg-purple-50 font-medium"
+                          onClick={() => setShowMobileMenu(false)}
+                        >
+                          Admin Dashboard
+                        </Link>
+                        <Link
+                          href="/admin/settings"
+                          className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
+                          onClick={() => setShowMobileMenu(false)}
+                        >
+                          การตั้งค่าเว็บไซต์
+                        </Link>
+                      </>
+                    )}
+
+                    <div className="border-t border-gray-200 my-2"></div>
+                    <button
+                      onClick={() => {
+                        signOut({ callbackUrl: '/' });
+                        setShowMobileMenu(false);
+                      }}
+                      className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50"
+                    >
+                      ออกจากระบบ
+                    </button>
+                  </>
+                ) : (
+                  <Link
+                    href="/signin"
+                    className="block px-4 py-2 bg-blue-600 text-white rounded-lg text-center"
+                    onClick={() => setShowMobileMenu(false)}
+                  >
+                    เข้าสู่ระบบ
+                  </Link>
+                )}
+              </div>
             </div>
           )}
         </div>
+      </nav>
 
-        <button className="md:hidden" onClick={() => setOpen((v) => !v)} aria-label="menu">
-          <Menu />
-        </button>
-      </div>
-
-      <MobileMenu open={open} onClose={() => setOpen(false)} links={links} />
-    </header>
-  );
-}
-
-type MenuItemProps = {
-  href: string;
-  children: React.ReactNode;
-  onClick?: () => void;
-};
-
-function MenuItem({ href, children, onClick }: MenuItemProps) {
-  return (
-    <Link href={href} className="block px-3 py-2 rounded-lg hover:bg-muted" onClick={onClick}>
-      {children}
-    </Link>
-  );
-}
-
-function Avatar({
-  name,
-  image,
-}: {
-  name?: string | null;
-  image?: string | null;
-}) {
-  if (image) {
-    // eslint-disable-next-line @next/next/no-img-element
-    return (
-      <img src={image} alt={name || "avatar"} className="h-6 w-6 rounded-full object-cover" />
-    );
-  }
-  const initials = (name || "U")
-    .split(" ")
-    .map((s: string) => s[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-  return (
-    <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center text-xs">
-      {initials}
-    </div>
+      {/* Location Modal */}
+      <LocationModal
+        isOpen={showLocationModal}
+        onClose={() => setShowLocationModal(false)}
+      />
+    </>
   );
 }

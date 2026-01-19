@@ -1,0 +1,104 @@
+Error fetching banners: Error [PrismaClientInitializationError]: 
+Invalid `prisma.heroBanner.findMany()` invocation:
+
+
+Can't reach database server at `db.vygryagvxjewxdzgipea.supabase.co:5432`
+
+Please make sure your database server is running at `db.vygryagvxjewxdzgipea.supabase.co:5432`.
+    at async x (.next/server/app/api/banners/route.js:1:715)
+    at async k (.next/server/app/api/banners/route.js:1:3768)
+    at async g (.next/server/app/api/banners/route.js:1:4771) {
+  clientVersion: '6.16.2',
+  errorCode: undefined,
+  retryable: undefined
+}
+
+[api/shops] Error after 174ms: Error [PrismaClientInitializationError]: 
+Invalid `prisma.$queryRawUnsafe()` invocation:
+
+
+Can't reach database server at `db.vygryagvxjewxdzgipea.supabase.co:5432`
+
+Please make sure your database server is running at `db.vygryagvxjewxdzgipea.supabase.co:5432`.
+    at async y (.next/server/app/api/shops/route.js:7:327)
+    at async z (.next/server/app/api/shops/route.js:7:898)
+    at async k (.next/server/app/api/shops/route.js:141:3140) {
+  clientVersion: '6.16.2',
+  errorCode: undefined,
+  retryable: undefined
+}
+
+Error fetching analytics settings: Error [PrismaClientInitializationError]: 
+Invalid `prisma.siteSetting.findMany()` invocation:
+
+
+Can't reach database server at `db.vygryagvxjewxdzgipea.supabase.co:5432`
+
+Please make sure your database server is running at `db.vygryagvxjewxdzgipea.supabase.co:5432`.
+    at async w (.next/server/app/api/settings/analytics/route.js:1:888)
+    at async k (.next/server/app/api/settings/analytics/route.js:1:4784)
+    at async g (.next/server/app/api/settings/analytics/route.js:1:5787) {
+  clientVersion: '6.16.2',
+  errorCode: undefined,
+  retryable: undefined
+}
+
+Error fetching public settings: Error [PrismaClientInitializationError]: 
+Invalid `prisma.siteSetting.findMany()` invocation:
+
+
+Can't reach database server at `db.vygryagvxjewxdzgipea.supabase.co:5432`
+
+Please make sure your database server is running at `db.vygryagvxjewxdzgipea.supabase.co:5432`.
+    at async x (.next/server/app/api/settings/route.js:1:627)
+    at async k (.next/server/app/api/settings/route.js:1:4044)
+    at async g (.next/server/app/api/settings/route.js:1:5047) {
+  clientVersion: '6.16.2',
+  errorCode: undefined,
+  retryable: undefined
+}
+
+revalidating cache with key: async()=>{let a=Date.now();if(f&&a-g<3e5)return f;let b=(await d.z.siteSetting.findMany({select:{key:!0,value:!0,dataType:!0}})).reduce((a,b)=>{let c=b.value;if("json"===b.dataType)try{c=JSON.parse(b.value)}catch{c=b.value}else"boolean"===b.dataType?c="true"===b.value:"number"===b.dataType&&(c=parseFloat(b.value));return a[b.key]=c,a},{});return f=b,g=a,b}-site-settings-[] Error [PrismaClientInitializationError]: 
+Invalid `prisma.siteSetting.findMany()` invocation:
+
+
+Can't reach database server at `db.vygryagvxjewxdzgipea.supabase.co:5432`
+
+Please make sure your database server is running at `db.vygryagvxjewxdzgipea.supabase.co:5432`.
+    at async h.revalidate (.next/server/chunks/2996.js:14:7675) {
+  clientVersion: '6.16.2',
+  errorCode: undefined,
+  retryable: undefined
+}
+
+Error fetching user role: Error [PrismaClientInitializationError]: 
+Invalid `prisma.user.findUnique()` invocation:
+
+
+Can't reach database server at `db.vygryagvxjewxdzgipea.supabase.co:5432`
+
+Please make sure your database server is running at `db.vygryagvxjewxdzgipea.supabase.co:5432`.
+    at async Object.session (.next/server/app/api/auth/[...nextauth]/route.js:1:2760)
+    at async Object.e (.next/server/chunks/2963.js:10:46843)
+    at async q (.next/server/chunks/2963.js:10:39583)
+    at async g (.next/server/chunks/2963.js:1:1893)
+    at async a.length.b (.next/server/chunks/2963.js:1:3334) {
+  clientVersion: '6.16.2',
+  errorCode: undefined,
+  retryable: undefined
+}
+
+[api/shops] Error after 158ms: Error [PrismaClientInitializationError]: 
+Invalid `prisma.$queryRawUnsafe()` invocation:
+
+
+Can't reach database server at `db.vygryagvxjewxdzgipea.supabase.co:5432`
+
+Please make sure your database server is running at `db.vygryagvxjewxdzgipea.supabase.co:5432`.
+    at async y (.next/server/app/api/shops/route.js:7:327)
+    at async z (.next/server/app/api/shops/route.js:7:898)
+    at async k (.next/server/app/api/shops/route.js:141:3140) {
+  clientVersion: '6.16.2',
+  errorCode: undefined,
+  retryable: undefined
+}
