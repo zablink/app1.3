@@ -14,9 +14,34 @@ export async function GET(request: NextRequest) {
     // Support both TIKTOK_CLIENT_KEY and TIKTOK_CLIENT_ID for flexibility
     const clientKey = process.env.TIKTOK_CLIENT_KEY || process.env.TIKTOK_CLIENT_ID;
     
-    // Ensure NEXT_PUBLIC_APP_URL doesn't have trailing slash
-    const baseUrl = (process.env.NEXT_PUBLIC_APP_URL || '').replace(/\/$/, '');
+    // Get base URL from environment variable or construct from request
+    // Priority: TIKTOK_REDIRECT_URI > NEXT_PUBLIC_APP_URL > NEXTAUTH_URL > request headers
+    let baseUrl = process.env.TIKTOK_REDIRECT_URI 
+      ? process.env.TIKTOK_REDIRECT_URI.replace(/\/api\/auth\/tiktok\/callback\/?$/, '')
+      : process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL;
+    
+    // If not set, construct from request headers
+    if (!baseUrl) {
+      const protocol = request.headers.get('x-forwarded-proto') || 'https';
+      const host = request.headers.get('host') || request.headers.get('x-forwarded-host');
+      if (host) {
+        baseUrl = `${protocol}://${host}`;
+      }
+    }
+    
+    // Ensure baseUrl doesn't have trailing slash
+    baseUrl = (baseUrl || '').replace(/\/$/, '');
     const redirectUri = `${baseUrl}/api/auth/tiktok/callback`;
+    
+    // Log for debugging
+    console.log('=== TikTok OAuth Configuration ===');
+    console.log('TIKTOK_REDIRECT_URI:', process.env.TIKTOK_REDIRECT_URI || 'not set');
+    console.log('NEXT_PUBLIC_APP_URL:', process.env.NEXT_PUBLIC_APP_URL || 'not set');
+    console.log('NEXTAUTH_URL:', process.env.NEXTAUTH_URL || 'not set');
+    console.log('Request Host:', request.headers.get('host'));
+    console.log('Computed Base URL:', baseUrl);
+    console.log('Final Redirect URI:', redirectUri);
+    console.log('================================');
     
     if (!clientKey) {
       console.error('TikTok OAuth not configured: Missing TIKTOK_CLIENT_KEY or TIKTOK_CLIENT_ID');
@@ -27,9 +52,9 @@ export async function GET(request: NextRequest) {
     }
 
     if (!baseUrl) {
-      console.error('NEXT_PUBLIC_APP_URL is not set');
+      console.error('Could not determine base URL from environment variables or request headers');
       return NextResponse.json(
-        { error: 'NEXT_PUBLIC_APP_URL environment variable is required' },
+        { error: 'Could not determine application URL. Please set NEXT_PUBLIC_APP_URL or NEXTAUTH_URL environment variable.' },
         { status: 500 }
       );
     }
