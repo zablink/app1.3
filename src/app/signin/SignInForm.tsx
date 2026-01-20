@@ -321,8 +321,8 @@ function SignInFormContent() {
                 </span>
               </button> */}
 
-              {/* Twitter/X */}
-              <button
+              {/* Twitter/X - Disabled: Commented out */}
+              {/* <button
                 onClick={() => handleSocialSignIn('twitter')}
                 className="w-full flex items-center justify-center gap-3 px-4 py-3.5 bg-black text-white rounded-xl hover:bg-gray-800 transition-all duration-200 shadow-sm hover:shadow-md"
               >
@@ -332,10 +332,10 @@ function SignInFormContent() {
                 <span className="font-medium">
                   เข้าสู่ระบบด้วย X
                 </span>
-              </button>
+              </button> */}
 
-              {/* TikTok - Disabled: No credentials configured */}
-              {/* <button
+              {/* TikTok */}
+              <button
                 onClick={() => handleSocialSignIn('tiktok')}
                 className="w-full flex items-center justify-center gap-3 px-4 py-3.5 bg-white border-2 border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 group shadow-sm"
               >
@@ -357,7 +357,7 @@ function SignInFormContent() {
                 <span className="text-gray-700 font-medium group-hover:text-gray-900">
                   เข้าสู่ระบบด้วย TikTok
                 </span>
-              </button> */}
+              </button>
 
             </div>
 
