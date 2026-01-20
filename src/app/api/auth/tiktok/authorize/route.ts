@@ -11,12 +11,14 @@ export const runtime = 'nodejs';
  */
 export async function GET(request: NextRequest) {
   try {
-    const clientKey = process.env.TIKTOK_CLIENT_KEY;
+    // Support both TIKTOK_CLIENT_KEY and TIKTOK_CLIENT_ID for flexibility
+    const clientKey = process.env.TIKTOK_CLIENT_KEY || process.env.TIKTOK_CLIENT_ID;
     const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/tiktok/callback`;
     
     if (!clientKey) {
+      console.error('TikTok OAuth not configured: Missing TIKTOK_CLIENT_KEY or TIKTOK_CLIENT_ID');
       return NextResponse.json(
-        { error: 'TikTok OAuth not configured' },
+        { error: 'TikTok OAuth not configured. Please set TIKTOK_CLIENT_KEY (or TIKTOK_CLIENT_ID) environment variable.' },
         { status: 500 }
       );
     }

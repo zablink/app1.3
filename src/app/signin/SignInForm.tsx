@@ -10,6 +10,7 @@ function SignInFormContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const error = searchParams.get('error');
+  const errorMessageParam = searchParams.get('message');
   const callbackUrl = searchParams.get('callbackUrl') || '/dashboard';
 
   // Log all URL parameters for debugging
@@ -44,13 +45,14 @@ function SignInFormContent() {
       SessionRequired: 'กรุณาเข้าสู่ระบบก่อนใช้งาน',
       google: 'การเชื่อมต่อกับ Google ล้มเหลว กรุณาตรวจสอบการตั้งค่า OAuth หรือลองใหม่อีกครั้ง',
       facebook: 'การเชื่อมต่อกับ Facebook ล้มเหลว กรุณาลองใหม่อีกครั้ง',
+      tiktok: 'การเชื่อมต่อกับ TikTok ล้มเหลว กรุณาตรวจสอบการตั้งค่า OAuth หรือลองใหม่อีกครั้ง',
       Default: 'เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ กรุณาลองใหม่อีกครั้ง'
     };
 
     return errorMessages[error] || errorMessages.Default;
   };
 
-  const errorMessage = getErrorMessage(error);
+  const errorMessage = errorMessageParam || getErrorMessage(error);
 
   // ลบ error จาก URL หลังจากแสดงผล 5 วินาที
   useEffect(() => {
