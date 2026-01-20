@@ -63,31 +63,35 @@ export async function GET(request: NextRequest) {
     const clientKey = process.env.TIKTOK_CLIENT_KEY || process.env.TIKTOK_CLIENT_ID;
     const clientSecret = process.env.TIKTOK_CLIENT_SECRET;
     
-    // Get base URL from environment variable or construct from request
-    // Priority: TIKTOK_REDIRECT_URI > NEXT_PUBLIC_APP_URL > NEXTAUTH_URL > request headers
-    let baseUrl = process.env.TIKTOK_REDIRECT_URI 
-      ? process.env.TIKTOK_REDIRECT_URI.replace(/\/api\/auth\/tiktok\/callback\/?$/, '')
-      : process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL;
+    // Get redirect URI - use TIKTOK_REDIRECT_URI directly if set, otherwise construct
+    let redirectUri = process.env.TIKTOK_REDIRECT_URI;
     
-    // If not set, construct from request headers
-    if (!baseUrl) {
-      const protocol = request.headers.get('x-forwarded-proto') || 'https';
-      const host = request.headers.get('host') || request.headers.get('x-forwarded-host');
-      if (host) {
-        baseUrl = `${protocol}://${host}`;
+    if (!redirectUri) {
+      // Construct from base URL
+      let baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL;
+      
+      // If not set, construct from request headers
+      if (!baseUrl) {
+        const protocol = request.headers.get('x-forwarded-proto') || 'https';
+        const host = request.headers.get('host') || request.headers.get('x-forwarded-host');
+        if (host) {
+          baseUrl = `${protocol}://${host}`;
+        }
       }
+      
+      // Ensure baseUrl doesn't have trailing slash
+      baseUrl = (baseUrl || '').replace(/\/$/, '');
+      redirectUri = `${baseUrl}/api/auth/tiktok/callback`;
     }
     
-    // Ensure baseUrl doesn't have trailing slash
-    baseUrl = (baseUrl || '').replace(/\/$/, '');
-    const redirectUri = `${baseUrl}/api/auth/tiktok/callback`;
+    // Ensure redirectUri doesn't have trailing slash
+    redirectUri = redirectUri.replace(/\/$/, '');
     
     console.log('=== TikTok Callback Configuration ===');
-    console.log('TIKTOK_REDIRECT_URI:', process.env.TIKTOK_REDIRECT_URI || 'not set');
+    console.log('TIKTOK_REDIRECT_URI (env):', process.env.TIKTOK_REDIRECT_URI || 'not set');
     console.log('NEXT_PUBLIC_APP_URL:', process.env.NEXT_PUBLIC_APP_URL || 'not set');
     console.log('NEXTAUTH_URL:', process.env.NEXTAUTH_URL || 'not set');
     console.log('Request Host:', request.headers.get('host'));
-    console.log('Computed Base URL:', baseUrl);
     console.log('Final Redirect URI:', redirectUri);
     console.log('=====================================');
 
