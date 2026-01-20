@@ -43,22 +43,29 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const clientKey = process.env.TIKTOK_CLIENT_KEY;
+    // Support both TIKTOK_CLIENT_KEY and TIKTOK_CLIENT_ID for flexibility
+    const clientKey = process.env.TIKTOK_CLIENT_KEY || process.env.TIKTOK_CLIENT_ID;
     const clientSecret = process.env.TIKTOK_CLIENT_SECRET;
     const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/tiktok/callback`;
 
     if (!clientKey || !clientSecret) {
-      console.error('TikTok OAuth credentials not configured');
+      console.error('TikTok OAuth credentials not configured:', {
+        hasClientKey: !!process.env.TIKTOK_CLIENT_KEY,
+        hasClientId: !!process.env.TIKTOK_CLIENT_ID,
+        hasClientSecret: !!process.env.TIKTOK_CLIENT_SECRET,
+      });
       return NextResponse.redirect(
         `${process.env.NEXT_PUBLIC_APP_URL}/signin?error=OAuthSignin`
       );
     }
 
     // Exchange code for access token
+    // TikTok OAuth API requires specific format
     const tokenResponse = await fetch('https://open.tiktokapis.com/v2/oauth/token/', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
+        'Cache-Control': 'no-cache',
       },
       body: new URLSearchParams({
         client_key: clientKey,
@@ -70,10 +77,23 @@ export async function GET(request: NextRequest) {
     });
 
     if (!tokenResponse.ok) {
-      const errorData = await tokenResponse.text();
-      console.error('TikTok token exchange error:', errorData);
+      const errorText = await tokenResponse.text();
+      let errorData;
+      try {
+        errorData = JSON.parse(errorText);
+      } catch {
+        errorData = { error: errorText };
+      }
+      console.error('TikTok token exchange error:', {
+        status: tokenResponse.status,
+        statusText: tokenResponse.statusText,
+        error: errorData,
+        redirectUri,
+        hasClientKey: !!clientKey,
+        hasClientSecret: !!clientSecret,
+      });
       return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_APP_URL}/signin?error=OAuthCallback`
+        `${process.env.NEXT_PUBLIC_APP_URL}/signin?error=OAuthCallback&message=${encodeURIComponent(errorData.error_description || errorData.error || 'Token exchange failed')}`
       );
     }
 
@@ -88,18 +108,31 @@ export async function GET(request: NextRequest) {
     }
 
     // Get user info from TikTok
+    // TikTok API requires fields parameter in query string
     const userInfoResponse = await fetch('https://open.tiktokapis.com/v2/user/info/?fields=open_id,display_name,avatar_url', {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
       },
     });
 
     if (!userInfoResponse.ok) {
-      const errorData = await userInfoResponse.text();
-      console.error('TikTok user info error:', errorData);
+      const errorText = await userInfoResponse.text();
+      let errorData;
+      try {
+        errorData = JSON.parse(errorText);
+      } catch {
+        errorData = { error: errorText };
+      }
+      console.error('TikTok user info error:', {
+        status: userInfoResponse.status,
+        statusText: userInfoResponse.statusText,
+        error: errorData,
+        hasAccessToken: !!accessToken,
+      });
       return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_APP_URL}/signin?error=OAuthCallback`
+        `${process.env.NEXT_PUBLIC_APP_URL}/signin?error=OAuthCallback&message=${encodeURIComponent(errorData.error_description || errorData.error || 'Failed to get user info')}`
       );
     }
 
