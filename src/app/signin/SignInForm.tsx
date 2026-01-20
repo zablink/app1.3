@@ -70,6 +70,12 @@ function SignInFormContent() {
       console.log('🚀 Starting sign in with provider:', provider);
       console.log('📍 Callback URL:', callbackUrl);
       
+      // TikTok uses custom route instead of NextAuth
+      if (provider === 'tiktok') {
+        window.location.href = `/api/auth/tiktok/authorize?callbackUrl=${encodeURIComponent(callbackUrl)}`;
+        return;
+      }
+      
       // Use NextAuth's signIn function - it handles CSRF and state properly
       await signIn(provider, {
         callbackUrl: callbackUrl,
@@ -337,24 +343,25 @@ function SignInFormContent() {
               {/* TikTok */}
               <button
                 onClick={() => handleSocialSignIn('tiktok')}
-                className="w-full flex items-center justify-center gap-3 px-4 py-3.5 bg-white border-2 border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 group shadow-sm"
+                className="w-full flex items-center justify-center gap-3 px-4 py-3.5 bg-[#161823] text-white rounded-xl hover:bg-[#1a1d2e] transition-all duration-200 shadow-sm hover:shadow-md"
               >
                 <div className="relative w-6 h-6 flex items-center justify-center">
-                  <div 
-                    className="absolute inset-0 rounded-full"
-                    style={{
-                      background: 'linear-gradient(135deg, #fe2c55 0%, #fe2c55 50%, #00f2ea 50%, #00f2ea 100%)',
-                      padding: '2px',
-                    }}
-                  >
-                    <div className="w-full h-full bg-white rounded-full flex items-center justify-center">
-                      <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="black">
-                        <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
-                      </svg>
-                    </div>
-                  </div>
+                  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none">
+                    <path 
+                      d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"
+                      fill="url(#tiktok-gradient)"
+                    />
+                    <defs>
+                      <linearGradient id="tiktok-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="#fe2c55" />
+                        <stop offset="50%" stopColor="#fe2c55" />
+                        <stop offset="50%" stopColor="#00f2ea" />
+                        <stop offset="100%" stopColor="#00f2ea" />
+                      </linearGradient>
+                    </defs>
+                  </svg>
                 </div>
-                <span className="text-gray-700 font-medium group-hover:text-gray-900">
+                <span className="font-medium">
                   เข้าสู่ระบบด้วย TikTok
                 </span>
               </button>

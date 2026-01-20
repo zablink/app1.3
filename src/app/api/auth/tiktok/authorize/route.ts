@@ -21,15 +21,26 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Get callbackUrl from query params
+    const { searchParams } = new URL(request.url);
+    const callbackUrl = searchParams.get('callbackUrl') || '/dashboard';
+
     // Generate state for CSRF protection
     const state = crypto.randomBytes(32).toString('hex');
     
-    // Store state in cookie for verification
+    // Store state and callbackUrl in cookie for verification
     const response = NextResponse.redirect(
       `https://www.tiktok.com/v2/auth/authorize/?client_key=${clientKey}&scope=user.info.basic&response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}`
     );
 
     response.cookies.set('tiktok_oauth_state', state, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 600, // 10 minutes
+    });
+
+    response.cookies.set('tiktok_callback_url', callbackUrl, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
