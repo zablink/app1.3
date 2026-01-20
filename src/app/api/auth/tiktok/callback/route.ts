@@ -46,7 +46,12 @@ export async function GET(request: NextRequest) {
     // Support both TIKTOK_CLIENT_KEY and TIKTOK_CLIENT_ID for flexibility
     const clientKey = process.env.TIKTOK_CLIENT_KEY || process.env.TIKTOK_CLIENT_ID;
     const clientSecret = process.env.TIKTOK_CLIENT_SECRET;
-    const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/tiktok/callback`;
+    
+    // Ensure NEXT_PUBLIC_APP_URL doesn't have trailing slash
+    const baseUrl = (process.env.NEXT_PUBLIC_APP_URL || '').replace(/\/$/, '');
+    const redirectUri = `${baseUrl}/api/auth/tiktok/callback`;
+    
+    console.log('TikTok callback - redirect URI:', redirectUri);
 
     if (!clientKey || !clientSecret) {
       console.error('TikTok OAuth credentials not configured:', {

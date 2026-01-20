@@ -13,12 +13,23 @@ export async function GET(request: NextRequest) {
   try {
     // Support both TIKTOK_CLIENT_KEY and TIKTOK_CLIENT_ID for flexibility
     const clientKey = process.env.TIKTOK_CLIENT_KEY || process.env.TIKTOK_CLIENT_ID;
-    const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/tiktok/callback`;
+    
+    // Ensure NEXT_PUBLIC_APP_URL doesn't have trailing slash
+    const baseUrl = (process.env.NEXT_PUBLIC_APP_URL || '').replace(/\/$/, '');
+    const redirectUri = `${baseUrl}/api/auth/tiktok/callback`;
     
     if (!clientKey) {
       console.error('TikTok OAuth not configured: Missing TIKTOK_CLIENT_KEY or TIKTOK_CLIENT_ID');
       return NextResponse.json(
         { error: 'TikTok OAuth not configured. Please set TIKTOK_CLIENT_KEY (or TIKTOK_CLIENT_ID) environment variable.' },
+        { status: 500 }
+      );
+    }
+
+    if (!baseUrl) {
+      console.error('NEXT_PUBLIC_APP_URL is not set');
+      return NextResponse.json(
+        { error: 'NEXT_PUBLIC_APP_URL environment variable is required' },
         { status: 500 }
       );
     }
@@ -30,10 +41,17 @@ export async function GET(request: NextRequest) {
     // Generate state for CSRF protection
     const state = crypto.randomBytes(32).toString('hex');
     
+    // Log redirect URI for debugging
+    console.log('TikTok OAuth redirect URI:', redirectUri);
+    console.log('Base URL:', baseUrl);
+    
+    // Build authorization URL
+    const authUrl = `https://www.tiktok.com/v2/auth/authorize/?client_key=${clientKey}&scope=user.info.basic&response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}`;
+    
+    console.log('TikTok authorization URL:', authUrl.replace(/client_secret=[^&]+/, 'client_secret=***'));
+    
     // Store state and callbackUrl in cookie for verification
-    const response = NextResponse.redirect(
-      `https://www.tiktok.com/v2/auth/authorize/?client_key=${clientKey}&scope=user.info.basic&response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}`
-    );
+    const response = NextResponse.redirect(authUrl);
 
     response.cookies.set('tiktok_oauth_state', state, {
       httpOnly: true,
