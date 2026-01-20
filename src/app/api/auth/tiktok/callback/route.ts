@@ -17,18 +17,34 @@ export async function GET(request: NextRequest) {
     const state = searchParams.get('state');
     const error = searchParams.get('error');
 
+    // Get base URL for redirects (will be set later if not available)
+    let baseUrlForRedirect = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL;
+    if (!baseUrlForRedirect) {
+      const protocol = request.headers.get('x-forwarded-proto') || 'https';
+      const host = request.headers.get('host') || request.headers.get('x-forwarded-host');
+      if (host) {
+        baseUrlForRedirect = `${protocol}://${host}`;
+      }
+    }
+    baseUrlForRedirect = (baseUrlForRedirect || '').replace(/\/$/, '');
+
     // Check for errors from TikTok
     if (error) {
       console.error('TikTok OAuth error:', error);
+      // Map TikTok specific errors to our error codes
+      let errorCode = 'OAuthSignin';
+      if (error === 'non_sandbox_target') {
+        errorCode = 'non_sandbox_target';
+      }
       return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_APP_URL}/signin?error=OAuthSignin`
+        `${baseUrlForRedirect}/signin?error=${errorCode}`
       );
     }
 
     // Validate required parameters
     if (!code || !state) {
       return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_APP_URL}/signin?error=OAuthCallback`
+        `${baseUrlForRedirect}/signin?error=OAuthCallback`
       );
     }
 
@@ -39,7 +55,7 @@ export async function GET(request: NextRequest) {
     if (!storedState || storedState !== state) {
       console.error('State mismatch in TikTok OAuth callback');
       return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_APP_URL}/signin?error=OAuthCallback`
+        `${baseUrlForRedirect}/signin?error=OAuthCallback`
       );
     }
 
@@ -47,11 +63,33 @@ export async function GET(request: NextRequest) {
     const clientKey = process.env.TIKTOK_CLIENT_KEY || process.env.TIKTOK_CLIENT_ID;
     const clientSecret = process.env.TIKTOK_CLIENT_SECRET;
     
-    // Ensure NEXT_PUBLIC_APP_URL doesn't have trailing slash
-    const baseUrl = (process.env.NEXT_PUBLIC_APP_URL || '').replace(/\/$/, '');
+    // Get base URL from environment variable or construct from request
+    // Priority: TIKTOK_REDIRECT_URI > NEXT_PUBLIC_APP_URL > NEXTAUTH_URL > request headers
+    let baseUrl = process.env.TIKTOK_REDIRECT_URI 
+      ? process.env.TIKTOK_REDIRECT_URI.replace(/\/api\/auth\/tiktok\/callback\/?$/, '')
+      : process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL;
+    
+    // If not set, construct from request headers
+    if (!baseUrl) {
+      const protocol = request.headers.get('x-forwarded-proto') || 'https';
+      const host = request.headers.get('host') || request.headers.get('x-forwarded-host');
+      if (host) {
+        baseUrl = `${protocol}://${host}`;
+      }
+    }
+    
+    // Ensure baseUrl doesn't have trailing slash
+    baseUrl = (baseUrl || '').replace(/\/$/, '');
     const redirectUri = `${baseUrl}/api/auth/tiktok/callback`;
     
-    console.log('TikTok callback - redirect URI:', redirectUri);
+    console.log('=== TikTok Callback Configuration ===');
+    console.log('TIKTOK_REDIRECT_URI:', process.env.TIKTOK_REDIRECT_URI || 'not set');
+    console.log('NEXT_PUBLIC_APP_URL:', process.env.NEXT_PUBLIC_APP_URL || 'not set');
+    console.log('NEXTAUTH_URL:', process.env.NEXTAUTH_URL || 'not set');
+    console.log('Request Host:', request.headers.get('host'));
+    console.log('Computed Base URL:', baseUrl);
+    console.log('Final Redirect URI:', redirectUri);
+    console.log('=====================================');
 
     if (!clientKey || !clientSecret) {
       console.error('TikTok OAuth credentials not configured:', {
@@ -60,7 +98,7 @@ export async function GET(request: NextRequest) {
         hasClientSecret: !!process.env.TIKTOK_CLIENT_SECRET,
       });
       return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_APP_URL}/signin?error=OAuthSignin`
+        `${baseUrlForRedirect}/signin?error=OAuthSignin`
       );
     }
 
@@ -108,7 +146,7 @@ export async function GET(request: NextRequest) {
     if (!accessToken) {
       console.error('No access token received from TikTok');
       return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_APP_URL}/signin?error=OAuthCallback`
+        `${baseUrlForRedirect}/signin?error=OAuthCallback`
       );
     }
 
@@ -147,7 +185,7 @@ export async function GET(request: NextRequest) {
     if (!tiktokUser || !tiktokUser.open_id) {
       console.error('Invalid user data from TikTok');
       return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_APP_URL}/signin?error=OAuthCallback`
+        `${baseUrlForRedirect}/signin?error=OAuthCallback`
       );
     }
 
@@ -236,7 +274,7 @@ export async function GET(request: NextRequest) {
       : 'next-auth.session-token';
 
     const response = NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_APP_URL}${callbackUrl}`
+      `${baseUrlForRedirect}${callbackUrl}`
     );
 
     // Set session cookie
