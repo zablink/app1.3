@@ -63,7 +63,8 @@ export async function GET(request: NextRequest) {
     const clientKey = process.env.TIKTOK_CLIENT_KEY || process.env.TIKTOK_CLIENT_ID;
     const clientSecret = process.env.TIKTOK_CLIENT_SECRET;
     
-    // Get redirect URI - use TIKTOK_REDIRECT_URI directly if set, otherwise construct
+    // Get redirect URI - use TIKTOK_REDIRECT_URI exactly as provided (do NOT normalize),
+    // otherwise construct a sensible default.
     let redirectUri = process.env.TIKTOK_REDIRECT_URI;
     
     if (!redirectUri) {
@@ -82,10 +83,9 @@ export async function GET(request: NextRequest) {
       // Ensure baseUrl doesn't have trailing slash
       baseUrl = (baseUrl || '').replace(/\/$/, '');
       redirectUri = `${baseUrl}/api/auth/tiktok/callback`;
+      // When we construct it ourselves, keep it normalized (no trailing slash)
+      redirectUri = redirectUri.replace(/\/$/, '');
     }
-    
-    // Ensure redirectUri doesn't have trailing slash
-    redirectUri = redirectUri.replace(/\/$/, '');
     
     console.log('=== TikTok Callback Configuration ===');
     console.log('TIKTOK_REDIRECT_URI (env):', process.env.TIKTOK_REDIRECT_URI || 'not set');
