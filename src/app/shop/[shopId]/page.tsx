@@ -89,7 +89,7 @@ const PACKAGE_BADGES: Record<string, { emoji: string; text: string; color: strin
 export default function ShopDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const shopId = params?.id as string | undefined;
+  const shopId = params?.shopId as string | undefined;
 
   const [shop, setShop] = useState<Shop | null>(null);
   const [loading, setLoading] = useState(true);
