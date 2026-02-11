@@ -1,3 +1,5 @@
+'user client' // ถ้าไม่ใส่จะ error > a client-side exception..
+// Gemini was here to fix the build!
 // src/app/page.tsx
 
 import { Suspense } from 'react';
@@ -56,14 +58,14 @@ async function getInitialData(): Promise<{ shops: Shop[], banners: HeroBanner[] 
         // Fetch initial shops directly from the database using Prisma
         const shops = await prisma.shop.findMany({
             where: {
-                isActive: true, // Assuming you only want to show active shops
-                isPublished: true, // Assuming shops must be published
+                // isActive: true, // Assuming you only want to show active shops
+                // isPublished: true, // Assuming shops must be published
             },
             take: 24, // Fetch the first 24 shops
             orderBy: [
-                {
-                    subscriptionTier: 'desc', // Premium, Pro, Basic, Free
-                },
+                // {
+                //     subscriptionTier: 'desc', // Premium, Pro, Basic, Free
+                // },
                 {
                     createdAt: 'desc',
                 },
@@ -72,11 +74,10 @@ async function getInitialData(): Promise<{ shops: Shop[], banners: HeroBanner[] 
                 id: true,
                 name: true,
                 description: true,
-                logo: true,
                 image: true,
-                subscriptionTier: true,
-                isOG: true,
-                ogBadgeEnabled: true,
+                // subscriptionTier: true,
+                // isOG: true,
+                // ogBadgeEnabled: true,
             },
         });
 
@@ -88,7 +89,7 @@ async function getInitialData(): Promise<{ shops: Shop[], banners: HeroBanner[] 
             { id: '4', imageUrl: '/images/banner/3.jpg' },
         ];
 
-        return { shops, banners };
+        return { shops: shops.map(s => ({...s, description: s.description || ''})), banners };
 
     } catch (error) {
         console.error('Error fetching initial data for HomePage:', error);

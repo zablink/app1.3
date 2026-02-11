@@ -1,7 +1,7 @@
 // src/app/api/auth/tiktok/callback/route.ts
 
 import { NextRequest, NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 import { encode } from 'next-auth/jwt';
 
 export const runtime = 'nodejs';

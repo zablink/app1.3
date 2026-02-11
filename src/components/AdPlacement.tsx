@@ -31,7 +31,7 @@ export default function AdPlacement({ placement }: AdPlacementProps) {
         .then((data) => {
           const banners = data?.banners ?? data;
           const first = Array.isArray(banners) ? banners[0] : null;
-          if (first?.image_url) setAd(first);
+          if (first?.imageUrl) setAd(first);
           else setAd(null);
         })
         .catch(() => setAd(null))
@@ -44,7 +44,7 @@ export default function AdPlacement({ placement }: AdPlacementProps) {
         .then((data) => {
           const banners = data?.banners ?? data;
           const first = Array.isArray(banners) ? banners[0] : null;
-          if (first?.image_url) setAd(first);
+          if (first?.imageUrl) setAd(first);
           else setAd(null);
         })
         .catch(() => setAd(null))

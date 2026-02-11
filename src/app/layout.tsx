@@ -1,3 +1,5 @@
+'user client' // ถ้าไม่ใส่จะ error > a client-side exception..
+
 // src/app/layout.tsx
 import { Prompt } from "next/font/google";
 import { LocationProvider } from '@/contexts/LocationContext';
