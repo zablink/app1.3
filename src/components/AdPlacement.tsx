@@ -1,3 +1,5 @@
+'use client'
+
 useEffect(() => {
     const fetchAdForLocation = (latitude: number, longitude: number) => {
       // The new URL includes a 'strategy=fallback' parameter.
