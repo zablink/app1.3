@@ -95,10 +95,12 @@ export default function HomePageClient({ initialShops, initialBanners }: HomePag
         try {
           const resp = await fetch(`/api/shops?lat=${latitude}&lng=${longitude}&limit=50&sortBy=distance`);
           const data = await resp.json();
-          setShopsNearby(data.shops || []);
+          const nearby = data.shops || [];
+          // ใช้รายการร้านจาก API เฉพาะเมื่อมีข้อมูล ถ้าไม่มีให้คงใช้ร้านจาก server (initialShops)
+          setShopsNearby(nearby.length > 0 ? nearby : null);
         } catch (err) {
           console.error('Error fetching nearby shops:', err);
-          setShopsNearby([]);
+          setShopsNearby(null);
         }
       },
       () => setLocationState({ status: 'error', error: 'Permission denied' })
