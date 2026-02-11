@@ -1,6 +1,7 @@
 // /src/app/coming-soon/layout.tsx
 
 import type { Metadata } from 'next';
+import Footer from '@/components/layout/Footer';
 import '../globals.css'; // Import CSS จาก parent folder
 
 export const metadata: Metadata = {
@@ -15,8 +16,9 @@ export default function ComingSoonLayout({
 }) {
   return (
     <html lang="th">
-      <body className="antialiased">
+      <body className="antialiased min-h-screen flex flex-col">
         {children}
+        <Footer />
       </body>
     </html>
   );
