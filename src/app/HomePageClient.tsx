@@ -85,6 +85,14 @@ export default function HomePageClient({ initialShops, initialBanners }: HomePag
 
   const SHOPS_PER_PAGE = 24;
 
+  // Sync shops from server when initialShops arrive (e.g. after hydration/client nav)
+  useEffect(() => {
+    if (initialShops.length > 0 && shops.length === 0) {
+      setShops(initialShops);
+      setHasMoreShops(initialShops.length >= SHOPS_PER_PAGE);
+    }
+  }, [initialShops, shops.length]);
+
   useEffect(() => {
     if (!navigator.geolocation) return;
     setLocationState({ status: 'loading' });
@@ -153,7 +161,8 @@ export default function HomePageClient({ initialShops, initialBanners }: HomePag
     };
   }, [isLoadingMore, hasMoreShops, currentPage, shopsNearby]);
 
-  const shopsToShow = shopsNearby !== null ? shopsNearby : shops;
+  // ใช้ initialShops เป็น fallback เมื่อ state ยังว่าง (ป้องกันกรณีโหลดช้า/hydration)
+  const shopsToShow = shopsNearby !== null ? shopsNearby : (shops.length > 0 ? shops : initialShops);
 
   const { premiumShops, proShops, basicShops, otherShops } = useMemo(() => {
     const premium = shopsToShow.filter(s => normalizeTier(s.subscriptionTier) === 'PREMIUM');
