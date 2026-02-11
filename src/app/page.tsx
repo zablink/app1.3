@@ -3,6 +3,7 @@
 import { Suspense } from 'react';
 import HomePageClient from "./HomePageClient";
 import type { Metadata } from 'next';
+import { prisma } from '@/lib/prisma'; // Import the Prisma client singleton
 
 // Add default Open Graph metadata for the homepage
 export const metadata: Metadata = {
@@ -50,27 +51,36 @@ interface HeroBanner {
   imageUrl: string;
 }
 
-// This is a placeholder for a proper data fetching function.
-// In a real application, this would fetch from a database or a CMS.
 async function getInitialData(): Promise<{ shops: Shop[], banners: HeroBanner[] }> {
-    const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
-    
     try {
-        // Fetch initial shops data on the server
-        const res = await fetch(`${apiBaseUrl}/api/shops?limit=24`, {
-            next: { revalidate: 300 } // Cache and revalidate every 5 minutes
+        // Fetch initial shops directly from the database using Prisma
+        const shops = await prisma.shop.findMany({
+            where: {
+                isActive: true, // Assuming you only want to show active shops
+                isPublished: true, // Assuming shops must be published
+            },
+            take: 24, // Fetch the first 24 shops
+            orderBy: [
+                {
+                    subscriptionTier: 'desc', // Premium, Pro, Basic, Free
+                },
+                {
+                    createdAt: 'desc',
+                },
+            ],
+            select: {
+                id: true,
+                name: true,
+                description: true,
+                logo: true,
+                image: true,
+                subscriptionTier: true,
+                isOG: true,
+                ogBadgeEnabled: true,
+            },
         });
 
-        if (!res.ok) {
-            console.error(`Failed to fetch initial shops: ${res.status}`);
-            // Return empty array on failure, so the page can still render.
-            return { shops: [], banners: [] };
-        }
-
-        const data = await res.json();
-        const shops: Shop[] = data.shops || [];
-
-        // As before, banner data is static. This runs on the server.
+        // Banner data can remain static or be fetched from a DB as well
         const banners: HeroBanner[] = [
             { id: '1', imageUrl: '/images/banner/1.jpg' },
             { id: '2', imageUrl: '/images/banner/2.jpg' },
@@ -82,7 +92,7 @@ async function getInitialData(): Promise<{ shops: Shop[], banners: HeroBanner[] 
 
     } catch (error) {
         console.error('Error fetching initial data for HomePage:', error);
-        // Return empty arrays on network error or other exceptions
+        // In case of a database error, return empty arrays to prevent crashing.
         return { shops: [], banners: [] };
     }
 }
