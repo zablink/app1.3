@@ -1,7 +1,7 @@
 // app/api/creator/profile/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/lib/auth";
 
 export async function GET(request: NextRequest) {

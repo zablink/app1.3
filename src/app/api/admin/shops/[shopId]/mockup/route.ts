@@ -1,6 +1,6 @@
 // src/app/api/admin/shops/[shopId]/mockup/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 import { requireAdmin } from '@/lib/auth';
 
 // PATCH: Toggle mockup status

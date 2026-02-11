@@ -1,6 +1,6 @@
 // src/app/api/shops/[shopId]/tokens/wallet/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 import { requireOwnerOrAdmin } from "@/lib/auth";
 
 /**

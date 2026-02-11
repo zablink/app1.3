@@ -2,7 +2,7 @@
 // Debug endpoint to check database connection and shop count
 
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
