@@ -4,6 +4,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Notification from '@/components/Notification';
+import AdPlacement from '@/components/AdPlacement'; // Import the AdPlacement component
 
 // Assuming interfaces are moved to a types file, but keeping them here for self-containment
 interface Shop {
@@ -162,11 +163,11 @@ export default function HomePageClient({ initialShops, initialBanners }: HomePag
       </div>
   );
 
-  const PlaceholderCard = ({ tier, icon, gradientFrom, gradientTo }: any) => (
-      <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg border-2 border-dashed border-gray-300 p-6 flex flex-col items-center justify-center h-full min-h-[280px] opacity-60">
-          <div className="text-6xl mb-3 opacity-40">{icon}</div>
-          <p className="text-gray-500 text-sm font-medium">ยังไม่มีร้านค้า {tier}</p>
-      </div>
+  const PlaceholderCard = ({ tier, icon }: { tier: string, icon: string }) => (
+    <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg border-2 border-dashed border-gray-300 p-6 flex flex-col items-center justify-center h-full min-h-[280px] opacity-60">
+        <div className="text-6xl mb-3 opacity-40">{icon}</div>
+        <p className="text-gray-500 text-sm font-medium">ยังไม่มีร้านค้า {tier}</p>
+    </div>
   );
 
   return (
@@ -192,7 +193,7 @@ export default function HomePageClient({ initialShops, initialBanners }: HomePag
       )}
 
       <main className="container mx-auto px-4 py-6">
-        <div className="space-y-8">
+        <div className="space-y-12">
             {/* Premium Group */}
             <div className="bg-gradient-to-br from-yellow-50 to-amber-50 p-6 rounded-xl border-2 border-yellow-300">
                 <h2 className="text-2xl font-bold text-yellow-500 mb-4">⭐ Premium Shops</h2>
@@ -202,8 +203,34 @@ export default function HomePageClient({ initialShops, initialBanners }: HomePag
                 </div>
             </div>
 
-            {/* Other groups (Pro, Basic, Free) would follow a similar structure */}
+            {/* Pro Group */}
+            <div className="p-6 rounded-xl">
+                <h2 className="text-2xl font-bold text-indigo-500 mb-4">💎 Pro Shops</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {groupedShops.pro.map((shop) => <ShopCard key={shop.id} shop={shop} tierColor="ring-indigo-400" />)}
+                    {[...Array(3 - groupedShops.pro.length)].map((_, i) => <PlaceholderCard key={i} tier="Pro" icon="💎" />)}
+                </div>
+            </div>
 
+            {/* Ad Placement */}
+            <AdPlacement placement="homepage-center-a" />
+
+            {/* Basic Group */}
+            <div className="p-6 rounded-xl">
+                <h2 className="text-2xl font-bold text-blue-500 mb-4">🔵 Basic Shops</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {groupedShops.basic.map((shop) => <ShopCard key={shop.id} shop={shop} tierColor="ring-blue-400" />)}
+                    {[...Array(3 - groupedShops.basic.length)].map((_, i) => <PlaceholderCard key={i} tier="Basic" icon="🔵" />)}
+                </div>
+            </div>
+
+            {/* All Shops (including Free tier) */}
+            <div>
+                <h2 className="text-2xl font-bold text-gray-700 mb-4">ร้านค้าทั้งหมด</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                    {shopsToShow.map((shop) => <ShopCard key={shop.id} shop={shop} />)}
+                </div>
+            </div>
         </div>
 
         {isLoadingMore && (
