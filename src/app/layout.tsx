@@ -7,6 +7,7 @@ import { ToastProvider } from '@/contexts/ToastContext';
 import SessionProvider from "@/components/SessionProvider";
 import { SiteSettingsProvider } from '@/hooks/useSiteSettings';
 import Navbar from "@/components/layout/Navbar";
+import Footer from "@/components/layout/Footer";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
 import { getSiteMetadata } from '@/lib/settings';
 import "./globals.css";
@@ -48,7 +49,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="th" className={prompt.variable}>
-      <body className={`${prompt.className} antialiased`}>
+      <body className={`${prompt.className} antialiased min-h-screen flex flex-col`}>
         <GoogleAnalytics />
         <SessionProvider>
           <SiteSettingsProvider>
@@ -56,6 +57,7 @@ export default function RootLayout({
               <ToastProvider>
                 <Navbar />
                 {children}
+                <Footer />
               </ToastProvider>
             </LocationProvider>
           </SiteSettingsProvider>
