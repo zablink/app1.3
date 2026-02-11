@@ -1,6 +1,6 @@
 // /src/app/api/admin/shops/[shopId]/owner/route.ts
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 import { requireOwnerOrAdmin } from "@/lib/auth";
 
 export async function GET(req: Request, { params }: { params: Promise<{ shopId: string }> }) {

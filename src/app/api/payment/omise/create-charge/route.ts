@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 import Omise from "omise";
 import { requireOwnerOrAdmin } from "@/lib/auth";
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 
 const omise = new Omise({ secretKey: process.env.OMISE_SECRET_KEY || "" });
 

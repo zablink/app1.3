@@ -1,6 +1,6 @@
 // src/app/api/shops/[shopId]/tokens/route.ts
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 import Omise from "omise";
 import { requireOwnerOrAdmin } from "@/lib/auth";
 
