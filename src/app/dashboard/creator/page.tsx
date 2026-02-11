@@ -79,9 +79,9 @@ export default function CreatorDashboard() {
   const getStatusBadge = (status: string) => {
     const badges = {
       PENDING: { icon: Clock, text: "รอตรวจสอบ", color: "bg-yellow-100 text-yellow-800" },
-      ACTIVE: { icon: CheckCircle, text: "ใช้งาน", color: "bg-green-100 text-green-800" },
+      APPROVED: { icon: CheckCircle, text: "อนุมัติแล้ว", color: "bg-green-100 text-green-800" },
       SUSPENDED: { icon: AlertCircle, text: "ระงับ", color: "bg-red-100 text-red-800" },
-      REJECTED: { icon: AlertCircle, text: "ปฏิเสธ", color: "bg-gray-100 text-gray-800" },
+      REJECTED: { icon: AlertCircle, text: "ถูกปฏิเสธ", color: "bg-red-100 text-red-800" },
     };
     const badge = badges[status as keyof typeof badges] || badges.PENDING;
     const Icon = badge.icon;
@@ -192,14 +192,23 @@ export default function CreatorDashboard() {
               </p>
             </div>
           </div>
-          <button
-            onClick={() => router.push("/creator/withdrawal")}
-            disabled={creator.availableBalance < 100}
-            className="mt-4 w-full md:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 bg-white text-purple-600 rounded-lg hover:bg-gray-50 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <CreditCard size={20} />
-            ถอนเงิน {creator.availableBalance < 100 && "(ขั้นต่ำ 100 บาท)"}
-          </button>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <button
+              onClick={() => router.push("/dashboard/creator/withdraw")}
+              disabled={creator.availableBalance < 100}
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white text-purple-600 rounded-lg hover:bg-gray-50 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <CreditCard size={20} />
+              ถอนเงิน {creator.availableBalance < 100 && "(ขั้นต่ำ 100 บาท)"}
+            </button>
+            <button
+              onClick={() => router.push("/dashboard/creator/earnings")}
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white/20 text-white rounded-lg hover:bg-white/30 transition font-medium"
+            >
+              <DollarSign size={20} />
+              ดูประวัติรายได้
+            </button>
+          </div>
         </div>
 
         {/* Stats Cards */}
