@@ -13,11 +13,12 @@ import {
   Store,
   Star,
   BarChart3,
-  Image as ImageIcon,
+  ImageIcon,
   Palette,
   FileText,
   TrendingUp,
-  Shield
+  Shield,
+  Gift
 } from 'lucide-react';
 
 export default function AdminDashboard() {
@@ -91,6 +92,14 @@ export default function AdminDashboard() {
       href: '/admin/categories',
       color: 'bg-pink-500',
       iconColor: 'text-pink-500'
+    },
+    {
+      title: 'Promotion Campaigns',
+      description: 'สร้างและจัดการโปรโมชั่นส่วนลดต่างๆ',
+      icon: Gift,
+      href: '/admin/campaigns',
+      color: 'bg-red-500',
+      iconColor: 'text-red-500'
     }
   ];
 

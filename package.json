@@ -12,17 +12,17 @@
   },
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "prisma generate && next build",
-    "build:local": "prisma generate && next build",
-    "build:vercel": "prisma generate && prisma db push && next build",
+    "build": "npx prisma generate && next build",
+    "build:local": "npx prisma generate && next build",
+    "build:vercel": "npx prisma generate && npx prisma db push && next build",
     "start": "next start",
     "lint": "eslint",
     "check:naming": "bash scripts/check-naming-standards.sh",
     "check:routes": "bash scripts/check-route-conflicts.sh",
     "prebuild": "bash scripts/check-route-conflicts.sh",
     "prepare": "bash scripts/setup-git-hooks.sh",
-    "postinstall": "prisma generate",
-    "vercel-build": "prisma generate && prisma db push && next build",
+    "postinstall": "npx prisma generate",
+    "vercel-build": "npx prisma generate && npx prisma db push && next build",
     "generate:shop-images": "tsx scripts/generate-shop-images-commonjs.ts"
   },
   "dependencies": {
