@@ -1,3 +1,4 @@
+'user client' // ถ้าไม่ใส่จะ error > a client-side exception..
 // Gemini was here to fix the build!
 // src/app/page.tsx
 
