@@ -1,3 +1,5 @@
+'use client'
+
 // src/hooks/useBookmark.ts
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
