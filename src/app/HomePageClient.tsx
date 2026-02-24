@@ -85,6 +85,14 @@ export default function HomePageClient({ initialShops, initialBanners }: HomePag
 
   const SHOPS_PER_PAGE = 24;
 
+  // Sync shops from server when initialShops arrive (e.g. after hydration/client nav)
+  useEffect(() => {
+    if (initialShops.length > 0 && shops.length === 0) {
+      setShops(initialShops);
+      setHasMoreShops(initialShops.length >= SHOPS_PER_PAGE);
+    }
+  }, [initialShops, shops.length]);
+
   useEffect(() => {
     if (!navigator.geolocation) return;
     setLocationState({ status: 'loading' });
@@ -95,10 +103,12 @@ export default function HomePageClient({ initialShops, initialBanners }: HomePag
         try {
           const resp = await fetch(`/api/shops?lat=${latitude}&lng=${longitude}&limit=50&sortBy=distance`);
           const data = await resp.json();
-          setShopsNearby(data.shops || []);
+          const nearby = data.shops || [];
+          // ใช้รายการร้านจาก API เฉพาะเมื่อมีข้อมูล ถ้าไม่มีให้คงใช้ร้านจาก server (initialShops)
+          setShopsNearby(nearby.length > 0 ? nearby : null);
         } catch (err) {
           console.error('Error fetching nearby shops:', err);
-          setShopsNearby([]);
+          setShopsNearby(null);
         }
       },
       () => setLocationState({ status: 'error', error: 'Permission denied' })
@@ -151,7 +161,8 @@ export default function HomePageClient({ initialShops, initialBanners }: HomePag
     };
   }, [isLoadingMore, hasMoreShops, currentPage, shopsNearby]);
 
-  const shopsToShow = shopsNearby !== null ? shopsNearby : shops;
+  // ใช้ initialShops เป็น fallback เมื่อ state ยังว่าง (ป้องกันกรณีโหลดช้า/hydration)
+  const shopsToShow = shopsNearby !== null ? shopsNearby : (shops.length > 0 ? shops : initialShops);
 
   const { premiumShops, proShops, basicShops, otherShops } = useMemo(() => {
     const premium = shopsToShow.filter(s => normalizeTier(s.subscriptionTier) === 'PREMIUM');

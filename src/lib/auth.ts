@@ -206,30 +206,30 @@ export const authOptions: NextAuthOptions = {
   },
 
   callbacks: {
-    // เพิ่ม user id และ role เข้าไปใน session
+    // เพิ่ม user id และ role เข้าไปใน session (role ถูกตั้งใน jwt callback จาก DB แล้ว)
     async session({ session, token }) {
       if (session?.user) {
         session.user.id = token.sub!;
-        
-        // ดึง role จาก database (real-time)
-        if (token.email) {
-          try {
-            const dbUser = await prisma.user.findUnique({
-              where: { email: token.email },
-              select: { role: true },
-            });
-            session.user.role = dbUser?.role || "USER";
-          } catch (error) {
-            console.error("Error fetching user role:", error);
-            session.user.role = "USER";
-          }
-        }
+        session.user.role = (token.role as string) || "USER";
       }
       return session;
     },
     
     async jwt({ token, user }) {
-      if (user) {
+      if (user?.email) token.email = user.email;
+      const email = (token.email ?? user?.email) as string | undefined;
+      if (email) {
+        try {
+          const dbUser = await prisma.user.findUnique({
+            where: { email },
+            select: { role: true },
+          });
+          token.role = dbUser?.role ?? (user ? (user as any).role : undefined) ?? "USER";
+        } catch (error) {
+          console.error("Error fetching user role in jwt:", error);
+          token.role = (user as any)?.role ?? token.role ?? "USER";
+        }
+      } else if (user) {
         token.role = (user as any).role || "USER";
       }
       return token;
