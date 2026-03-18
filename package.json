@@ -12,7 +12,7 @@
   },
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "npx prisma generate && next build",
+    "build": "npx prisma generate && NODE_OPTIONS=--max-old-space-size=6144 next build",
     "build:local": "npx prisma generate && next build",
     "build:vercel": "npx prisma generate && npx prisma db push && next build",
     "start": "next start",

@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // ลดโอกาส build fail บน Vercel เมื่อ log ถูกตัด / ESLint หนัก — รัน npm run lint ใน CI แทน
+  eslint: { ignoreDuringBuilds: true },
   images: {
   remotePatterns: [
     // Supabase Storage

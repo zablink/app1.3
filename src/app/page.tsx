@@ -1,11 +1,11 @@
-'user client' // ถ้าไม่ใส่จะ error > a client-side exception..
-// Gemini was here to fix the build!
 // src/app/page.tsx
-
-import { Suspense } from 'react';
+import { Suspense } from "react";
 import HomePageClient from "./HomePageClient";
-import type { Metadata } from 'next';
-import { prisma } from '@/lib/prisma'; // Import the Prisma client singleton
+import type { Metadata } from "next";
+import { prisma } from "@/lib/prisma";
+
+/** ไม่ pre-render ตอน build — ลดโอกาส build fail เมื่อ DB ไม่พร้อมใน build step บน Vercel */
+export const dynamic = "force-dynamic";
 
 // Add default Open Graph metadata for the homepage
 export const metadata: Metadata = {
