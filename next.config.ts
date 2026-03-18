@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
-const nextConfig: NextConfig = {
-  // ลดโอกาส build fail บน Vercel เมื่อ log ถูกตัด / ESLint หนัก — รัน npm run lint ใน CI แทน
+// Next 16 NextConfig type อาจไม่มี eslint — runtime ยังรองรับ ignoreDuringBuilds
+const nextConfig = {
   eslint: { ignoreDuringBuilds: true },
   images: {
   remotePatterns: [
@@ -51,6 +51,6 @@ const nextConfig: NextConfig = {
     },
     ],
   },
-};
+} as NextConfig;
 
 export default nextConfig;
