@@ -399,48 +399,50 @@ export async function requireShopOwner() {
 }
 
 /**
- * Require shop owner or admin role (alias for requireShopOwner)
+ * Require shop owner or admin for a shop. Returns NextResponse on auth failure, null if OK.
+ * (Always NextResponse | null so route handlers satisfy App Router typing.)
  */
-export async function requireOwnerOrAdmin(req?: Request, shopId?: string) {
-  // If shopId is provided, check if user owns the shop or is admin
+export async function requireOwnerOrAdmin(
+  req?: Request,
+  shopId?: string
+): Promise<NextResponse | null> {
   if (shopId && req) {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    
-    const userRole = (session.user as any).role || 'USER';
-    
-    // Admin can access any shop
-    if (userRole === 'ADMIN') {
+
+    const userRole = (session.user as any).role || "USER";
+
+    if (userRole === "ADMIN") {
       return null;
     }
-    
-    // Check if user owns the shop
+
     try {
       const shop = await prisma.shop.findUnique({
         where: { id: shopId },
-        select: { ownerId: true }
+        select: { ownerId: true },
       });
-      
+
       if (!shop) {
-        return NextResponse.json({ error: 'Shop not found' }, { status: 404 });
+        return NextResponse.json({ error: "Shop not found" }, { status: 404 });
       }
-      
+
       if (shop.ownerId === session.user.id) {
         return null;
       }
-      
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     } catch (error) {
-      console.error('Error checking shop ownership:', error);
-      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+      console.error("Error checking shop ownership:", error);
+      return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
   }
-  
-  // Fallback to role-based check
-  return requireRole(['SHOP', 'ADMIN']);
+
+  const roleResult = await requireRole(["SHOP", "ADMIN"]);
+  if (roleResult.error) return roleResult.error;
+  return null;
 }
 
 /**
