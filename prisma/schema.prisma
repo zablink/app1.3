@@ -28,6 +28,7 @@ model User {
   sessions      Session[]
   bookmarks     UserBookmark[]
   shops         Shop[]
+  creator       creators?
 
   @@map("users")
 }
@@ -545,6 +546,7 @@ model creator_price_history {
 model creators {
   id                    String                  @id
   userId                String                  @unique
+  user                  User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
   displayName           String
   bio                   String?
   phone                 String?
