@@ -46,7 +46,9 @@ export async function POST(
             email: true,
           },
         },
-        category: true,
+        categories: {
+          include: { category: true },
+        },
       },
     });
 
