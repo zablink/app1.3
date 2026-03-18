@@ -20,7 +20,8 @@
       ]
     },
     "types": [
-      "next-auth"
+      "next-auth",
+      "node"
     ],
     "isolatedModules": true,
     "jsx": "react-jsx",

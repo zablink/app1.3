@@ -5,6 +5,13 @@ import crypto from 'crypto';
 
 export const runtime = 'nodejs';
 
+function sanitizeCallbackPath(input: string | null) {
+  if (!input) return '/dashboard';
+  if (!input.startsWith('/')) return '/dashboard';
+  if (input.startsWith('//')) return '/dashboard';
+  return input;
+}
+
 /**
  * GET /api/auth/tiktok/authorize
  * Initiate TikTok OAuth flow
@@ -38,17 +45,6 @@ export async function GET(request: NextRequest) {
       redirectUri = redirectUri.replace(/\/$/, '');
     }
     
-    // Log for debugging
-    console.log('=== TikTok OAuth Configuration ===');
-    console.log('TIKTOK_REDIRECT_URI (env):', process.env.TIKTOK_REDIRECT_URI || 'not set');
-    console.log('NEXT_PUBLIC_APP_URL:', process.env.NEXT_PUBLIC_APP_URL || 'not set');
-    console.log('NEXTAUTH_URL:', process.env.NEXTAUTH_URL || 'not set');
-    console.log('Request Host:', request.headers.get('host'));
-    console.log('Final Redirect URI:', redirectUri);
-    console.log('Redirect URI Length:', redirectUri.length);
-    console.log('Redirect URI (encoded):', encodeURIComponent(redirectUri));
-    console.log('================================');
-    
     if (!clientKey) {
       console.error('TikTok OAuth not configured: Missing TIKTOK_CLIENT_KEY or TIKTOK_CLIENT_ID');
       return NextResponse.json(
@@ -67,7 +63,7 @@ export async function GET(request: NextRequest) {
 
     // Get callbackUrl from query params
     const { searchParams } = new URL(request.url);
-    const callbackUrl = searchParams.get('callbackUrl') || '/dashboard';
+    const callbackUrl = sanitizeCallbackPath(searchParams.get('callbackUrl'));
 
     // Generate state for CSRF protection
     const state = crypto.randomBytes(32).toString('hex');
@@ -75,14 +71,6 @@ export async function GET(request: NextRequest) {
     // Build authorization URL with proper encoding
     const encodedRedirectUri = encodeURIComponent(redirectUri);
     const authUrl = `https://www.tiktok.com/v2/auth/authorize/?client_key=${clientKey}&scope=user.info.basic&response_type=code&redirect_uri=${encodedRedirectUri}&state=${state}`;
-    
-    console.log('TikTok authorization URL (decoded redirect_uri):', authUrl.replace(/redirect_uri=([^&]+)/, (match, encoded) => {
-      try {
-        return `redirect_uri=${decodeURIComponent(encoded)}`;
-      } catch {
-        return match;
-      }
-    }).replace(/client_key=[^&]+/, 'client_key=***'));
     
     // Store state and callbackUrl in cookie for verification
     const response = NextResponse.redirect(authUrl);

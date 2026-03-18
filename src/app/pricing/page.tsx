@@ -1,6 +1,7 @@
 // src/app/pricing/page.tsx
 import Link from 'next/link';
 import { Check, Star, Zap, Crown } from 'lucide-react';
+import { PricingAddToCartButton } from "./PricingAddToCartButton";
 
 export default function PricingPage() {
   const subscriptionPackages = [
@@ -223,16 +224,17 @@ export default function PricingPage() {
                       ))}
                     </ul>
 
-                    <Link
-                      href={`/pricing/cart/package?packageName=${pkg.name}`}
+                    <PricingAddToCartButton
+                      kind="subscription"
+                      tier={pkg.name}
                       className={`block w-full text-center py-3 rounded-lg font-semibold transition-colors ${
                         pkg.popular
-                          ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600"
+                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                       }`}
                     >
                       เริ่มต้นใช้งาน
-                    </Link>
+                    </PricingAddToCartButton>
                   </div>
                 </div>
               );
@@ -279,12 +281,15 @@ export default function PricingPage() {
                   <div className="text-2xl font-bold text-blue-600 mb-4">
                     ฿{token.price}
                   </div>
-                  <Link
-                    href={`/pricing/cart/token?amount=${token.amount + token.bonus}&price=${token.price}&bonus=${token.bonus}`}
+                  <PricingAddToCartButton
+                    kind="token_pack"
+                    packId={
+                      token.amount === 100 ? "pack_100" : token.amount === 500 ? "pack_500" : token.amount === 1000 ? "pack_1000" : "pack_5000"
+                    }
                     className="block w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-center"
                   >
                     ซื้อเลย
-                  </Link>
+                  </PricingAddToCartButton>
                 </div>
               </div>
             ))}

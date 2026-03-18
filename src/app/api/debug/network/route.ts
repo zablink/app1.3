@@ -3,10 +3,14 @@
 
 import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { debugGuard } from '@/lib/debug-guard';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(request: Request) {
+  const blocked = debugGuard(request);
+  if (blocked) return blocked;
+
   const debugInfo: any = {
     timestamp: new Date().toISOString(),
     environment: {

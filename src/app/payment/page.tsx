@@ -12,184 +12,56 @@ export default function PaymentPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const type = searchParams.get("type"); // "package" or "token"
-  const shopId = searchParams.get("shopId");
-  
-  // Package params
-  const packageName = searchParams.get("packageName");
-  
-  // Token params
-  const amount = searchParams.get("amount");
-  const price = searchParams.get("price");
-  const bonus = searchParams.get("bonus") || "0";
   
   const toast = useToast();
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
-  const [packageData, setPackageData] = useState<any>(null);
-
-  // Hardcoded package data matching the pricing page
-  const packageMapping: Record<string, any> = {
-    FREE: { name: 'FREE', price: 0, period: 'ตลอดไป' },
-    BASIC: { name: 'BASIC', price: 199, period: 'ต่อเดือน' },
-    PRO: { name: 'PRO', price: 499, period: 'ต่อเดือน' },
-    PREMIUM: { name: 'PREMIUM', price: 999, period: 'ต่อเดือน' },
-  };
+  const [cart, setCart] = useState<any>(null);
+  const item = cart?.items?.[0];
 
   useEffect(() => {
     if (status === "unauthenticated") {
-      router.push("/signin?callbackUrl=/pricing");
+      router.push("/signin?callbackUrl=/cart");
       return;
     }
     if (status === "authenticated") {
-      if (!type || !shopId) {
-        toast.showError("ข้อมูลไม่ครบถ้วน");
-        router.push("/pricing");
-        return;
-      }
-      
-      if (type === "package") {
-        if (!packageName || !packageMapping[packageName.toUpperCase()]) {
-          toast.showError("ไม่พบแพ็คเกจที่เลือก");
-          router.push("/pricing");
+      (async () => {
+        try {
+          const res = await fetch("/api/cart", { cache: "no-store" });
+          const data = await res.json();
+          if (!data.cart || !data.cart.items?.length) {
+            toast.showError("ตะกร้าว่าง");
+            router.push("/cart");
+            return;
+          }
+          setCart(data.cart);
+        } catch {
+          toast.showError("โหลดตะกร้าไม่สำเร็จ");
+          router.push("/cart");
           return;
+        } finally {
+          setLoading(false);
         }
-        setPackageData(packageMapping[packageName.toUpperCase()]);
-      } else if (type === "token") {
-        if (!amount || !price) {
-          toast.showError("ข้อมูล Token ไม่ครบถ้วน");
-          router.push("/pricing");
-          return;
-        }
-      }
-      
-      setLoading(false);
+      })();
     }
-  }, [status, type, shopId, packageName, amount, price]);
+  }, [status]);
 
   const handlePayment = async () => {
-    if (!shopId) {
-      toast.showError("ไม่พบร้านค้า");
-      return;
-    }
-
     setProcessing(true);
     try {
-      if (type === "token") {
-        // Handle token purchase
-        const tokenAmount = parseInt(amount || "0");
-        const tokenPrice = parseFloat(price || "0");
-        
-        const res = await fetch(`/api/shops/${shopId}/tokens`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            amountTokens: tokenAmount,
-            price: tokenPrice,
-          }),
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          // Redirect to Omise payment
-          if (data.charge?.authorize_uri) {
-            window.location.href = data.charge.authorize_uri;
-          } else {
-            toast.showError("ไม่สามารถสร้างการชำระเงินได้");
-            setProcessing(false);
-          }
-        } else {
-          const error = await res.json();
-          toast.showError(error.error || "เกิดข้อผิดพลาด");
-          setProcessing(false);
-        }
-      } else if (type === "package") {
-        // Handle package purchase
-        if (!packageName || packageData.price === 0) {
-          // FREE package - redirect to register
-          router.push(`/shop/register`);
-          return;
-        }
-
-        // Get package ID from database
-        const plansRes = await fetch(`/api/subscription-plans`);
-        if (!plansRes.ok) {
-          toast.showError("ไม่สามารถโหลดข้อมูลแพ็คเกจได้");
-          setProcessing(false);
-          return;
-        }
-
-        const plansData = await plansRes.json();
-        const plans = plansData.packages || [];
-        
-        // Find package by tier name
-        const plan = plans.find((p: any) => 
-          p.tier?.toUpperCase() === packageName.toUpperCase() ||
-          p.name?.toUpperCase() === packageName.toUpperCase()
-        );
-
-        if (!plan) {
-          toast.showError("ไม่พบแพ็คเกจในระบบ");
-          setProcessing(false);
-          return;
-        }
-
-        // Create Omise charge first with return URI
-        const returnUri = `${window.location.origin}/payment?type=package&packageName=${packageName}&shopId=${shopId}&return=true`;
-        const chargeRes = await fetch(`/api/payment/omise/create-charge`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            shopId,
-            amount: packageData.price,
-            description: `Subscription: ${packageData.name}`,
-            returnUri,
-            metadata: {
-              action: "subscription",
-              packageName: packageName,
-              packageId: plan.id,
-            },
-          }),
-        });
-
-        if (chargeRes.ok) {
-          const chargeData = await chargeRes.json();
-          
-          // Create subscription with PENDING status - webhook will activate it
-          // We'll need to modify the API to support PENDING, but for now create it
-          // The webhook will update paymentRef when payment completes
-          try {
-            const subRes = await fetch(`/api/shops/${shopId}/subscription`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                packageId: plan.id,
-                autoRenew: true,
-                paymentProvider: "omise",
-                paymentRef: chargeData.charge.id,
-              }),
-            });
-
-            // Note: The API creates ACTIVE subscription, but webhook should handle it correctly
-            // If webhook finds matching paymentRef, it will update status
-          } catch (subError) {
-            console.error("Subscription creation error (non-blocking):", subError);
-            // Continue anyway - webhook can create subscription if needed
-          }
-
-          // Redirect to Omise payment
-          if (chargeData.charge?.authorize_uri) {
-            window.location.href = chargeData.charge.authorize_uri;
-          } else {
-            toast.showError("ไม่สามารถสร้างการชำระเงินได้");
-            setProcessing(false);
-          }
-        } else {
-          const error = await chargeRes.json();
-          toast.showError(error.error || "เกิดข้อผิดพลาดในการสร้างการชำระเงิน");
-          setProcessing(false);
-        }
+      const res = await fetch("/api/payment/checkout", { method: "POST" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        toast.showError(data.error || "เกิดข้อผิดพลาดในการสร้างการชำระเงิน");
+        setProcessing(false);
+        return;
       }
+      if (data.charge?.authorize_uri) {
+        window.location.href = data.charge.authorize_uri;
+        return;
+      }
+      toast.showError("ไม่พบลิงก์ชำระเงิน");
+      setProcessing(false);
     } catch (error) {
       console.error("Error processing payment:", error);
       toast.showError("เกิดข้อผิดพลาด");
@@ -200,9 +72,8 @@ export default function PaymentPage() {
   // Handle return from Omise
   useEffect(() => {
     const returnParam = searchParams.get("return");
-    if (returnParam === "true" && type === "package") {
+    if (returnParam === "true") {
       toast.showSuccess("กำลังตรวจสอบการชำระเงิน...");
-      // Wait a moment for webhook to process, then redirect
       setTimeout(() => {
         router.push("/dashboard/shop");
       }, 2000);
@@ -226,7 +97,7 @@ export default function PaymentPage() {
         {/* Header */}
         <div className="mb-6">
           <Link
-            href={type === "package" ? `/pricing/cart/package?packageName=${packageName}` : `/pricing/cart/token?amount=${amount}&price=${price}&bonus=${bonus}`}
+            href="/cart"
             className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -243,45 +114,36 @@ export default function PaymentPage() {
         <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">สรุปคำสั่งซื้อ</h2>
           
-          {type === "package" && packageData && (
+          {item?.kind === "subscription" && (
             <div className="flex items-center gap-4 mb-4">
               <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                 <Package className="w-6 h-6 text-blue-600" />
               </div>
               <div className="flex-1">
-                <h3 className="font-semibold text-gray-900">แพ็คเกจ {packageData.name}</h3>
-                <p className="text-sm text-gray-600">{packageData.period}</p>
+                <h3 className="font-semibold text-gray-900">แพ็คเกจ {item.tier}</h3>
+                <p className="text-sm text-gray-600">ราคาจะคำนวณจากฝั่งเซิร์ฟเวอร์</p>
               </div>
               <div className="text-right">
                 <p className="text-lg font-bold text-gray-900">
-                  {packageData.price === 0 ? (
-                    <span className="text-green-600">ฟรี</span>
-                  ) : (
-                    <>฿{packageData.price.toLocaleString()}</>
-                  )}
+                  —
                 </p>
               </div>
             </div>
           )}
 
-          {type === "token" && (
+          {item?.kind === "token_pack" && (
             <div className="flex items-center gap-4 mb-4">
               <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
                 <Coins className="w-6 h-6 text-yellow-600" />
               </div>
               <div className="flex-1">
                 <h3 className="font-semibold text-gray-900">
-                  Token {parseInt(amount || "0").toLocaleString()} เหรียญ
+                  Token Pack {item.packId}
                 </h3>
-                {parseInt(bonus || "0") > 0 && (
-                  <p className="text-sm text-green-600">
-                    รวมโบนัส {parseInt(bonus || "0").toLocaleString()} เหรียญ
-                  </p>
-                )}
               </div>
               <div className="text-right">
                 <p className="text-lg font-bold text-gray-900">
-                  ฿{parseFloat(price || "0").toLocaleString()}
+                  —
                 </p>
               </div>
             </div>
@@ -291,15 +153,7 @@ export default function PaymentPage() {
             <div className="flex justify-between items-center">
               <span className="text-lg font-semibold text-gray-900">ยอดรวม</span>
               <span className="text-2xl font-bold text-gray-900">
-                {type === "package" && packageData ? (
-                  packageData.price === 0 ? (
-                    <span className="text-green-600">ฟรี</span>
-                  ) : (
-                    <>฿{packageData.price.toLocaleString()}</>
-                  )
-                ) : (
-                  <>฿{parseFloat(price || "0").toLocaleString()}</>
-                )}
+                —
               </span>
             </div>
           </div>
@@ -339,14 +193,14 @@ export default function PaymentPage() {
         {/* Payment Button */}
         <div className="flex gap-4">
           <Link
-            href={type === "package" ? `/pricing/cart/package?packageName=${packageName}` : `/pricing/cart/token?amount=${amount}&price=${price}&bonus=${bonus}`}
+            href="/cart"
             className="flex-1 px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition text-center font-medium"
           >
             ยกเลิก
           </Link>
           <button
             onClick={handlePayment}
-            disabled={processing || (type === "package" && packageData?.price === 0)}
+            disabled={processing}
             className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-medium"
           >
             {processing ? (

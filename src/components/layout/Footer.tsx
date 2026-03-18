@@ -1,4 +1,6 @@
 // src/components/layout/Footer.tsx
+import Link from "next/link";
+
 export default function Footer() {
   const currentYear = new Date().getFullYear();
 
@@ -9,6 +11,20 @@ export default function Footer() {
           <p className="text-sm text-gray-300">
             © {currentYear} Vertex Horizons Co.,Ltd. All rights reserved.
           </p>
+          <div className="flex flex-wrap items-center justify-center gap-4 text-sm">
+            <Link href="/business-policy" className="text-gray-300 hover:text-white transition-colors">
+              นโยบายทางธุรกิจ
+            </Link>
+            <Link href="/refund-policy" className="text-gray-300 hover:text-white transition-colors">
+              นโยบายคืนเงิน
+            </Link>
+            <Link href="/privacy" className="text-gray-300 hover:text-white transition-colors">
+              Privacy
+            </Link>
+            <Link href="/terms" className="text-gray-300 hover:text-white transition-colors">
+              Terms
+            </Link>
+          </div>
         </div>
       </div>
     </footer>

@@ -1,5 +1,6 @@
 // src/app/api/debug/facebook-redirect-uri/route.ts
 import { NextResponse } from 'next/server';
+import { debugGuard } from '@/lib/debug-guard';
 
 export const dynamic = 'force-dynamic';
 
@@ -8,6 +9,9 @@ export const dynamic = 'force-dynamic';
  * Debug endpoint to show the Facebook redirect URI that should be configured
  */
 export async function GET(request: Request) {
+  const blocked = debugGuard(request);
+  if (blocked) return blocked;
+
   try {
     const url = new URL(request.url);
     const baseUrl = url.origin;

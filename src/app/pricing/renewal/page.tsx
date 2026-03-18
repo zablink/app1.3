@@ -62,10 +62,28 @@ export default function RenewalPage() {
       return;
     }
 
-    // Redirect to payment with renewal flag
-    router.push(
-      `/payment?type=package&packageId=${subscription.plan.id}&shopId=${shopId}&renewal=true`
-    );
+    const tier = String(subscription.plan.tier || subscription.plan.name || "").toUpperCase();
+    if (!["BASIC", "PRO", "PREMIUM"].includes(tier)) {
+      toast.showError("ไม่พบ Tier ของแพ็คเกจ");
+      return;
+    }
+
+    fetch("/api/cart", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        shopId,
+        item: { kind: "subscription", tier, context: "renewal" },
+      }),
+    })
+      .then(async (res) => {
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error || "บันทึกตะกร้าไม่สำเร็จ");
+        }
+      })
+      .then(() => router.push("/cart"))
+      .catch((e) => toast.showError(e.message || "เกิดข้อผิดพลาด"));
   };
 
   if (loading || status === "loading") {

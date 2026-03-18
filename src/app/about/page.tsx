@@ -147,7 +147,19 @@ export default function AboutPage() {
           <p className="text-gray-600 mb-6">
             Please review our legal documents to understand your rights and responsibilities when using our platform.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex flex-col sm:flex-row gap-4 flex-wrap">
+            <Link
+              href="/business-policy"
+              className="px-6 py-3 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors font-medium text-center"
+            >
+              นโยบายทางธุรกิจ
+            </Link>
+            <Link
+              href="/refund-policy"
+              className="px-6 py-3 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium text-center"
+            >
+              นโยบายคืนเงิน
+            </Link>
             <Link
               href="/terms"
               className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-center"

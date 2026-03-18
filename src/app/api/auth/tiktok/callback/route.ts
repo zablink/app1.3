@@ -6,6 +6,13 @@ import { encode } from 'next-auth/jwt';
 
 export const runtime = 'nodejs';
 
+function sanitizeCallbackPath(input: string | null | undefined) {
+  const value = input || '/dashboard';
+  if (!value.startsWith('/')) return '/dashboard';
+  if (value.startsWith('//')) return '/dashboard';
+  return value;
+}
+
 /**
  * GET /api/auth/tiktok/callback
  * Handle TikTok OAuth callback
@@ -50,7 +57,7 @@ export async function GET(request: NextRequest) {
 
     // Verify state from cookie
     const storedState = request.cookies.get('tiktok_oauth_state')?.value;
-    const callbackUrl = request.cookies.get('tiktok_callback_url')?.value || '/dashboard';
+    const callbackUrl = sanitizeCallbackPath(request.cookies.get('tiktok_callback_url')?.value);
 
     if (!storedState || storedState !== state) {
       console.error('State mismatch in TikTok OAuth callback');
@@ -87,13 +94,10 @@ export async function GET(request: NextRequest) {
       redirectUri = redirectUri.replace(/\/$/, '');
     }
     
-    console.log('=== TikTok Callback Configuration ===');
-    console.log('TIKTOK_REDIRECT_URI (env):', process.env.TIKTOK_REDIRECT_URI || 'not set');
-    console.log('NEXT_PUBLIC_APP_URL:', process.env.NEXT_PUBLIC_APP_URL || 'not set');
-    console.log('NEXTAUTH_URL:', process.env.NEXTAUTH_URL || 'not set');
-    console.log('Request Host:', request.headers.get('host'));
-    console.log('Final Redirect URI:', redirectUri);
-    console.log('=====================================');
+    if (!process.env.NEXTAUTH_SECRET) {
+      console.error('NEXTAUTH_SECRET is not set');
+      return NextResponse.redirect(`${baseUrlForRedirect}/signin?error=Configuration`);
+    }
 
     if (!clientKey || !clientSecret) {
       console.error('TikTok OAuth credentials not configured:', {
@@ -140,7 +144,7 @@ export async function GET(request: NextRequest) {
         hasClientSecret: !!clientSecret,
       });
       return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_APP_URL}/signin?error=OAuthCallback&message=${encodeURIComponent(errorData.error_description || errorData.error || 'Token exchange failed')}`
+        `${baseUrlForRedirect}/signin?error=OAuthCallback&message=${encodeURIComponent(errorData.error_description || errorData.error || 'Token exchange failed')}`
       );
     }
 
@@ -179,7 +183,7 @@ export async function GET(request: NextRequest) {
         hasAccessToken: !!accessToken,
       });
       return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_APP_URL}/signin?error=OAuthCallback&message=${encodeURIComponent(errorData.error_description || errorData.error || 'Failed to get user info')}`
+        `${baseUrlForRedirect}/signin?error=OAuthCallback&message=${encodeURIComponent(errorData.error_description || errorData.error || 'Failed to get user info')}`
       );
     }
 
@@ -215,7 +219,8 @@ export async function GET(request: NextRequest) {
 
       // Update or create account
       const existingAccount = existingUser.accounts.find(
-        (acc) => acc.provider === 'tiktok' && acc.providerAccountId === tiktokUser.open_id
+        (acc: { provider: string; providerAccountId: string }) =>
+          acc.provider === 'tiktok' && acc.providerAccountId === tiktokUser.open_id
       );
 
       if (existingAccount) {
@@ -268,7 +273,7 @@ export async function GET(request: NextRequest) {
         picture: user.image,
         role: user.role || 'USER',
       },
-      secret: process.env.NEXTAUTH_SECRET!,
+      secret: process.env.NEXTAUTH_SECRET,
       maxAge: 30 * 24 * 60 * 60, // 30 days
     });
 
@@ -297,8 +302,11 @@ export async function GET(request: NextRequest) {
     return response;
   } catch (error) {
     console.error('TikTok callback error:', error);
-    return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_APP_URL}/signin?error=OAuthCallback`
-    );
+    const protocol = request.headers.get('x-forwarded-proto') || 'https';
+    const host = request.headers.get('host') || request.headers.get('x-forwarded-host');
+    const baseUrl =
+      (process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || (host ? `${protocol}://${host}` : '')).replace(/\/$/, '');
+
+    return NextResponse.redirect(`${baseUrl}/signin?error=OAuthCallback`);
   }
 }

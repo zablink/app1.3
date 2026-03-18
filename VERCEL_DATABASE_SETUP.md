@@ -33,15 +33,16 @@ postgresql://postgres:[YOUR-PASSWORD]@db.gysckclnnitkgafvdkno.supabase.co:5432/p
 
 ### 2. ตรวจสอบ Connection String
 
-จาก `.env` file:
+อย่าใส่รหัสผ่านจริงลงในเอกสาร/โค้ด ให้ใช้ placeholder:
+
 ```
-DATABASE_URL="postgresql://postgres:YpYuAJY1wS7fFQo0@db.gysckclnnitkgafvdkno.supabase.co:5432/postgres"
+DATABASE_URL="postgresql://postgres:[YOUR-PASSWORD]@db.gysckclnnitkgafvdkno.supabase.co:5432/postgres"
 ```
 
 **สำหรับ Vercel Production ควรใช้:**
 
 ```
-DATABASE_URL="postgresql://postgres:YpYuAJY1wS7fFQo0@db.gysckclnnitkgafvdkno.supabase.co:6543/postgres?pgbouncer=true"
+DATABASE_URL="postgresql://postgres:[YOUR-PASSWORD]@db.gysckclnnitkgafvdkno.supabase.co:6543/postgres?pgbouncer=true"
 ```
 
 ### 3. ตรวจสอบ Supabase Connection Pooling

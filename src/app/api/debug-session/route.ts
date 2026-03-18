@@ -3,20 +3,15 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { debugGuard } from "@/lib/debug-guard";
 
 export async function GET(request: Request) {
+  const blocked = debugGuard(request);
+  if (blocked) return blocked;
+
   try {
-    const headers = Object.fromEntries(request.headers);
-    
-    console.log("=== Debug Session API ===");
-    console.log("Environment:", process.env.NODE_ENV);
-    console.log("Cookie header:", headers.cookie?.substring(0, 100));
-    
     const session = await getServerSession(authOptions);
-    
-    console.log("Session exists:", !!session);
-    console.log("User ID:", session?.user?.id);
-    
+
     return NextResponse.json({
       timestamp: new Date().toISOString(),
       environment: process.env.NODE_ENV,
@@ -28,9 +23,9 @@ export async function GET(request: Request) {
       },
       
       cookies: {
-        hasCookie: !!headers.cookie,
-        hasSecureToken: headers.cookie?.includes("__Secure-next-auth.session-token"),
-        hasRegularToken: headers.cookie?.includes("next-auth.session-token"),
+        hasCookie: !!request.headers.get("cookie"),
+        hasSecureToken: request.headers.get("cookie")?.includes("__Secure-next-auth.session-token"),
+        hasRegularToken: request.headers.get("cookie")?.includes("next-auth.session-token"),
       },
       
       session: {

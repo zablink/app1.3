@@ -2,10 +2,14 @@
 // Debug endpoints index - lists all available debug endpoints
 
 import { NextResponse } from 'next/server';
+import { debugGuard } from '@/lib/debug-guard';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(request: Request) {
+  const blocked = debugGuard(request);
+  if (blocked) return blocked;
+
   const debugEndpoints = {
     timestamp: new Date().toISOString(),
     description: 'Database Connection Debug Endpoints',

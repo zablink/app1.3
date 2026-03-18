@@ -8,6 +8,9 @@
 # Install dependencies (auto-setup git hooks)
 npm install
 
+# Setup env
+cp env.example .env.local
+
 # Run development server
 npm run dev
 
@@ -27,6 +30,12 @@ npm run check:naming
 # Build to verify everything works
 npm run build
 ```
+
+## 🔐 Security Notes
+
+- **Never commit** `.env` / `.env.local` (secrets). Use `env.example` as template.
+- **Debug APIs** under `/api/debug/*` are blocked in production unless you set `DEBUG_API_SECRET`
+  and send header `x-debug-secret: <DEBUG_API_SECRET>`.
 
 ## 📚 Documentation
 

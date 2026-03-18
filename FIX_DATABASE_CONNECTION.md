@@ -22,21 +22,21 @@ db.gysckclnnitkgafvdkno.supabase.co:5432
 
 ### ขั้นตอนที่ 2: ตั้งค่า Connection String
 
-**จาก `.env` file ของคุณ:**
+**ตัวอย่าง (อย่าใส่รหัสผ่านจริง):**
 ```
-postgresql://postgres:YpYuAJY1wS7fFQo0@db.gysckclnnitkgafvdkno.supabase.co:5432/postgres
+postgresql://postgres:[YOUR-PASSWORD]@db.gysckclnnitkgafvdkno.supabase.co:5432/postgres
 ```
 
 **เปลี่ยนเป็น (ใช้ Connection Pooler - port 6543):**
 
 ```
-postgresql://postgres:YpYuAJY1wS7fFQo0@db.gysckclnnitkgafvdkno.supabase.co:6543/postgres?pgbouncer=true
+postgresql://postgres:[YOUR-PASSWORD]@db.gysckclnnitkgafvdkno.supabase.co:6543/postgres?pgbouncer=true
 ```
 
 ### ขั้นตอนที่ 3: ตั้งค่า Environment
 
 - **Key:** `DATABASE_URL`
-- **Value:** `postgresql://postgres:YpYuAJY1wS7fFQo0@db.gysckclnnitkgafvdkno.supabase.co:6543/postgres?pgbouncer=true`
+- **Value:** `postgresql://postgres:[YOUR-PASSWORD]@db.gysckclnnitkgafvdkno.supabase.co:6543/postgres?pgbouncer=true`
 - **Environment:** เลือก **Production**, **Preview**, และ **Development** (หรือเลือกทั้งหมด)
 
 ### ขั้นตอนที่ 4: Redeploy
