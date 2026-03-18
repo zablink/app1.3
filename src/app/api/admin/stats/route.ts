@@ -16,8 +16,8 @@ export async function GET(request: NextRequest) {
       activeSubscriptions,
     ] = await Promise.all([
       prisma.shop.count(),
-      prisma.creator.count(),
-      prisma.campaign.count(),
+      prisma.creators.count(),
+      prisma.campaigns.count(),
       prisma.user.count(),
       prisma.shop.count({ where: { status: 'PENDING' } }),
       prisma.shopSubscription.count({ where: { status: 'ACTIVE' } }),

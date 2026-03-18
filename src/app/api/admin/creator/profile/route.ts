@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     const where = status ? { applicationStatus: status as any } : {};
 
     const [creators, total] = await Promise.all([
-      prisma.creator.findMany({
+      prisma.creators.findMany({
         where,
         skip: (page - 1) * limit,
         take: limit,
@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
         },
         orderBy: { createdAt: 'desc' },
       }),
-      prisma.creator.count({ where }),
+      prisma.creators.count({ where }),
     ]);
 
     return NextResponse.json({

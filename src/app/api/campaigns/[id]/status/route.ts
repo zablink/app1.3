@@ -29,7 +29,7 @@ export async function PATCH(
     }
 
     const { id } = await params;
-    const campaign = await prisma.campaign.findUnique({
+    const campaign = await prisma.campaigns.findUnique({
       where: { id },
       include: {
         shop: {
@@ -135,7 +135,7 @@ export async function PATCH(
     }
 
     // Update status
-    const updatedCampaign = await prisma.campaign.update({
+    const updatedCampaign = await prisma.campaigns.update({
       where: { id: params.id },
       data: {
         status,

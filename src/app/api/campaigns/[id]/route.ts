@@ -16,7 +16,7 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const campaign = await prisma.campaign.findUnique({
+    const campaign = await prisma.campaigns.findUnique({
       where: { id: (await params).id },
       include: {
         shop: {
@@ -76,7 +76,7 @@ export async function PATCH(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const campaign = await prisma.campaign.findUnique({
+    const campaign = await prisma.campaigns.findUnique({
       where: { id: (await params).id },
       include: {
         shop: {
@@ -118,7 +118,7 @@ export async function PATCH(
       }
     }
 
-    const updatedCampaign = await prisma.campaign.update({
+    const updatedCampaign = await prisma.campaigns.update({
       where: { id: (await params).id },
       data: {
         ...(title && { title }),
@@ -170,7 +170,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const campaign = await prisma.campaign.findUnique({
+    const campaign = await prisma.campaigns.findUnique({
       where: { id: (await params).id },
       include: {
         shop: {
@@ -207,7 +207,7 @@ export async function DELETE(
     }
 
     // ลบ campaign (จะลบ jobs ที่เกี่ยวข้องด้วยเพราะมี onDelete: Cascade)
-    await prisma.campaign.delete({
+    await prisma.campaigns.delete({
       where: { id: (await params).id }
     });
 

@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Check if display name already exists
-    const existing = await prisma.creator.findFirst({
+    const existing = await prisma.creators.findFirst({
       where: {
         displayName: {
           equals: name,

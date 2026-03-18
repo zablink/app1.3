@@ -36,7 +36,7 @@ export async function POST(
       );
     }
 
-    const job = await prisma.campaignJob.findUnique({
+    const job = await prisma.campaign_jobs.findUnique({
       where: { id: (await params).id },
       include: {
         creator: {
@@ -80,7 +80,7 @@ export async function POST(
     }
 
     // Update job status เป็น SUBMITTED
-    const updatedJob = await prisma.campaignJob.update({
+    const updatedJob = await prisma.campaign_jobs.update({
       where: { id: (await params).id },
       data: {
         status: 'SUBMITTED',

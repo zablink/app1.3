@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
 
     const userId = session.user.id;
 
-    const creator = await prisma.creator.findUnique({
+    const creator = await prisma.creators.findUnique({
       where: { userId },
       select: {
         id: true,
@@ -90,7 +90,7 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    const creator = await prisma.creator.findUnique({
+    const creator = await prisma.creators.findUnique({
       where: { userId },
     });
 
@@ -102,7 +102,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Update creator prices
-    const updatedCreator = await prisma.creator.update({
+    const updatedCreator = await prisma.creators.update({
       where: { userId },
       data: {
         currentPriceMin: parseInt(currentPriceMin),

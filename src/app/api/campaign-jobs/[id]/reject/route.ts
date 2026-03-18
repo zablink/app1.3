@@ -26,7 +26,7 @@ export async function POST(
       );
     }
 
-    const job = await prisma.campaignJob.findUnique({
+    const job = await prisma.campaign_jobs.findUnique({
       where: { id: (await params).id },
       include: {
         creator: {
@@ -68,7 +68,7 @@ export async function POST(
     // Update job status เป็น REJECTED และคืน budget
     const result = await prisma.$transaction(async (tx) => {
       // 1. Update job status
-      const updatedJob = await tx.campaignJob.update({
+      const updatedJob = await tx.campaign_jobs.update({
         where: { id: (await params).id },
         data: {
           status: 'REJECTED',
@@ -141,7 +141,7 @@ export async function DELETE(
     const body = await request.json();
     const { reason } = body;
 
-    const job = await prisma.campaignJob.findUnique({
+    const job = await prisma.campaign_jobs.findUnique({
       where: { id: (await params).id },
       include: {
         creator: {
@@ -179,7 +179,7 @@ export async function DELETE(
     // Update job status เป็น CANCELLED
     const result = await prisma.$transaction(async (tx) => {
       // 1. Update job status
-      const updatedJob = await tx.campaignJob.update({
+      const updatedJob = await tx.campaign_jobs.update({
         where: { id: (await params).id },
         data: {
           status: 'CANCELLED',

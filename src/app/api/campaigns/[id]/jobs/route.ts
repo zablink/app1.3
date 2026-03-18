@@ -19,7 +19,7 @@ export async function GET(
     const searchParams = request.nextUrl.searchParams;
     const status = searchParams.get('status'); // Filter by status
 
-    const campaign = await prisma.campaign.findUnique({
+    const campaign = await prisma.campaigns.findUnique({
       where: { id: (await params).id },
       select: {
         id: true,
@@ -51,7 +51,7 @@ export async function GET(
       whereClause.status = status;
     }
 
-    const jobs = await prisma.campaignJob.findMany({
+    const jobs = await prisma.campaign_jobs.findMany({
       where: whereClause,
       include: {
         creator: {
@@ -108,7 +108,7 @@ export async function POST(
       );
     }
 
-    const campaign = await prisma.campaign.findUnique({
+    const campaign = await prisma.campaigns.findUnique({
       where: { id: (await params).id },
       include: {
         shop: {
@@ -164,7 +164,7 @@ export async function POST(
     }
 
     // ตรวจสอบว่า creator มีอยู่จริงและ approved
-    const creator = await prisma.creator.findUnique({
+    const creator = await prisma.creators.findUnique({
       where: { id: creatorId },
       select: {
         id: true,
@@ -202,7 +202,7 @@ export async function POST(
     }
 
     // สร้าง job ใหม่
-    const newJob = await prisma.campaignJob.create({
+    const newJob = await prisma.campaign_jobs.create({
       data: {
         campaignId: (await params).id,
         creatorId: creatorId,

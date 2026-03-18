@@ -13,7 +13,7 @@ export async function GET() {
     }
 
     // Find creator by user email
-    const creator = await prisma.creator.findFirst({
+    const creator = await prisma.creators.findFirst({
       where: {
         user: {
           email: session.user.email,

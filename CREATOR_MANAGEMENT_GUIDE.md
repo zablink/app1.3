@@ -368,7 +368,7 @@ curl http://localhost:3000/admin/creators/[id]/jobs
 **วิธีแก้:**
 ```typescript
 // ❌ ผิด
-await prisma.creator.findMany()
+await prisma.creators.findMany()
 
 // ✅ ถูกต้อง
 await prisma.creators.findMany()

@@ -11,7 +11,7 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const creator = await prisma.creator.findUnique({
+  const creator = await prisma.creators.findUnique({
     where: { userId: session.user.id },
     select: { id: true }
   });

@@ -93,7 +93,7 @@ export async function GET(req: NextRequest) {
         orderBy = { currentPriceMin: "asc" };
     }
 
-    const creators = await prisma.creator.findMany({
+    const creators = await prisma.creators.findMany({
       where,
       include: {
         user: {

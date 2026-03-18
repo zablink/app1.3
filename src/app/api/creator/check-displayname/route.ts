@@ -101,7 +101,7 @@ export async function GET(request: NextRequest) {
     }
 
     // ดึงผู้ใช้ปัจจุบัน
-    const currentUser = await prisma.creator.findUnique({
+    const currentUser = await prisma.creators.findUnique({
       where: { userId: session.user.id },
       select: { displayName: true },
     });
@@ -116,7 +116,7 @@ export async function GET(request: NextRequest) {
     }
 
     // ค้นหาชื่อที่ซ้ำเป๊ะ (exact match)
-    const exactMatch = await prisma.creator.findFirst({
+    const exactMatch = await prisma.creators.findFirst({
       where: {
         displayName: {
           equals: displayName.trim(),
@@ -140,7 +140,7 @@ export async function GET(request: NextRequest) {
     }
 
     // ค้นหาชื่อที่ใกล้เคียง (similar names)
-    const allCreators = await prisma.creator.findMany({
+    const allCreators = await prisma.creators.findMany({
       where: {
         userId: { not: session.user.id },
         status: { in: ["PENDING", "APPROVED"] }, // เช็คเฉพาะที่ active

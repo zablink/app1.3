@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Find creator
-    const creator = await prisma.creator.findUnique({
+    const creator = await prisma.creators.findUnique({
       where: { userId: session.user.id },
       include: {
         creator_coverage_areas: true,
@@ -49,7 +49,7 @@ export async function GET(req: NextRequest) {
     // 4. In creator's coverage area (optional - can be removed if want all campaigns)
 
     const now = new Date();
-    const campaigns = await prisma.campaign.findMany({
+    const campaigns = await prisma.campaigns.findMany({
       where: {
         status: { in: ["ACTIVE", "PENDING"] },
         startDate: { lte: now },

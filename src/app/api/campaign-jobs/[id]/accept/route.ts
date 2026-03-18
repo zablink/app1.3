@@ -16,7 +16,7 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const job = await prisma.campaignJob.findUnique({
+    const job = await prisma.campaign_jobs.findUnique({
       where: { id: (await params).id },
       include: {
         creator: {
@@ -85,7 +85,7 @@ export async function POST(
     // Update job status เป็น ACCEPTED
     const updatedJob = await prisma.$transaction(async (tx) => {
       // 1. Update job status
-      const job = await tx.campaignJob.update({
+      const job = await tx.campaign_jobs.update({
         where: { id: (await params).id },
         data: {
           status: 'ACCEPTED',

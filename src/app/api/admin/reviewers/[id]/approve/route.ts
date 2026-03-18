@@ -44,7 +44,7 @@ export async function POST(
     }
 
     // Find creator
-    const creator = await prisma.creator.findUnique({
+    const creator = await prisma.creators.findUnique({
       where: { id: (await params).id },
       include: {
         user: {
@@ -94,7 +94,7 @@ export async function POST(
         );
       }
 
-      const updatedCreator = await prisma.creator.update({
+      const updatedCreator = await prisma.creators.update({
         where: { id: (await params).id },
         data: {
           applicationStatus: "APPROVED",
@@ -130,7 +130,7 @@ export async function POST(
         );
       }
 
-      const updatedCreator = await prisma.creator.update({
+      const updatedCreator = await prisma.creators.update({
         where: { id: (await params).id },
         data: {
           applicationStatus: "REJECTED",
@@ -188,7 +188,7 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const status = searchParams.get("status") || "PENDING";
 
-    const creators = await prisma.creator.findMany({
+    const creators = await prisma.creators.findMany({
       where: {
         applicationStatus: status as any,
       },

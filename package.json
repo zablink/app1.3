@@ -17,6 +17,7 @@
     "build:vercel": "npx prisma generate && npx prisma db push && next build",
     "start": "next start",
     "lint": "eslint",
+    "typecheck": "npx prisma generate && tsc --noEmit --pretty false",
     "check:naming": "bash scripts/check-naming-standards.sh",
     "check:routes": "bash scripts/check-route-conflicts.sh",
     "prebuild": "bash scripts/check-route-conflicts.sh",
