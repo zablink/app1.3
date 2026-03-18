@@ -27,8 +27,18 @@ npm run check:routes
 # Check naming standards
 npm run check:naming
 
+# TypeScript ทั้งโปรเจกต์ (ใช้ Prisma 6 จาก node_modules — อย่าใช้ npx prisma เปล่าๆ จะไปดึง Prisma 7)
+npm install
+npm run typecheck
+
 # Build to verify everything works
 npm run build
+```
+
+ถ้า `npm install` บน Mac เก่าแล้ว error เรื่อง `esbuild` / Security framework — รันตรวจแบบเดียวกับ CI ด้วย Docker:
+
+```bash
+npm run typecheck:docker
 ```
 
 ## 🔐 Security Notes
@@ -127,8 +137,9 @@ npm run check:routes
 
 ### Database issues
 ```bash
-npx prisma generate
-npx prisma db push
+npm install   # ให้มี prisma ใน node_modules ก่อน
+prisma generate
+prisma db push
 ```
 
 ## 🤝 Contributing

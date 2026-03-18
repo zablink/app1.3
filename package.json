@@ -18,6 +18,7 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "prisma generate && tsc --noEmit --pretty false",
+    "typecheck:docker": "bash scripts/typecheck-docker.sh",
     "check:naming": "bash scripts/check-naming-standards.sh",
     "check:routes": "bash scripts/check-route-conflicts.sh",
     "prebuild": "bash scripts/check-route-conflicts.sh",

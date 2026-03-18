@@ -68,6 +68,13 @@ src/
 | `npm run check:routes` | Check for route conflicts |
 | `npm run check:naming` | Check naming conventions |
 | `npm run lint` | Run ESLint |
+| `npm run typecheck` | Prisma generate + `tsc --noEmit` (ต้อง `npm install` ก่อน) |
+| `npm run typecheck:docker` | เหมือน typecheck แต่รันใน Docker (Mac เก่าที่ esbuild พัง) |
+
+### Prisma / Typecheck
+
+- ใช้ **Prisma 6** ตาม `package.json` — รันผ่าน `prisma` หลัง `npm install` เท่านั้น
+- **อย่า** รัน `npx prisma` โดยไม่มี dependency ในโปรเจกต์ (จะโหลด Prisma 7 แล้ว schema พัง)
 
 ## 🔧 Git Hooks
 
