@@ -3,7 +3,7 @@
 
 'use client';
 
-import { AdBanner } from '@/components/AdBanner';
+import AdBanner from '@/components/AdBanner';
 import { useAdBanner } from '@/hooks/useAdBanner';
 import { useEffect, useState } from 'react';
 
