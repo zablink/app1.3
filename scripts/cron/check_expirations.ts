@@ -1,5 +1,5 @@
 // scripts/cron/check_expirations.ts
-import prisma from "../src/lib/prisma";
+import prisma from "../../src/lib/prisma";
 
 async function main() {
   console.log("Cron: check expirations start", new Date().toISOString());
