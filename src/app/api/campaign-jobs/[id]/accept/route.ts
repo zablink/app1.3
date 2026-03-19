@@ -19,7 +19,7 @@ export async function POST(
     const job = await prisma.campaign_jobs.findUnique({
       where: { id: (await params).id },
       include: {
-        creator: {
+        creators: {
           select: {
             id: true,
             userId: true
@@ -41,7 +41,7 @@ export async function POST(
     }
 
     // ตรวจสอบสิทธิ์ - เฉพาะ creator ที่ถูกเชิญ
-    if (job.creator.userId !== session.user.id) {
+    if (job.creators.userId !== session.user.id) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -92,7 +92,7 @@ export async function POST(
           acceptedAt: new Date()
         },
         include: {
-          creator: {
+          creators: {
             select: {
               id: true,
               displayName: true

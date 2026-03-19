@@ -25,7 +25,7 @@ export async function POST(
     const job = await prisma.campaign_jobs.findUnique({
       where: { id: (await params).id },
       include: {
-        creator: {
+        creators: {
           select: {
             id: true,
             userId: true,
@@ -101,7 +101,7 @@ export async function POST(
           creatorEarning
         },
         include: {
-          creator: {
+          creators: {
             select: {
               id: true,
               displayName: true,
