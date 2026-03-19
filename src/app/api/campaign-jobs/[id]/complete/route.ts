@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { PrismaClient } from '@prisma/client';
+import { randomUUID } from 'crypto';
 
 import { prisma } from '@/lib/prisma';
 import { calculateOGTokenCost } from '@/lib/og-campaign';
@@ -127,6 +128,7 @@ export async function POST(
       // 2. สร้าง Earning record
       const earning = await tx.earnings.create({
         data: {
+          id: randomUUID(),
           creatorId: job.creatorId,
           campaignJobId: job.id,
           amount: creatorEarning,
