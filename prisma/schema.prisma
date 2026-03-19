@@ -281,6 +281,38 @@ model TokenWallet {
   @@map("token_wallets")
 }
 
+// TokenPurchase (batch-based) is stored in `token_purchases`
+// NOTE: DB columns are snake_case; we expose camelCase fields for existing code compatibility.
+model TokenPurchase {
+  id          String   @id @default(dbgenerated("(gen_random_uuid())::text"))
+  walletId    String   @map("wallet_id")
+  amount      Int
+  remaining   Int
+  price       Int
+  provider    String
+  providerRef String?  @map("provider_ref")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  expiresAt   DateTime @map("expires_at") @db.Timestamptz(6)
+
+  wallet      TokenWallet @relation(fields: [walletId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@map("token_purchases")
+}
+
+// TokenUsage is stored in `token_usages`
+model TokenUsage {
+  id           String   @id @default(dbgenerated("(gen_random_uuid())::text"))
+  walletId     String   @map("wallet_id")
+  type         String
+  amount       Int
+  referenceId  String?  @map("reference_id")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  wallet       TokenWallet @relation(fields: [walletId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@map("token_usages")
+}
+
 /// *
 ///  * ---------------------------
 ///  * PROMOTION CAMPAIGN models
