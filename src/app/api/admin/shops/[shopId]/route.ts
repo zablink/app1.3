@@ -13,8 +13,17 @@ export async function GET(
     const shop = await prisma.shop.findUnique({
       where: { id: (await params).shopId },
       include: {
-        User: true,
-        ShopCategory: true,
+        owner: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            image: true,
+          },
+        },
+        categories: {
+          include: { category: true },
+        },
       },
     });
 
