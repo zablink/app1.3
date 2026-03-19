@@ -21,46 +21,21 @@ export async function GET(req: Request) {
   }
 
   try {
-    const earnings = await prisma.earning.findMany({
+    const earnings = await prisma.earnings.findMany({
       where: {
         creatorId: creator.id,
       },
       orderBy: {
         createdAt: 'desc',
-      },
-      include: {
-        job: {
-          select: {
-            id: true,
-            campaign: {
-              select: {
-                id: true,
-                title: true,
-                Shop: {
-                  select: {
-                    id: true,
-                    name: true,
-                  }
-                }
-              }
-            }
-          }
-        },
-        withdrawal: {
-          select: {
-            id: true,
-            status: true,
-          }
-        }
       }
     });
 
-    const total = await prisma.earning.aggregate({
+    const total = await prisma.earnings.aggregate({
       where: { creatorId: creator.id },
       _sum: { amount: true },
     });
 
-    const totalWithdrawn = await prisma.withdrawal.aggregate({
+    const totalWithdrawn = await prisma.withdrawals.aggregate({
       where: { 
         creatorId: creator.id,
         status: { in: ['PROCESSING', 'COMPLETED'] }

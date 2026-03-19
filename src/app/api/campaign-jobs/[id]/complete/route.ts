@@ -125,7 +125,7 @@ export async function POST(
       });
 
       // 2. สร้าง Earning record
-      const earning = await tx.earning.create({
+      const earning = await tx.earnings.create({
         data: {
           creatorId: job.creatorId,
           campaignJobId: job.id,
@@ -138,7 +138,7 @@ export async function POST(
       });
 
       // 3. Update Creator stats
-      await tx.creator.update({
+      await tx.creators.update({
         where: { id: job.creatorId },
         data: {
           totalReviews: { increment: 1 },
