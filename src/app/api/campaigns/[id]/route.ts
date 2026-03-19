@@ -19,17 +19,17 @@ export async function GET(
     const campaign = await prisma.campaigns.findUnique({
       where: { id: (await params).id },
       include: {
-        shop: {
+        Shop: {
           select: {
             id: true,
             name: true,
-            logo: true,
+            image: true,
             ownerId: true
           }
         },
-        jobs: {
+        campaign_jobs: {
           include: {
-            creator: {
+            creators: {
               select: {
                 id: true,
                 displayName: true,
@@ -47,8 +47,8 @@ export async function GET(
     }
 
     // ตรวจสอบสิทธิ์ - เฉพาะเจ้าของร้าน, creator ที่เกี่ยวข้อง, หรือ admin
-    const isOwner = campaign.shop.ownerId === session.user.id;
-    const isCreatorInJob = campaign.jobs.some(job => job.creator.userId === session.user.id);
+    const isOwner = campaign.Shop.ownerId === session.user.id;
+    const isCreatorInJob = campaign.campaign_jobs.some(job => job.creators.userId === session.user.id);
     const isAdmin = (session.user as any).role === 'ADMIN';
 
     if (!isOwner && !isCreatorInJob && !isAdmin) {
@@ -79,7 +79,7 @@ export async function PATCH(
     const campaign = await prisma.campaigns.findUnique({
       where: { id: (await params).id },
       include: {
-        shop: {
+        Shop: {
           select: { ownerId: true }
         }
       }
@@ -90,7 +90,7 @@ export async function PATCH(
     }
 
     // ตรวจสอบสิทธิ์ - เฉพาะเจ้าของร้าน
-    if (campaign.shop.ownerId !== session.user.id) {
+    if (campaign.Shop.ownerId !== session.user.id) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -129,16 +129,16 @@ export async function PATCH(
         updatedAt: new Date()
       },
       include: {
-        shop: {
+        Shop: {
           select: {
             id: true,
             name: true,
-            logo: true
+            image: true
           }
         },
-        jobs: {
+        campaign_jobs: {
           include: {
-            creator: {
+            creators: {
               select: {
                 id: true,
                 displayName: true
@@ -173,10 +173,10 @@ export async function DELETE(
     const campaign = await prisma.campaigns.findUnique({
       where: { id: (await params).id },
       include: {
-        shop: {
+        Shop: {
           select: { ownerId: true }
         },
-        jobs: {
+        campaign_jobs: {
           select: {
             id: true,
             status: true
@@ -190,12 +190,12 @@ export async function DELETE(
     }
 
     // ตรวจสอบสิทธิ์
-    if (campaign.shop.ownerId !== session.user.id) {
+    if (campaign.Shop.ownerId !== session.user.id) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     // ไม่ให้ลบถ้ามี job ที่ IN_PROGRESS หรือ COMPLETED
-    const hasActiveJobs = campaign.jobs.some(
+    const hasActiveJobs = campaign.campaign_jobs.some(
       job => job.status === 'IN_PROGRESS' || job.status === 'COMPLETED'
     );
 

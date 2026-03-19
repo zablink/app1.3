@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { PrismaClient } from '@prisma/client';
+import { randomUUID } from 'crypto';
 
 import { prisma } from '@/lib/prisma';
 
@@ -23,7 +24,7 @@ export async function GET(
       where: { id: (await params).id },
       select: {
         id: true,
-        shop: {
+        Shop: {
           select: {
             ownerId: true
           }
@@ -36,7 +37,7 @@ export async function GET(
     }
 
     // ตรวจสอบสิทธิ์
-    const isOwner = campaign.shop.ownerId === session.user.id;
+    const isOwner = campaign.Shop.ownerId === session.user.id;
     const isAdmin = (session.user as any).role === 'ADMIN';
 
     if (!isOwner && !isAdmin) {
@@ -54,14 +55,12 @@ export async function GET(
     const jobs = await prisma.campaign_jobs.findMany({
       where: whereClause,
       include: {
-        creator: {
+        creators: {
           select: {
             id: true,
             displayName: true,
             bio: true,
             phone: true,
-            socialMedia: true,
-            portfolioLinks: true,
             currentPriceMin: true,
             currentPriceMax: true,
             totalReviews: true,
@@ -111,13 +110,13 @@ export async function POST(
     const campaign = await prisma.campaigns.findUnique({
       where: { id: (await params).id },
       include: {
-        shop: {
+        Shop: {
           select: {
             id: true,
             ownerId: true
           }
         },
-        jobs: {
+        campaign_jobs: {
           where: {
             creatorId: creatorId
           }
@@ -130,7 +129,7 @@ export async function POST(
     }
 
     // ตรวจสอบสิทธิ์ - เฉพาะเจ้าของร้าน
-    if (campaign.shop.ownerId !== session.user.id) {
+    if (campaign.Shop.ownerId !== session.user.id) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -143,7 +142,7 @@ export async function POST(
     }
 
     // ตรวจสอบว่า creator นี้มี job อยู่แล้วหรือไม่
-    if (campaign.jobs.length > 0) {
+    if (campaign.campaign_jobs.length > 0) {
       return NextResponse.json(
         { error: 'Creator already has a job in this campaign' },
         { status: 400 }
@@ -204,6 +203,7 @@ export async function POST(
     // สร้าง job ใหม่
     const newJob = await prisma.campaign_jobs.create({
       data: {
+        id: randomUUID(),
         campaignId: (await params).id,
         creatorId: creatorId,
         agreedPrice: priceInTokens,
@@ -211,7 +211,7 @@ export async function POST(
         createdAt: new Date()
       },
       include: {
-        creator: {
+        creators: {
           select: {
             id: true,
             displayName: true,
@@ -219,15 +219,15 @@ export async function POST(
             currentPriceMax: true
           }
         },
-        campaign: {
+        campaigns: {
           select: {
             id: true,
             title: true,
-            shop: {
+            Shop: {
               select: {
                 id: true,
                 name: true,
-                logo: true
+                image: true
               }
             }
           }

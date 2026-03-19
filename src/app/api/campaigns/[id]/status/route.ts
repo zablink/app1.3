@@ -32,13 +32,13 @@ export async function PATCH(
     const campaign = await prisma.campaigns.findUnique({
       where: { id },
       include: {
-        shop: {
+        Shop: {
           select: {
             id: true,
             ownerId: true
           }
         },
-        jobs: {
+        campaign_jobs: {
           select: {
             id: true,
             status: true
@@ -52,7 +52,7 @@ export async function PATCH(
     }
 
     // ตรวจสอบสิทธิ์ - เฉพาะเจ้าของร้าน
-    if (campaign.shop.ownerId !== session.user.id) {
+    if (campaign.Shop.ownerId !== session.user.id) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -100,7 +100,7 @@ export async function PATCH(
 
     // ACTIVE/PAUSED → CANCELLED: ต้องจัดการ jobs ที่ยังไม่เสร็จ
     if ((currentStatus === 'ACTIVE' || currentStatus === 'PAUSED') && status === 'CANCELLED') {
-      const activeJobs = campaign.jobs.filter(
+      const activeJobs = campaign.campaign_jobs.filter(
         job => job.status === 'ACCEPTED' || job.status === 'IN_PROGRESS'
       );
 
@@ -119,7 +119,7 @@ export async function PATCH(
 
     // COMPLETED: ต้องเช็คว่า jobs เสร็จหมดแล้ว
     if (status === 'COMPLETED') {
-      const incompleteJobs = campaign.jobs.filter(
+      const incompleteJobs = campaign.campaign_jobs.filter(
         job => job.status !== 'COMPLETED' && job.status !== 'REJECTED' && job.status !== 'CANCELLED'
       );
 
@@ -136,22 +136,22 @@ export async function PATCH(
 
     // Update status
     const updatedCampaign = await prisma.campaigns.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         status,
         updatedAt: new Date()
       },
       include: {
-        shop: {
+        Shop: {
           select: {
             id: true,
             name: true,
-            logo: true
+            image: true
           }
         },
-        jobs: {
+        campaign_jobs: {
           include: {
-            creator: {
+            creators: {
               select: {
                 id: true,
                 displayName: true
