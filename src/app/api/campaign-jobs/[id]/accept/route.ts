@@ -103,7 +103,7 @@ export async function POST(
               id: true,
               title: true,
               description: true,
-              shop: {
+              Shop: {
                 select: {
                   id: true,
                   name: true,

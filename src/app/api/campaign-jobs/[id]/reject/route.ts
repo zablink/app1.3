@@ -37,7 +37,7 @@ export async function POST(
         },
         campaigns: {
           include: {
-            shop: {
+            Shop: {
               select: {
                 id: true,
                 ownerId: true
@@ -53,7 +53,7 @@ export async function POST(
     }
 
     // ตรวจสอบสิทธิ์ - เฉพาะเจ้าของร้าน
-    if (job.campaigns.shop.ownerId !== session.user.id) {
+    if (job.campaigns.Shop.ownerId !== session.user.id) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -87,7 +87,7 @@ export async function POST(
             select: {
               id: true,
               title: true,
-              shop: {
+              Shop: {
                 select: {
                   id: true,
                   name: true,
@@ -197,7 +197,7 @@ export async function DELETE(
             select: {
               id: true,
               title: true,
-              shop: {
+              Shop: {
                 select: {
                   id: true,
                   name: true
