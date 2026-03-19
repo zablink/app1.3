@@ -35,7 +35,7 @@ export async function POST(
             userId: true
           }
         },
-        campaign: {
+        campaigns: {
           include: {
             shop: {
               select: {
@@ -53,7 +53,7 @@ export async function POST(
     }
 
     // ตรวจสอบสิทธิ์ - เฉพาะเจ้าของร้าน
-    if (job.campaign.shop.ownerId !== session.user.id) {
+    if (job.campaigns.shop.ownerId !== session.user.id) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -83,7 +83,7 @@ export async function POST(
               phone: true
             }
           },
-          campaign: {
+          campaigns: {
             select: {
               id: true,
               title: true,
@@ -100,7 +100,7 @@ export async function POST(
       });
 
       // 2. คืน budget กลับไปให้ campaign (เพราะงานถูกปฏิเสธ)
-      await tx.campaign.update({
+      await tx.campaigns.update({
         where: { id: job.campaignId },
         data: {
           remainingBudget: {
@@ -150,7 +150,7 @@ export async function DELETE(
             userId: true
           }
         },
-        campaign: {
+        campaigns: {
           select: {
             id: true,
             status: true
@@ -193,7 +193,7 @@ export async function DELETE(
               displayName: true
             }
           },
-          campaign: {
+          campaigns: {
             select: {
               id: true,
               title: true,
@@ -210,7 +210,7 @@ export async function DELETE(
 
       // 2. ถ้า job เป็น ACCEPTED แล้ว ต้องคืน budget
       if (job.status === 'ACCEPTED') {
-        await tx.campaign.update({
+        await tx.campaigns.update({
           where: { id: job.campaignId },
           data: {
             remainingBudget: {

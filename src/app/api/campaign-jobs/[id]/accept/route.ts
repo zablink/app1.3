@@ -25,7 +25,7 @@ export async function POST(
             userId: true
           }
         },
-        campaign: {
+        campaigns: {
           select: {
             id: true,
             status: true,
@@ -54,7 +54,7 @@ export async function POST(
     }
 
     // ตรวจสอบว่า campaign ยัง ACTIVE อยู่หรือไม่
-    if (job.campaign.status !== 'ACTIVE') {
+    if (job.campaigns.status !== 'ACTIVE') {
       return NextResponse.json(
         { error: 'Campaign is not active' },
         { status: 400 }
@@ -63,7 +63,7 @@ export async function POST(
 
     // ตรวจสอบว่า campaign ยังไม่หมดอายุ
     const now = new Date();
-    if (job.campaign.endDate < now) {
+    if (job.campaigns.endDate < now) {
       return NextResponse.json(
         { error: 'Campaign has ended' },
         { status: 400 }
@@ -71,11 +71,11 @@ export async function POST(
     }
 
     // ตรวจสอบว่ามี budget เหลือพอหรือไม่
-    if (job.campaign.remainingBudget < job.agreedPrice) {
+    if (job.campaigns.remainingBudget < job.agreedPrice) {
       return NextResponse.json(
         {
           error: 'Insufficient campaign budget',
-          remainingBudget: job.campaign.remainingBudget,
+          remainingBudget: job.campaigns.remainingBudget,
           required: job.agreedPrice
         },
         { status: 400 }
@@ -98,7 +98,7 @@ export async function POST(
               displayName: true
             }
           },
-          campaign: {
+          campaigns: {
             select: {
               id: true,
               title: true,
@@ -118,7 +118,7 @@ export async function POST(
       });
 
       // 2. ลด remaining budget ของ campaign (reserve budget)
-      await tx.campaign.update({
+      await tx.campaigns.update({
         where: { id: job.campaignId },
         data: {
           remainingBudget: {

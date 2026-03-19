@@ -45,7 +45,7 @@ export async function POST(
             userId: true
           }
         },
-        campaign: {
+        campaigns: {
           select: {
             id: true,
             status: true
@@ -72,7 +72,7 @@ export async function POST(
     }
 
     // ตรวจสอบว่า campaign ยัง ACTIVE อยู่หรือไม่
-    if (job.campaign.status !== 'ACTIVE' && job.campaign.status !== 'PAUSED') {
+    if (job.campaigns.status !== 'ACTIVE' && job.campaigns.status !== 'PAUSED') {
       return NextResponse.json(
         { error: 'Campaign is not active or paused' },
         { status: 400 }
@@ -98,7 +98,7 @@ export async function POST(
             phone: true
           }
         },
-        campaign: {
+        campaigns: {
           select: {
             id: true,
             title: true,

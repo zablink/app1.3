@@ -33,7 +33,7 @@ export async function POST(
             completedReviews: true
           }
         },
-        campaign: {
+        campaigns: {
           include: {
             shop: {
               select: {
@@ -51,7 +51,7 @@ export async function POST(
     }
 
     // ตรวจสอบสิทธิ์ - เฉพาะเจ้าของร้าน
-    if (job.campaign.shop.ownerId !== session.user.id) {
+    if (job.campaigns.shop.ownerId !== session.user.id) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -66,7 +66,7 @@ export async function POST(
     // Get shop's active subscription for OG discount
     const activeSubscription = await prisma.shopSubscription.findFirst({
       where: {
-        shop_id: job.campaign.shopId,
+        shop_id: job.campaigns.shopId,
         status: 'ACTIVE',
       },
       orderBy: { start_date: 'desc' },
@@ -108,7 +108,7 @@ export async function POST(
               phone: true
             }
           },
-          campaign: {
+          campaigns: {
             select: {
               id: true,
               title: true,
