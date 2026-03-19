@@ -37,31 +37,39 @@ export async function POST(request: NextRequest) {
         const endDate = new Date();
         endDate.setDate(endDate.getDate() + (subscriptionDays || 30));
 
-        // สร้างหรืออัปเดต subscription
-        await prisma.shopSubscription.upsert({
+        // ไม่มี @@unique([shop_id, package_id, status]) ใน schema — ใช้ findFirst + update/create
+        const existingSub = await prisma.shopSubscription.findFirst({
           where: {
-            shop_id_package_id_status: {
-              shop_id: shopId,
-              package_id: packageId,
-              status: 'ACTIVE'
-            }
-          },
-          create: {
             shop_id: shopId,
             package_id: packageId,
-            start_date: startDate,
-            end_date: endDate,
-            status: 'ACTIVE',
-            payment_status: 'PAID',
-            original_price: 0,
-            final_price: 0,
-            paid_at: new Date()
+            status: "ACTIVE",
           },
-          update: {
-            end_date: endDate,
-            updated_at: new Date()
-          }
+          orderBy: { end_date: "desc" },
         });
+
+        if (existingSub) {
+          await prisma.shopSubscription.update({
+            where: { id: existingSub.id },
+            data: {
+              end_date: endDate,
+              updated_at: new Date(),
+            },
+          });
+        } else {
+          await prisma.shopSubscription.create({
+            data: {
+              shop_id: shopId,
+              package_id: packageId,
+              start_date: startDate,
+              end_date: endDate,
+              status: "ACTIVE",
+              payment_status: "PAID",
+              original_price: 0,
+              final_price: 0,
+              paid_at: new Date(),
+            },
+          });
+        }
 
         // สร้างหรืออัปเดต token wallet
         if (tokenAmount && tokenAmount > 0) {
