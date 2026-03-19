@@ -107,9 +107,8 @@ export async function POST(
                 select: {
                   id: true,
                   name: true,
-                  logo: true,
+                image: true,
                   address: true,
-                  phone: true
                 }
               }
             }
