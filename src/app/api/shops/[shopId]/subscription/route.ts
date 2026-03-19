@@ -14,9 +14,9 @@ export async function GET(req: Request, { params }: { params: Promise<{ shopId: 
   try {
     const shopId = (await params).shopId;
     const active = await prisma.shopSubscription.findFirst({
-      where: { shopId, status: "ACTIVE" },
-      include: { plan: true },
-      orderBy: { expiresAt: "desc" },
+      where: { shop_id: shopId, status: "ACTIVE" },
+      include: { subscription_packages: true },
+      orderBy: { end_date: "desc" },
     });
     return NextResponse.json(active);
   } catch (err) {
@@ -39,7 +39,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ shopId:
     if (!plan) return NextResponse.json({ error: "Plan not found" }, { status: 404 });
 
     const startedAt = new Date();
-    const expiresAt = new Date(startedAt.getTime() + plan.periodDays * 24 * 60 * 60 * 1000);
+    const expiresAt = new Date(startedAt.getTime() + plan.period_days * 24 * 60 * 60 * 1000);
 
     // Check if eligible for OG Campaign
     const isOG = await isOGEligible(startedAt);
@@ -55,20 +55,21 @@ export async function POST(req: Request, { params }: { params: Promise<{ shopId:
 
     const sub = await prisma.shopSubscription.create({
       data: {
-        shop: { connect: { id: shopId } },
-        plan: { connect: { id: packageId } },
+        shop_id: shopId,
+        package_id: packageId,
         status: "ACTIVE",
-        startedAt,
-        expiresAt,
-        autoRenew,
-        paymentProvider,
-        paymentRef,
+        start_date: startedAt,
+        end_date: expiresAt,
+        auto_renew: autoRenew,
+        original_price: plan.price_monthly,
+        final_price: plan.price_monthly,
+        payment_status: "PENDING",
         // OG Campaign fields
         is_og_subscription: isOG,
         og_token_multiplier: ogTokenMultiplier,
         og_usage_discount: ogUsageDiscount,
       },
-      include: { plan: true },
+      include: { subscription_packages: true },
     });
 
     // Update user OG member status if eligible

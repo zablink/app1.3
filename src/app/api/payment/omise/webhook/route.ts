@@ -26,40 +26,37 @@ export async function POST(req: Request) {
       const providerRef = data.id;
 
       if (shopId && action === "subscription") {
-        // Update subscription with payment reference
-        // Find subscription by paymentRef or the most recent subscription for this shop
+        // Mark the most recent pending subscription as paid
         const subscription = await prisma.shopSubscription.findFirst({
           where: {
-            shopId,
-            OR: [
-              { paymentRef: providerRef },
-              { paymentRef: null },
-            ],
+            shop_id: shopId,
+            payment_status: "PENDING",
           },
-          orderBy: { createdAt: "desc" },
+          orderBy: { created_at: "desc" },
         });
 
         if (subscription) {
-          // Update paymentRef to confirm payment
           await prisma.shopSubscription.update({
             where: { id: subscription.id },
             data: { 
-              paymentRef: providerRef,
+              payment_status: "PAID",
+              paid_at: new Date(),
               status: "ACTIVE",
             },
           });
         } else {
-          // If no subscription found, try to find by packageId from metadata
+          // If no pending subscription found, try to find by packageId from metadata
           const packageId = metadata.packageId as string | undefined;
           if (packageId) {
             await prisma.shopSubscription.updateMany({
               where: {
-                shopId,
-                packageId,
-                paymentRef: null,
+                shop_id: shopId,
+                package_id: packageId,
+                payment_status: "PENDING",
               },
               data: {
-                paymentRef: providerRef,
+                payment_status: "PAID",
+                paid_at: new Date(),
                 status: "ACTIVE",
               },
             });
@@ -75,7 +72,7 @@ export async function POST(req: Request) {
           // add tokens to wallet balance if not already added
           const purchase = await prisma.tokenPurchase.findUnique({ where: { id: purchaseId } });
           if (purchase) {
-            const wallet = await prisma.tokenWallet.findUnique({ where: { shopId } });
+            const wallet = await prisma.tokenWallet.findUnique({ where: { shop_id: shopId } });
             if (wallet) {
               await prisma.tokenWallet.update({
                 where: { id: wallet.id },
@@ -83,7 +80,7 @@ export async function POST(req: Request) {
               });
             } else {
               await prisma.tokenWallet.create({
-                data: { shop: { connect: { id: shopId } }, balance: purchase.amount },
+                data: { shop_id: shopId, balance: purchase.amount },
               });
             }
           }
