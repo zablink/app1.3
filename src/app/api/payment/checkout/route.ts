@@ -89,10 +89,10 @@ export async function POST(req: Request) {
     if (!pack) return NextResponse.json({ error: "Invalid token pack" }, { status: 400 });
 
     // ensure wallet exists
-    let wallet = await prisma.tokenWallet.findUnique({ where: { shopId: cart.shopId } });
+    let wallet = await prisma.tokenWallet.findUnique({ where: { shop_id: cart.shopId } });
     if (!wallet) {
       wallet = await prisma.tokenWallet.create({
-        data: { shop: { connect: { id: cart.shopId } }, balance: 0 },
+        data: { shop_id: cart.shopId, balance: 0 },
       });
     }
 

@@ -90,10 +90,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ shopId:
       // Calculate token amount with OG multiplier
       const finalTokenAmount = await calculateOGTokens(plan.tokenAmount, isOG);
 
-      let wallet = await prisma.tokenWallet.findUnique({ where: { shopId } });
+      let wallet = await prisma.tokenWallet.findUnique({ where: { shop_id: shopId } });
       if (!wallet) {
         wallet = await prisma.tokenWallet.create({
-          data: { shop: { connect: { id: shopId } }, balance: finalTokenAmount },
+          data: { shop_id: shopId, balance: finalTokenAmount },
         });
       } else {
         await prisma.tokenWallet.update({

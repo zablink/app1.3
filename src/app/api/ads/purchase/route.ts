@@ -58,7 +58,7 @@ export async function POST(req: Request) {
     if (authErr) return authErr;
 
     // Ensure wallet exists
-    const wallet = await prisma.tokenWallet.findUnique({ where: { shopId } });
+    const wallet = await prisma.tokenWallet.findUnique({ where: { shop_id: shopId } });
     if (!wallet) return NextResponse.json({ error: "No token wallet found" }, { status: 400 });
 
     // 1) Select batches FIFO to cover rawRequired = tokenCost

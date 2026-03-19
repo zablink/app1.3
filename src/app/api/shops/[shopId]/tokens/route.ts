@@ -17,10 +17,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ shopId:
     if (!amountTokens || !price) return NextResponse.json({ error: "amountTokens and price required" }, { status: 400 });
 
     // ensure wallet exists
-    let wallet = await prisma.tokenWallet.findUnique({ where: { shopId } });
+    let wallet = await prisma.tokenWallet.findUnique({ where: { shop_id: shopId } });
     if (!wallet) {
       wallet = await prisma.tokenWallet.create({
-        data: { shop: { connect: { id: shopId } }, balance: 0 },
+        data: { shop_id: shopId, balance: 0 },
       });
     }
 
