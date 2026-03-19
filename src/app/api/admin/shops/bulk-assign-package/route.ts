@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
       try {
         const shop = await prisma.shop.findUnique({
           where: { id: shopId },
-          include: { tokenWallet: true }
+          include: { token_wallets: true }
         });
 
         if (!shop) {
