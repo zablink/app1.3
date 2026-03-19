@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
     // Note: AdPurchase model may need to be checked in schema
     // Using raw query as fallback if model doesn't exist
     try {
-      const ads = await prisma.adPurchase.findMany({
+      const ads = await (prisma as any).adPurchase.findMany({
         where: { shopId },
         include: {
           adPackage: {

@@ -63,8 +63,8 @@ export async function GET(
       wallet: {
         id: wallet.id,
         balance: wallet.balance,
-        createdAt: wallet.createdAt || wallet.created_at,
-        updatedAt: wallet.updatedAt || wallet.updated_at,
+        createdAt: wallet.created_at || null,
+        updatedAt: wallet.updated_at || null,
       },
       purchases,
       usages,

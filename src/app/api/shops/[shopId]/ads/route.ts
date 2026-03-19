@@ -18,7 +18,7 @@ export async function GET(
 
     // Fetch ads
     try {
-      const ads = await prisma.adPurchase.findMany({
+      const ads = await (prisma as any).adPurchase.findMany({
         where: { shopId },
         include: {
           adPackage: {

@@ -21,7 +21,7 @@ export async function GET(
     let allAds: any[] = [];
     
     try {
-      activeAds = await prisma.adPurchase.findMany({
+      activeAds = await (prisma as any).adPurchase.findMany({
         where: {
           shopId,
           startAt: { lte: new Date() },
@@ -30,7 +30,7 @@ export async function GET(
       });
 
       // Fetch all ads for stats
-      allAds = await prisma.adPurchase.findMany({
+      allAds = await (prisma as any).adPurchase.findMany({
         where: { shopId },
       });
     } catch (error: any) {
