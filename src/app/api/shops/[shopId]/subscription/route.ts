@@ -137,8 +137,8 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ shopI
 
   try {
     const active = await prisma.shopSubscription.findFirst({
-      where: { shopId, status: "ACTIVE" },
-      orderBy: { expiresAt: "desc" },
+      where: { shop_id: shopId, status: "ACTIVE" },
+      orderBy: { end_date: "desc" },
     });
     if (!active) return NextResponse.json({ error: "No active subscription" }, { status: 404 });
 
