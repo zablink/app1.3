@@ -86,9 +86,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ shopId:
     }
 
     // If plan grants tokens, grant tokens and create token purchase batch
-    if (plan.tokenAmount && plan.tokenAmount > 0) {
+    const planTokenAmount = plan.token_amount ?? 0;
+    if (planTokenAmount > 0) {
       // Calculate token amount with OG multiplier
-      const finalTokenAmount = await calculateOGTokens(plan.tokenAmount, isOG);
+      const finalTokenAmount = await calculateOGTokens(planTokenAmount, isOG);
 
       let wallet = await prisma.tokenWallet.findUnique({ where: { shop_id: shopId } });
       if (!wallet) {
@@ -107,7 +108,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ shopId:
           wallet: { connect: { id: wallet.id } },
           amount: finalTokenAmount,
           remaining: finalTokenAmount,
-          price: plan.price,
+          price: Math.round(Number(plan.price)),
           provider: paymentProvider ?? "subscription",
           providerRef: paymentRef ?? null,
           expiresAt: ogBenefitsUntil || expiresAt, // Use OG benefits until date if OG
