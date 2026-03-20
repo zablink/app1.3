@@ -11,6 +11,13 @@ const KM = 1000;
 const VALID_AREA_TABLES = ['th_subdistricts', 'th_districts', 'th_provinces'] as const;
 type AreaTable = (typeof VALID_AREA_TABLES)[number];
 
+/** Row shape from dynamic Shop listing SQL ($queryRawUnsafe) — columns vary by query */
+type ShopQueryRow = Record<string, unknown>;
+
+function asShopQueryRows(result: unknown): ShopQueryRow[] {
+  return Array.isArray(result) ? (result as ShopQueryRow[]) : [];
+}
+
 // Helper: Validate Thailand coordinates
 function isValidThailandCoordinates(lat: number, lng: number): boolean {
   if (lat === 0 && lng === 0) return false; // Default GPS error
@@ -50,8 +57,8 @@ async function tableHasColumn(tableName: string, columnName: string) {
   try {
     const q = `SELECT 1 FROM information_schema.columns WHERE table_name ILIKE $1 AND column_name = $2 LIMIT 1;`;
     console.log('[api/shops] Checking column:', tableName, columnName);
-    const res: any[] = await prisma.$queryRawUnsafe(q, tableName, columnName);
-    const exists = Array.isArray(res) && res.length > 0;
+    const res = (await prisma.$queryRawUnsafe(q, tableName, columnName)) as unknown[];
+    const exists = res.length > 0;
     console.log('[api/shops] Column check result:', tableName, columnName, exists);
     return exists;
   } catch (error) {
@@ -189,9 +196,9 @@ export async function GET(request: NextRequest) {
         console.log('[api/shops] Executing main query...');
         console.log('[api/shops] SQL (random):', sql.substring(0, 500), '...', 'params:', params);
         
-        let rows;
+        let rows: ShopQueryRow[];
         try {
-          rows = await prisma.$queryRawUnsafe(sql, ...params);
+          rows = asShopQueryRows(await prisma.$queryRawUnsafe(sql, ...params));
         } catch (queryError) {
           console.error('[api/shops] ❌ Query execution failed:', queryError);
           console.error('[api/shops] SQL:', sql.substring(0, 1000));
@@ -199,7 +206,7 @@ export async function GET(request: NextRequest) {
           throw queryError;
         }
         const elapsed = Date.now() - startTime;
-        const shopsCount = Array.isArray(rows) ? rows.length : 0;
+        const shopsCount = rows.length;
         console.log(`[api/shops] ✅ Query successful - rows: ${shopsCount}, offset: ${offset}, time: ${elapsed}ms`);
         if (shopsCount === 0) {
           console.log('[api/shops] ⚠️ WARNING: No shops returned! This might indicate:');
@@ -207,7 +214,7 @@ export async function GET(request: NextRequest) {
           console.log('[api/shops]   2. All shops filtered out by WHERE clause');
           console.log('[api/shops]   3. Database connection issue');
         }
-        return NextResponse.json({ success: true, shops: Array.isArray(rows) ? rows : [], hasLocation: false, queryTime: elapsed });
+        return NextResponse.json({ success: true, shops: rows, hasLocation: false, queryTime: elapsed });
       } catch (sqlError) {
         console.error('[api/shops] ❌ SQL error in main query:', sqlError);
         console.error('[api/shops] Error details:', {
@@ -242,11 +249,11 @@ export async function GET(request: NextRequest) {
           `;
           const fallbackParams = [limit, offset];
           console.log('[api/shops] Fallback SQL:', simpleSql.substring(0, 300), '...', 'params:', fallbackParams);
-          const rows = await prisma.$queryRawUnsafe(simpleSql, ...fallbackParams);
+          const rows = asShopQueryRows(await prisma.$queryRawUnsafe(simpleSql, ...fallbackParams));
           const elapsed = Date.now() - startTime;
-          const shopsCount = Array.isArray(rows) ? rows.length : 0;
+          const shopsCount = rows.length;
           console.log(`[api/shops] ✅ Fallback query successful - rows: ${shopsCount}, time: ${elapsed}ms`);
-          return NextResponse.json({ success: true, shops: Array.isArray(rows) ? rows : [], hasLocation: false, queryTime: elapsed });
+          return NextResponse.json({ success: true, shops: rows, hasLocation: false, queryTime: elapsed });
         } catch (fallbackError) {
           console.error('[api/shops] ❌ Fallback query also failed:', fallbackError);
           const elapsed = Date.now() - startTime;
@@ -343,13 +350,19 @@ export async function GET(request: NextRequest) {
           LIMIT $${params.length};
         `;
         console.log('[api/shops] SQL (distance):', sql, params);
-        const rows = await prisma.$queryRawUnsafe(sql, ...params);
+        const rows = asShopQueryRows(await prisma.$queryRawUnsafe(sql, ...params));
         const elapsed = Date.now() - startTime;
         console.log(`[api/shops] distance r=${r}m, rows=${rows.length}, time=${elapsed}ms`);
-        if (rows && rows.length > 0) {
+        if (rows.length > 0) {
           return NextResponse.json({
             success: true,
-            shops: rows.map((r: any) => ({ ...r, distance: r.distance != null ? parseFloat(Number(r.distance).toFixed(2)) : null })),
+            shops: rows.map((row) => ({
+              ...row,
+              distance:
+                row.distance != null && row.distance !== ''
+                  ? parseFloat(Number(row.distance as string | number).toFixed(2))
+                  : null,
+            })),
             hasLocation: true,
             userLocation: { lat: latitude, lng: longitude },
             queryTime: elapsed,
@@ -397,7 +410,7 @@ export async function GET(request: NextRequest) {
       LIMIT $${paramsFinal.length};
     `;
     console.log('[api/shops] SQL (final fallback):', sqlFinal, paramsFinal);
-    const fallbackRows = await prisma.$queryRawUnsafe(sqlFinal, ...paramsFinal);
+    const fallbackRows = asShopQueryRows(await prisma.$queryRawUnsafe(sqlFinal, ...paramsFinal));
     const elapsed = Date.now() - startTime;
     console.log(`[api/shops] fallback rows: ${fallbackRows.length}, time: ${elapsed}ms`);
     return NextResponse.json({ success: true, shops: fallbackRows, hasLocation: false, queryTime: elapsed });
