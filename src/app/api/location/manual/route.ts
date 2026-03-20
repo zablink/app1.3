@@ -1,6 +1,5 @@
 // app/api/location/manual/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
 import type { LocationInfo } from '@/lib/location-service';
 
 import { prisma } from '@/lib/prisma';
@@ -18,15 +17,15 @@ export async function POST(request: NextRequest) {
     }
 
     // ดึงข้อมูลตำบล พร้อม amphure และ province
-    const tambon = await prisma.th_subdistricts.findUnique({
+    const tambon = await prisma.loc_tambons.findUnique({
       where: { id: tambonId },
       include: {
-        th_districts: {
+        loc_amphures: {
           include: {
-            th_provinces: true
-          }
-        }
-      }
+            loc_provinces: true,
+          },
+        },
+      },
     });
 
     if (!tambon) {
@@ -39,10 +38,10 @@ export async function POST(request: NextRequest) {
     // สร้าง LocationInfo object
     const locationInfo: LocationInfo = {
       coordinates: { lat: 0, lng: 0 }, // ไม่มี GPS จริง
-      provinceId: tambon.th_districts.th_provinces.id,
-      provinceName: tambon.th_districts.th_provinces.name_th,
-      amphureId: tambon.th_districts.id,
-      amphureName: tambon.th_districts.name_th,
+      provinceId: tambon.loc_amphures.loc_provinces.id,
+      provinceName: tambon.loc_amphures.loc_provinces.name_th,
+      amphureId: tambon.loc_amphures.id,
+      amphureName: tambon.loc_amphures.name_th,
       tambonId: tambon.id,
       tambonName: tambon.name_th
     };

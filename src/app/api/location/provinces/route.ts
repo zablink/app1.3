@@ -1,12 +1,11 @@
 // app/api/location/provinces/route.ts
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
 
 import { prisma } from '@/lib/prisma';
 
 export async function GET() {
   try {
-    const provinces = await prisma.th_provinces.findMany({
+    const provinces = await prisma.loc_provinces.findMany({
       where: { deleted_at: null },
       orderBy: { name_th: 'asc' },
       select: {

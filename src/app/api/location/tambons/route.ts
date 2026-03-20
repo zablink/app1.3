@@ -1,6 +1,5 @@
 // app/api/location/tambons/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
 
 import { prisma } from '@/lib/prisma';
 
@@ -16,7 +15,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const tambons = await prisma.th_subdistricts.findMany({
+    const tambons = await prisma.loc_tambons.findMany({
       where: {
         amphure_id: parseInt(amphureId),
         deleted_at: null

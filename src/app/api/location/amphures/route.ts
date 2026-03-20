@@ -1,6 +1,5 @@
 // app/api/location/amphures/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
 
 import { prisma } from '@/lib/prisma';
 
@@ -16,7 +15,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const amphures = await prisma.th_districts.findMany({
+    const amphures = await prisma.loc_amphures.findMany({
       where: {
         province_id: parseInt(provinceId),
         deleted_at: null

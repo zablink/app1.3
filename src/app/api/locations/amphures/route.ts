@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const amphures = await prisma.th_districts.findMany({
+    const amphures = await prisma.loc_amphures.findMany({
       where: {
         province_id: parseInt(provinceId),
         deleted_at: null,
