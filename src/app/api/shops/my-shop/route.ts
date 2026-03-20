@@ -12,10 +12,10 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Find shop by user email
+    // Shop belongs to User via ownerId → relation field is `owner`, not `user`
     const shop = await prisma.shop.findFirst({
       where: {
-        user: {
+        owner: {
           email: session.user.email,
         },
       },

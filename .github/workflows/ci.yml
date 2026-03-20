@@ -20,7 +20,7 @@ jobs:
         run: npm install
 
       - name: Prisma generate + Typecheck
-        run: prisma generate && tsc --noEmit --pretty false
+        run: npx prisma generate && npx tsc --noEmit --pretty false
 
       - name: Lint
         run: npm run lint
