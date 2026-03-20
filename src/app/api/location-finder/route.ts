@@ -1,7 +1,8 @@
 // src/app/api/location-finder/route.ts
 
 import { NextResponse } from 'next/server';
-import { supabase, LocationInfo } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
+import type { FindLocationRpcRow } from '@/lib/location-service';
 
 // Define the handler for GET requests
 export async function GET(request: Request) {
@@ -29,7 +30,7 @@ export async function GET(request: Request) {
     });
     
     // Type Cast the raw data returned from RPC to our expected type
-    const data = rawData as LocationInfo[] | null;
+    const data = rawData as FindLocationRpcRow[] | null;
 
 
     if (error) {

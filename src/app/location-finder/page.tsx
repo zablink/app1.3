@@ -3,12 +3,12 @@
 'use client';
 
 import { useState } from 'react';
-import { LocationInfo } from '@/lib/supabase'; // Reuse the interface definition
+import type { FindLocationRpcRow } from '@/lib/location-service';
 
 export default function LocationFinderPage() {
   const [lat, setLat] = useState<string>('13.7563'); // Default to Bangkok for testing
   const [lng, setLng] = useState<string>('100.5018'); // Default to Bangkok for testing
-  const [locationInfo, setLocationInfo] = useState<LocationInfo | null>(null);
+  const [locationInfo, setLocationInfo] = useState<FindLocationRpcRow | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -22,7 +22,7 @@ export default function LocationFinderPage() {
       const data = await response.json();
 
       if (response.ok) {
-        setLocationInfo(data as LocationInfo);
+        setLocationInfo(data as FindLocationRpcRow);
       } else {
         // Handle 400, 404, 500 errors from the API
         setError(data.error || 'Failed to fetch location data');

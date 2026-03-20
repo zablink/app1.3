@@ -20,6 +20,20 @@ export interface LocationInfo {
   possibleTambons?: any[]; // กรณีที่มีหลายตำบลที่ใกล้เคียง
 }
 
+/**
+ * Row shape from Supabase RPC `find_location` (e.g. location-finder API / demo page).
+ * Column names follow DB aliases; the function may return additional fields.
+ */
+export interface FindLocationRpcRow {
+  tambon_id?: number | null;
+  tambon_name_th?: string | null;
+  amphure_id?: number | null;
+  amphure_name_th?: string | null;
+  province_id?: number | null;
+  province_name_th?: string | null;
+  [key: string]: unknown;
+}
+
 // ========================================
 // 1. DISTANCE CALCULATION (PostGIS)
 // ========================================
