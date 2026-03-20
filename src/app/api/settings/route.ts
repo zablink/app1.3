@@ -74,8 +74,6 @@ export async function getPublicSettings() {
       value: true,
       dataType: true
     },
-    // Cache for 5 minutes
-    cacheStrategy: { ttl: 300 }
   });
 
   // แปลงเป็น Object
