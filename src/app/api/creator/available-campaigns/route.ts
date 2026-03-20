@@ -97,36 +97,13 @@ export async function GET(req: NextRequest) {
       orderBy: { createdAt: "desc" },
     });
 
-    // Calculate distance if creator has location
-    // Note: This is simplified. You may want to use PostGIS for accurate distance
-    const campaignsWithDistance = campaigns.map((campaign) => {
-      let distance = null;
-      if (creator.lat && creator.lng && campaign.Shop.lat && campaign.Shop.lng) {
-        // Simple distance calculation (Haversine formula would be better)
-        const lat1 = creator.lat;
-        const lon1 = creator.lng;
-        const lat2 = campaign.Shop.lat;
-        const lon2 = campaign.Shop.lng;
-        const R = 6371; // Earth's radius in km
-        const dLat = ((lat2 - lat1) * Math.PI) / 180;
-        const dLon = ((lon2 - lon1) * Math.PI) / 180;
-        const a =
-          Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-          Math.cos((lat1 * Math.PI) / 180) *
-            Math.cos((lat2 * Math.PI) / 180) *
-            Math.sin(dLon / 2) *
-            Math.sin(dLon / 2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        distance = R * c; // Distance in km
-      }
-
-      return {
-        ...campaign,
-        distance: distance ? Math.round(distance * 10) / 10 : null, // Round to 1 decimal
-        availableSlots:
-          (campaign.targetReviewers || 1) - campaign.campaign_jobs.length,
-      };
-    });
+    // Distance skipped: `creators` has no lat/lng in schema. Add coords to DB + select here if needed.
+    const campaignsWithDistance = campaigns.map((campaign) => ({
+      ...campaign,
+      distance: null as number | null,
+      availableSlots:
+        (campaign.targetReviewers || 1) - campaign.campaign_jobs.length,
+    }));
 
     return NextResponse.json({
       campaigns: campaignsWithDistance,

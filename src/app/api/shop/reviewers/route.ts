@@ -54,15 +54,17 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // Location filter
-    if (provinceId) {
-      where.provinceId = parseInt(provinceId);
-    }
-    if (amphureId) {
-      where.amphureId = parseInt(amphureId);
-    }
-    if (tambonId) {
-      where.tambonId = parseInt(tambonId);
+    // Location filter (coverage lives on creator_coverage_areas, not on creators row)
+    if (provinceId || amphureId || tambonId) {
+      const areaWhere: {
+        provinceId?: number;
+        amphureId?: number;
+        tambonId?: number;
+      } = {};
+      if (provinceId) areaWhere.provinceId = parseInt(provinceId, 10);
+      if (amphureId) areaWhere.amphureId = parseInt(amphureId, 10);
+      if (tambonId) areaWhere.tambonId = parseInt(tambonId, 10);
+      where.creator_coverage_areas = { some: areaWhere };
     }
 
     // Search by name

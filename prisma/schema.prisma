@@ -556,6 +556,8 @@ model creator_coverage_areas {
   tambonId   Int?
   createdAt  DateTime @default(now())
 
+  creators creators @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+
   @@index([amphureId])
   @@index([creatorId])
   @@index([provinceId])
@@ -615,6 +617,7 @@ model creators {
   approvedAt            DateTime?
   rejectedAt            DateTime?
   campaign_jobs         campaign_jobs[]
+  creator_coverage_areas creator_coverage_areas[]
   creator_price_history creator_price_history[]
   earnings              earnings[]
   withdrawals           withdrawals[]
