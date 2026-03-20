@@ -8,7 +8,7 @@ import Omise from "omise";
 
 export const runtime = "nodejs";
 
-const omise = new Omise({ secretKey: process.env.OMISE_SECRET_KEY || "" });
+const omise = Omise({ secretKey: process.env.OMISE_SECRET_KEY || "" });
 
 export async function POST(req: Request) {
   if (!process.env.OMISE_SECRET_KEY) {

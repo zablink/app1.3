@@ -4,7 +4,7 @@ import Omise from "omise";
 import { requireOwnerOrAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-const omise = new Omise({ secretKey: process.env.OMISE_SECRET_KEY || "" });
+const omise = Omise({ secretKey: process.env.OMISE_SECRET_KEY || "" });
 
 export async function POST(req: Request) {
   try {
